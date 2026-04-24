@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react"
 import {
   startTransition,
   useCallback,
@@ -18,6 +17,7 @@ import { WorkspaceFilterButton } from "@/components/WorkspaceFilterButton"
 import { CattleFilterPanel } from "@/components/workspace/CattleFilterPanel"
 import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles"
 import { AddAnimalModal } from "@/components/AddAnimalModal"
+import { AiSparkleDisclosureButton } from "@/components/ui/ai-sparkle-disclosure-button"
 import { Button } from "@/components/ui/button"
 import { useRanchData } from "@/contexts/RanchDataContext"
 import { parseCattleCareDueParam, type CattleCareDueKind } from "@/lib/cattleCareDue"
@@ -205,18 +205,14 @@ function PastureCard({
           Last check · <strong className="font-semibold text-foreground">{lastCheck}</strong>
         </span>
         {hc.heiferCount > 0 && pastureAiSuggestion ? (
-          <button
-            type="button"
-            className="flex shrink-0 items-center justify-center rounded p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-            aria-label={aiExpanded ? "Hide AI suggestion" : "Show AI suggestion"}
-            aria-expanded={aiExpanded}
+          <AiSparkleDisclosureButton
+            ariaLabel={aiExpanded ? "Hide AI suggestion" : "Show AI suggestion"}
+            expanded={aiExpanded}
             onClick={(e) => {
               e.stopPropagation()
               setAiExpanded((o) => !o)
             }}
-          >
-            <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
-          </button>
+          />
         ) : null}
       </div>
 

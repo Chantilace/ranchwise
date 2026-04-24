@@ -40,6 +40,7 @@ import { getStatusDotClass } from "@/lib/statusUtils";
 import { WORKSPACE_PAGE_SCROLL_CLASS } from "@/lib/workspacePageCard";
 import type { ObservationEntry, RiskLevel } from "@/types/observation";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { AiSparkleDisclosureButton } from "@/components/ui/ai-sparkle-disclosure-button";
 import { cn } from "@/lib/utils";
 
 function farrierIso(horse: HorseTableRow): string | null {
@@ -650,15 +651,13 @@ export function HorseProfile() {
                           </div>
                         </div>
                         {aiSuggestion ? (
-                          <button
-                            type="button"
-                            className="flex shrink-0 items-center justify-center rounded p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                            aria-label={
+                          <AiSparkleDisclosureButton
+                            ariaLabel={
                               expanded
                                 ? "Hide AI suggestion"
                                 : "Show AI suggestion"
                             }
-                            aria-expanded={expanded}
+                            expanded={expanded}
                             onClick={(e) => {
                               e.stopPropagation();
                               setAiExpandedIds((prev) => ({
@@ -666,13 +665,7 @@ export function HorseProfile() {
                                 [entry.id]: !prev[entry.id],
                               }));
                             }}
-                          >
-                            <Sparkles
-                              className="size-5 text-ai-accent"
-                              strokeWidth={1.5}
-                              aria-hidden
-                            />
-                          </button>
+                          />
                         ) : null}
                       </div>
                       <p className="text-sm font-normal text-foreground">

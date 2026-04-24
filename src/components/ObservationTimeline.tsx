@@ -1,7 +1,7 @@
-import { Sparkles } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { ObservationCategoryBadge } from "@/components/ObservationCategoryBadge"
+import { AiSparkleDisclosureButton } from "@/components/ui/ai-sparkle-disclosure-button"
 import { parseObservationDate } from "@/lib/initialObservations"
 import { getObservationTimelineDotClass } from "@/lib/statusUtils"
 import type { ObservationEntry, RiskLevel } from "@/types/observation"
@@ -78,18 +78,14 @@ export function ObservationTimeline({ observations, contentClassName }: Observat
                     </div>
                   </div>
                   {aiSuggestion ? (
-                    <button
-                      type="button"
-                      className="flex shrink-0 items-center justify-center rounded p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                      aria-label={expanded ? "Hide AI suggestion" : "Show AI suggestion"}
-                      aria-expanded={expanded}
+                    <AiSparkleDisclosureButton
+                      ariaLabel={expanded ? "Hide AI suggestion" : "Show AI suggestion"}
+                      expanded={expanded}
                       onClick={(e) => {
                         e.stopPropagation()
                         setAiExpandedIds((prev) => ({ ...prev, [entry.id]: !prev[entry.id] }))
                       }}
-                    >
-                      <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
-                    </button>
+                    />
                   ) : null}
                 </div>
                 <p className="text-sm font-medium leading-relaxed text-foreground">{entry.notes}</p>

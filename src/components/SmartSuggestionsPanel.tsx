@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp, Sparkles } from "lucide-react"
 import { useId, useMemo, useState } from "react"
+import { AiSparkleDisclosureButton } from "@/components/ui/ai-sparkle-disclosure-button"
 import { cn } from "@/lib/utils"
 
 export type SmartSuggestionsPanelProps = {
@@ -74,18 +75,14 @@ function SingleLineCard({ suggestion }: { suggestion: string }) {
           <p className="truncate">{suggestion}</p>
         )}
       </div>
-      <button
-        type="button"
-        className="flex shrink-0 items-center justify-center rounded p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-        aria-label={expanded ? "Hide AI suggestion" : "Show AI suggestion"}
-        aria-expanded={expanded}
+      <AiSparkleDisclosureButton
+        ariaLabel={expanded ? "Hide AI suggestion" : "Show AI suggestion"}
+        expanded={expanded}
         onClick={(e) => {
           e.stopPropagation()
           setExpanded((o) => !o)
         }}
-      >
-        <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
-      </button>
+      />
     </div>
   )
 }
