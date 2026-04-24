@@ -1,10 +1,11 @@
 import { Camera, ChevronDown, ChevronRight } from "lucide-react"
-import type { ChangeEvent, RefObject } from "react"
+import { useId, type ChangeEvent, type RefObject } from "react"
 import { FeedMultiSelect } from "@/components/FeedMultiSelect"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import type { NewHorseData } from "@/lib/addHorseForm"
 import { AppMenuSelect } from "@/components/ui/app-menu-select"
+import { FormLabel } from "@/components/ui/form-label"
 import type { FeedOption } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 
@@ -27,14 +28,8 @@ export const ADD_HORSE_MAX_PHOTO_BYTES = 5 * 1024 * 1024
 const PROFILE_EDIT_SEX_OPTIONS = ["Mare", "Gelding", "Stallion"] as const
 const PROFILE_EDIT_ROLE_OPTIONS = ["Working", "Breeding", "Retired"] as const
 
-const modalLabelClass = "text-xs font-medium tracking-wide text-muted-foreground uppercase"
-const profileEditLabelClass =
-  "mb-[5px] block text-xs font-normal uppercase tracking-[0.07em] text-muted-foreground"
 const profileEditInputClass =
   "min-h-0 w-full rounded-lg border-[0.5px] border-border bg-secondary px-3 py-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-action/25"
-
-const sheetLabelClass =
-  "mb-2 block text-xs font-semibold uppercase tracking-widest text-foreground"
 
 function sheetToggleClass(active: boolean) {
   return cn(
@@ -152,7 +147,15 @@ export function AddHorseFormFields({
   onLastDentalIsoChange,
 }: AddHorseFormFieldsProps) {
   const isProfileEdit = appearance === "profileEdit"
-  const labelClass = isProfileEdit ? profileEditLabelClass : modalLabelClass
+  const formFieldVariant = isProfileEdit ? ("profileEdit" as const) : ("default" as const)
+  const formFieldLabelClassName = isProfileEdit ? "mb-[5px]" : undefined
+
+  const sheetFieldId = useId()
+  const sheetNameId = `${sheetFieldId}-name`
+  const sheetAgeId = `${sheetFieldId}-age`
+  const sheetPastureId = `${sheetFieldId}-pasture`
+  const sheetPhotoInputId = `${sheetFieldId}-photo`
+  const sheetNotesId = `${sheetFieldId}-notes`
   const sexOptionsList = isProfileEdit
     ? (() => {
         const list: string[] = [...PROFILE_EDIT_SEX_OPTIONS]
@@ -174,7 +177,9 @@ export function AddHorseFormFields({
       <>
         <div className="flex flex-col gap-4">
           <label className="flex flex-col">
-            <span className={labelClass}>Name *</span>
+            <FormLabel variant={formFieldVariant} className={formFieldLabelClassName}>
+              Name *
+            </FormLabel>
             <Input
               placeholder="Horse name"
               value={name}
@@ -185,7 +190,9 @@ export function AddHorseFormFields({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="flex flex-col">
-              <span className={labelClass}>Sex *</span>
+              <FormLabel variant={formFieldVariant} className={formFieldLabelClassName}>
+                Sex *
+              </FormLabel>
               <AppMenuSelect
                 value={sex}
                 onValueChange={onSexChange}
@@ -205,7 +212,9 @@ export function AddHorseFormFields({
               />
             </label>
             <label className="flex flex-col">
-              <span className={labelClass}>Age *</span>
+              <FormLabel variant={formFieldVariant} className={formFieldLabelClassName}>
+                Age *
+              </FormLabel>
               <Input
                 type="number"
                 inputMode="numeric"
@@ -220,7 +229,9 @@ export function AddHorseFormFields({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="flex flex-col">
-              <span className={labelClass}>Role *</span>
+              <FormLabel variant={formFieldVariant} className={formFieldLabelClassName}>
+                Role *
+              </FormLabel>
               <AppMenuSelect
                 value={role}
                 onValueChange={onRoleChange}
@@ -240,7 +251,9 @@ export function AddHorseFormFields({
               />
             </label>
             <label className="flex flex-col">
-              <span className={labelClass}>Pasture *</span>
+              <FormLabel variant={formFieldVariant} className={formFieldLabelClassName}>
+                Pasture *
+              </FormLabel>
               <AppMenuSelect
                 value={pasture}
                 onValueChange={onPastureChange}
@@ -290,7 +303,9 @@ export function AddHorseFormFields({
         {expanded ? (
           <div className="mt-4 flex flex-col gap-4">
             <div>
-              <span className={cn(labelClass, isProfileEdit ? "mb-[5px]" : "mb-2", "block")}>Photo</span>
+              <FormLabel variant={formFieldVariant} className={isProfileEdit ? "mb-[5px]" : "mb-2"}>
+                Photo
+              </FormLabel>
               {photoPreviewUrl?.trim() ? (
                 <div className="mb-3 flex justify-center">
                   <img
@@ -319,12 +334,16 @@ export function AddHorseFormFields({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className={labelClass}>Feed</span>
+              <FormLabel variant={formFieldVariant} className={formFieldLabelClassName}>
+                Feed
+              </FormLabel>
               <FeedMultiSelect value={feed} onChange={onFeedChange} placeholder="Select feed types" />
             </div>
 
             <label className="flex flex-col gap-1.5">
-              <span className={labelClass}>Notes</span>
+              <FormLabel variant={formFieldVariant} className={formFieldLabelClassName}>
+                Notes
+              </FormLabel>
               <Textarea
                 rows={3}
                 placeholder="Any additional notes"
@@ -347,7 +366,9 @@ export function AddHorseFormFields({
             onLastDentalIsoChange ? (
               <>
                 <label className="flex flex-col">
-                  <span className={labelClass}>Body condition (1–9)</span>
+                  <FormLabel variant={formFieldVariant} className={formFieldLabelClassName}>
+                    Body condition (1–9)
+                  </FormLabel>
                   <Input
                     type="number"
                     min={1}
@@ -359,7 +380,9 @@ export function AddHorseFormFields({
                   />
                 </label>
                 <label className="flex flex-col">
-                  <span className={labelClass}>Last farrier</span>
+                  <FormLabel variant={formFieldVariant} className={formFieldLabelClassName}>
+                    Last farrier
+                  </FormLabel>
                   <Input
                     type="date"
                     value={lastFarrierIso}
@@ -368,7 +391,9 @@ export function AddHorseFormFields({
                   />
                 </label>
                 <label className="flex flex-col">
-                  <span className={labelClass}>Last dental</span>
+                  <FormLabel variant={formFieldVariant} className={formFieldLabelClassName}>
+                    Last dental
+                  </FormLabel>
                   <Input
                     type="date"
                     value={lastDentalIso}
@@ -390,8 +415,11 @@ export function AddHorseFormFields({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <label className={sheetLabelClass}>Name</label>
+        <FormLabel variant="sheet" className="mb-2" htmlFor={sheetNameId}>
+          Name
+        </FormLabel>
         <input
+          id={sheetNameId}
           placeholder="Horse name"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
@@ -400,7 +428,9 @@ export function AddHorseFormFields({
       </div>
 
       <div>
-        <label className={sheetLabelClass}>Sex</label>
+        <FormLabel variant="sheet" className="mb-2">
+          Sex
+        </FormLabel>
         <div className="flex flex-wrap gap-2">
           {ADD_HORSE_SEX_OPTIONS.map((s) => (
             <button
@@ -416,8 +446,11 @@ export function AddHorseFormFields({
       </div>
 
       <div>
-        <label className={sheetLabelClass}>Age</label>
+        <FormLabel variant="sheet" className="mb-2" htmlFor={sheetAgeId}>
+          Age
+        </FormLabel>
         <input
+          id={sheetAgeId}
           type="number"
           inputMode="numeric"
           min={1}
@@ -429,7 +462,9 @@ export function AddHorseFormFields({
       </div>
 
       <div>
-        <label className={sheetLabelClass}>Role</label>
+        <FormLabel variant="sheet" className="mb-2">
+          Role
+        </FormLabel>
         <div className="flex flex-wrap gap-2">
           {ADD_HORSE_ROLE_OPTIONS.map((r) => (
             <button
@@ -445,8 +480,11 @@ export function AddHorseFormFields({
       </div>
 
       <div>
-        <label className={sheetLabelClass}>Pasture</label>
+        <FormLabel variant="sheet" className="mb-2" htmlFor={sheetPastureId}>
+          Pasture
+        </FormLabel>
         <AppMenuSelect
+          id={sheetPastureId}
           value={pasture}
           onValueChange={onPastureChange}
           options={[
@@ -471,11 +509,12 @@ export function AddHorseFormFields({
       {expanded ? (
         <>
           <div>
-            <label className={sheetLabelClass}>
+            <FormLabel variant="sheet" className="mb-2" htmlFor={sheetPhotoInputId}>
               Photo{" "}
               <span className="font-normal normal-case tracking-normal text-muted-foreground">(optional)</span>
-            </label>
+            </FormLabel>
             <input
+              id={sheetPhotoInputId}
               ref={fileInputRef}
               type="file"
               accept="image/jpeg,image/png"
@@ -492,19 +531,20 @@ export function AddHorseFormFields({
           </div>
 
           <div>
-            <label className={sheetLabelClass}>
+            <FormLabel variant="sheet" className="mb-2">
               Feed{" "}
               <span className="font-normal normal-case tracking-normal text-muted-foreground">(optional)</span>
-            </label>
+            </FormLabel>
             <FeedMultiSelect value={feed} onChange={onFeedChange} placeholder="Select feed types" />
           </div>
 
           <div>
-            <label className={sheetLabelClass}>
+            <FormLabel variant="sheet" className="mb-2" htmlFor={sheetNotesId}>
               Notes{" "}
               <span className="font-normal normal-case tracking-normal text-muted-foreground">(optional)</span>
-            </label>
+            </FormLabel>
             <textarea
+              id={sheetNotesId}
               placeholder="Any additional notes..."
               value={notes}
               onChange={(e) => onNotesChange(e.target.value)}

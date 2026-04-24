@@ -66,7 +66,7 @@ export function MenuMultiSelectField({
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {sectionLabel ? (
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {sectionLabel}
         </p>
       ) : null}
@@ -185,7 +185,7 @@ export function MenuRadioSelectField({
   return (
     <div className="flex flex-col gap-1.5">
       {sectionLabel ? (
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {sectionLabel}
         </p>
       ) : null}

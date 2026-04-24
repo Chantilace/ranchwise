@@ -2,6 +2,7 @@ import { Dialog } from "@base-ui/react/dialog"
 import { Sparkles, X } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { FormLabel } from "@/components/ui/form-label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
@@ -34,8 +35,6 @@ export interface RecordCalvingModalProps {
   /** Fires after user taps Done on the calving result step (e.g. close home quick-log sheet). */
   onCalvingDone?: () => void
 }
-
-const labelClass = "text-xs font-medium tracking-wide text-muted-foreground uppercase"
 
 const DELIVERY_OPTIONS: { id: DeliveryType; label: string }[] = [
   { id: "normal", label: "Normal" },
@@ -208,7 +207,7 @@ export function RecordCalvingEditor(props: RecordCalvingEditorProps) {
       <div className={cn(contentClassName)}>
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
-            <span className={labelClass}>Date &amp; time</span>
+            <FormLabel variant="default">Date &amp; time</FormLabel>
             <Input
               type="datetime-local"
               value={dateTimeLocal}
@@ -219,7 +218,7 @@ export function RecordCalvingEditor(props: RecordCalvingEditorProps) {
           </label>
 
           <div className="flex flex-col gap-2">
-            <span className={labelClass}>Delivery type</span>
+            <FormLabel variant="default">Delivery type</FormLabel>
             <div className="flex flex-wrap gap-2">
               {DELIVERY_OPTIONS.map((opt) => (
                 <button
@@ -241,7 +240,7 @@ export function RecordCalvingEditor(props: RecordCalvingEditorProps) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className={labelClass}>Calf status</span>
+            <FormLabel variant="default">Calf status</FormLabel>
             <div className="flex flex-wrap gap-2">
               {CALF_OPTIONS.map((opt) => (
                 <button
@@ -263,7 +262,7 @@ export function RecordCalvingEditor(props: RecordCalvingEditorProps) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className={labelClass}>Complications (multi)</span>
+            <FormLabel variant="default">Complications (multi)</FormLabel>
             <div className="flex flex-wrap gap-2">
               {COMPLICATION_OPTIONS.map((opt) => (
                 <button
@@ -285,7 +284,7 @@ export function RecordCalvingEditor(props: RecordCalvingEditorProps) {
           </div>
 
           <label className="flex flex-col gap-1.5">
-            <span className={labelClass}>Notes (optional)</span>
+            <FormLabel variant="default">Notes (optional)</FormLabel>
             <Textarea
               rows={3}
               placeholder="Any additional details..."
@@ -297,7 +296,7 @@ export function RecordCalvingEditor(props: RecordCalvingEditorProps) {
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className={labelClass}>Logged by</span>
+            <FormLabel variant="default">Logged by</FormLabel>
             <Input
               placeholder="Your name"
               value={loggedBy}

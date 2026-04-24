@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
 import { StatusBadge } from "@/components/StatusBadge"
+import { FormLabel } from "@/components/ui/form-label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -699,27 +700,31 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                 {sheetState !== "search" && selectedAnimal && (sheetState === "form" || sheetState === "result") ? (
                   <div className="flex flex-col gap-2">
                     <div className="sticky top-0 z-10 -mx-4 mb-2 border-b border-border bg-card px-4 md:-mx-6 md:px-6">
-                      <div className="grid w-full grid-cols-2 gap-2">
+                      <div className="flex w-full gap-0" role="tablist">
                         <button
                           type="button"
+                          role="tab"
+                          aria-selected={activeTab === "log"}
                           onClick={() => setActiveTab("log")}
                           className={cn(
-                            "flex min-h-12 w-full min-w-0 items-center justify-center border-b-2 px-2 py-2.5 text-base transition-colors -mb-px",
+                            "-mb-px flex min-w-0 flex-1 items-center justify-center border-b-2 px-2.5 py-2 text-base sm:px-4",
                             activeTab === "log"
-                              ? "border-sidebar-accent-foreground font-semibold text-sidebar-accent-foreground"
-                              : "border-transparent font-medium text-muted-foreground hover:text-foreground"
+                              ? "border-action font-medium text-action"
+                              : "border-transparent text-muted-foreground",
                           )}
                         >
                           Log
                         </button>
                         <button
                           type="button"
+                          role="tab"
+                          aria-selected={activeTab === "history"}
                           onClick={() => setActiveTab("history")}
                           className={cn(
-                            "flex min-h-12 w-full min-w-0 items-center justify-center border-b-2 px-2 py-2.5 text-base transition-colors -mb-px",
+                            "-mb-px flex min-w-0 flex-1 items-center justify-center border-b-2 px-2.5 py-2 text-base sm:px-4",
                             activeTab === "history"
-                              ? "border-sidebar-accent-foreground font-semibold text-sidebar-accent-foreground"
-                              : "border-transparent font-medium text-muted-foreground hover:text-foreground"
+                              ? "border-action font-medium text-action"
+                              : "border-transparent text-muted-foreground",
                           )}
                         >
                           <span className="truncate text-center">
@@ -751,7 +756,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
 
                         {selectedAnimal.species === "horse" ? (
                           <div className="flex flex-col gap-1.5">
-                            <span className="text-sm text-muted-foreground">Category</span>
+                            <FormLabel variant="default">Category</FormLabel>
                             <div className="flex flex-wrap gap-2">
                               {HORSE_OBSERVATION_CATEGORIES.map((cat) => (
                                 <button
@@ -776,7 +781,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
 
                         {!(sheetState === "result" && aiResult) ? (
                           <label className="flex flex-col gap-1.5">
-                            <span className="text-sm text-muted-foreground">Observation</span>
+                            <FormLabel variant="default">Observation</FormLabel>
                             <Textarea
                               ref={observationTextareaRef}
                               value={observation}
@@ -793,7 +798,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                         ) : null}
 
                         <label className="flex flex-col gap-1.5">
-                          <span className="text-sm text-muted-foreground">Your name</span>
+                          <FormLabel variant="default">Your name</FormLabel>
                           <Input
                             value={observerName}
                             onChange={(e) => setObserverName(e.target.value)}

@@ -3,7 +3,6 @@ import {
   Menu,
   MoreHorizontal,
   PanelLeft,
-  Plus,
   Settings,
   Sparkles,
   X,
@@ -443,7 +442,6 @@ export function RanchWorkspaceShell({
                 className="hidden md:inline-flex"
                 onClick={openLogObservation}
               >
-                <Plus aria-hidden />
                 Log observation
               </Button>
               <Button

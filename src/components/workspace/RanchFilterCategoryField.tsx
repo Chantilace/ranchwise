@@ -267,7 +267,7 @@ export function RanchFilterCategoryField({
 
   return (
     <div className={cn("flex flex-col gap-1.5", !usePortal && "relative")}>
-      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{sectionLabel}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{sectionLabel}</p>
 
       <div ref={anchorRef} className={cn(!usePortal && "relative")}>
         <div

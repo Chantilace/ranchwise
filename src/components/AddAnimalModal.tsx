@@ -17,20 +17,21 @@ import { Textarea } from "@/components/ui/textarea"
 import { useRanchData } from "@/contexts/RanchDataContext"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { AppMenuSelect } from "@/components/ui/app-menu-select"
+import { FormLabel } from "@/components/ui/form-label"
 import { cn } from "@/lib/utils"
 
-function Label({
+function AddAnimalFieldLabel({
   children,
-  required: req,
+  required,
 }: {
   children: React.ReactNode
   required?: boolean
 }) {
   return (
-    <label className="mb-1.5 block text-sm font-medium text-foreground">
+    <FormLabel variant="default" className="mb-1.5">
       {children}
-      {req ? <span className="text-red-500"> *</span> : null}
-    </label>
+      {required ? " *" : null}
+    </FormLabel>
   )
 }
 
@@ -93,7 +94,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
 
   const pastureSelect = (
     <>
-      <Label>Pasture</Label>
+      <AddAnimalFieldLabel>Pasture</AddAnimalFieldLabel>
       <AppMenuSelect
         value={form.pastureId}
         onValueChange={(v) => patch("pastureId", v)}
@@ -106,7 +107,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
 
   const notesField = (
     <>
-      <Label>Notes</Label>
+      <AddAnimalFieldLabel>Notes</AddAnimalFieldLabel>
       <Textarea
         placeholder="Health notes, lineage, etc."
         className="min-h-[80px]"
@@ -151,7 +152,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
               <div className="flex flex-col gap-4">
                 <div>
-                  <Label required>Tag number</Label>
+                  <AddAnimalFieldLabel required>Tag number</AddAnimalFieldLabel>
                   <Input
                     placeholder="e.g. A-0042"
                     value={form.tagNumber}
@@ -159,11 +160,11 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                   />
                 </div>
                 <div>
-                  <Label>Name</Label>
+                  <AddAnimalFieldLabel>Name</AddAnimalFieldLabel>
                   <Input placeholder="Optional" value={form.name} onChange={(e) => patch("name", e.target.value)} />
                 </div>
                 <div>
-                  <Label required>Breed</Label>
+                  <AddAnimalFieldLabel required>Breed</AddAnimalFieldLabel>
                   <AppMenuSelect
                     value={form.breed}
                     onValueChange={(v) => patch("breed", v)}
@@ -173,7 +174,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                   />
                 </div>
                 <div>
-                  <Label required>Sex</Label>
+                  <AddAnimalFieldLabel required>Sex</AddAnimalFieldLabel>
                   <AppMenuSelect
                     value={form.sex}
                     onValueChange={(v) => patch("sex", v)}
@@ -183,11 +184,11 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                   />
                 </div>
                 <div>
-                  <Label>Date of birth</Label>
+                  <AddAnimalFieldLabel>Date of birth</AddAnimalFieldLabel>
                   <Input type="date" value={form.dateOfBirth} onChange={(e) => patch("dateOfBirth", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Weight (lbs)</Label>
+                  <AddAnimalFieldLabel>Weight (lbs)</AddAnimalFieldLabel>
                   <Input
                     type="number"
                     placeholder="e.g. 1200"
@@ -196,7 +197,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                   />
                 </div>
                 <div>
-                  <Label required>Status</Label>
+                  <AddAnimalFieldLabel required>Status</AddAnimalFieldLabel>
                   <AppMenuSelect
                     value={form.status}
                     onValueChange={(v) => patch("status", v as AddAnimalFormState["status"])}
@@ -213,7 +214,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                 >
                   {form.status === "deceased" ? (
                     <div>
-                      <Label>Date of death</Label>
+                      <AddAnimalFieldLabel>Date of death</AddAnimalFieldLabel>
                       <Input type="date" value={form.dateOfDeath} onChange={(e) => patch("dateOfDeath", e.target.value)} />
                     </div>
                   ) : null}
@@ -228,11 +229,11 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                   {form.status === "sold" ? (
                     <>
                       <div>
-                        <Label>Sale date</Label>
+                        <AddAnimalFieldLabel>Sale date</AddAnimalFieldLabel>
                         <Input type="date" value={form.saleDate} onChange={(e) => patch("saleDate", e.target.value)} />
                       </div>
                       <div>
-                        <Label>Buyer</Label>
+                        <AddAnimalFieldLabel>Buyer</AddAnimalFieldLabel>
                         <Input placeholder="Optional" value={form.buyer} onChange={(e) => patch("buyer", e.target.value)} />
                       </div>
                     </>
@@ -291,7 +292,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
               <div className="mt-1 grid grid-cols-2 gap-x-5 gap-y-4">
                 <div>
-                  <Label required>Tag number</Label>
+                  <AddAnimalFieldLabel required>Tag number</AddAnimalFieldLabel>
                   <Input
                     placeholder="e.g. A-0042"
                     value={form.tagNumber}
@@ -299,11 +300,11 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                   />
                 </div>
                 <div>
-                  <Label>Name</Label>
+                  <AddAnimalFieldLabel>Name</AddAnimalFieldLabel>
                   <Input placeholder="Optional" value={form.name} onChange={(e) => patch("name", e.target.value)} />
                 </div>
                 <div>
-                  <Label required>Breed</Label>
+                  <AddAnimalFieldLabel required>Breed</AddAnimalFieldLabel>
                   <AppMenuSelect
                     value={form.breed}
                     onValueChange={(v) => patch("breed", v)}
@@ -313,7 +314,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                   />
                 </div>
                 <div>
-                  <Label required>Sex</Label>
+                  <AddAnimalFieldLabel required>Sex</AddAnimalFieldLabel>
                   <AppMenuSelect
                     value={form.sex}
                     onValueChange={(v) => patch("sex", v)}
@@ -323,11 +324,11 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                   />
                 </div>
                 <div>
-                  <Label>Date of birth</Label>
+                  <AddAnimalFieldLabel>Date of birth</AddAnimalFieldLabel>
                   <Input type="date" value={form.dateOfBirth} onChange={(e) => patch("dateOfBirth", e.target.value)} />
                 </div>
                 <div>
-                  <Label>Weight (lbs)</Label>
+                  <AddAnimalFieldLabel>Weight (lbs)</AddAnimalFieldLabel>
                   <Input
                     type="number"
                     placeholder="e.g. 1200"
@@ -336,7 +337,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                   />
                 </div>
                 <div>
-                  <Label required>Status</Label>
+                  <AddAnimalFieldLabel required>Status</AddAnimalFieldLabel>
                   <AppMenuSelect
                     value={form.status}
                     onValueChange={(v) => patch("status", v as AddAnimalFormState["status"])}
@@ -354,7 +355,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                 >
                   {form.status === "deceased" ? (
                     <div>
-                      <Label>Date of death</Label>
+                      <AddAnimalFieldLabel>Date of death</AddAnimalFieldLabel>
                       <Input type="date" value={form.dateOfDeath} onChange={(e) => patch("dateOfDeath", e.target.value)} />
                     </div>
                   ) : null}
@@ -369,11 +370,11 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
                   {form.status === "sold" ? (
                     <>
                       <div>
-                        <Label>Sale date</Label>
+                        <AddAnimalFieldLabel>Sale date</AddAnimalFieldLabel>
                         <Input type="date" value={form.saleDate} onChange={(e) => patch("saleDate", e.target.value)} />
                       </div>
                       <div>
-                        <Label>Buyer</Label>
+                        <AddAnimalFieldLabel>Buyer</AddAnimalFieldLabel>
                         <Input placeholder="Optional" value={form.buyer} onChange={(e) => patch("buyer", e.target.value)} />
                       </div>
                     </>

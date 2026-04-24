@@ -1,9 +1,8 @@
+import { useId } from "react"
+import { FormLabel } from "@/components/ui/form-label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-
-const modalLabelClass =
-  "text-xs font-medium tracking-wide text-muted-foreground uppercase"
 
 function allClearPillClass(selected: boolean) {
   return cn(
@@ -54,18 +53,22 @@ export function LogPastureCheckFormFields({
   loggedBy,
   onLoggedByChange,
 }: LogPastureCheckFormFieldsProps) {
+  const pastureSheetFieldId = useId()
+  const sheetNotesId = `${pastureSheetFieldId}-notes`
+  const sheetLoggedById = `${pastureSheetFieldId}-logged-by`
+
   if (variant === "modal") {
     return (
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <span className={modalLabelClass}>All clear</span>
+          <FormLabel variant="default">All clear</FormLabel>
           <AllClearYesNoRow allClear={allClear} onAllClearChange={onAllClearChange} />
         </div>
 
         <label className="flex flex-col gap-1.5">
-          <span className={modalLabelClass}>
+          <FormLabel variant="default">
             Notes {!allClear ? "(required)" : "(optional)"}
-          </span>
+          </FormLabel>
           <Textarea
             rows={4}
             placeholder={`Any observations for ${pastureName}?`}
@@ -76,7 +79,7 @@ export function LogPastureCheckFormFields({
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className={modalLabelClass}>Logged by</span>
+          <FormLabel variant="default">Logged by</FormLabel>
           <Input
             placeholder="Your name"
             value={loggedBy}
@@ -91,22 +94,23 @@ export function LogPastureCheckFormFields({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-foreground">
+        <FormLabel variant="sheet" className="mb-2">
           All clear?
-        </label>
+        </FormLabel>
         <AllClearYesNoRow allClear={allClear} onAllClearChange={onAllClearChange} />
       </div>
 
       <div>
-        <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-foreground">
+        <FormLabel variant="sheet" className="mb-2" htmlFor={sheetNotesId}>
           Notes
           {allClear ? (
             <span className="ml-1 font-normal normal-case tracking-normal text-muted-foreground">
               (optional)
             </span>
           ) : null}
-        </label>
+        </FormLabel>
         <textarea
+          id={sheetNotesId}
           value={notes}
           onChange={(e) => onNotesChange(e.target.value)}
           placeholder={`Any observations for ${pastureName}?`}
@@ -116,10 +120,11 @@ export function LogPastureCheckFormFields({
       </div>
 
       <div>
-        <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-foreground">
+        <FormLabel variant="sheet" className="mb-2" htmlFor={sheetLoggedById}>
           Logged by
-        </label>
+        </FormLabel>
         <input
+          id={sheetLoggedById}
           value={loggedBy}
           onChange={(e) => onLoggedByChange(e.target.value)}
           placeholder="Your name"

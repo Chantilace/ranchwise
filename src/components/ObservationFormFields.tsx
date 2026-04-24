@@ -1,11 +1,10 @@
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { AppMenuSelect } from "@/components/ui/app-menu-select"
+import { FormLabel } from "@/components/ui/form-label"
 import { ALL_OBSERVATION_CATEGORIES, HORSE_OBSERVATION_CATEGORIES } from "@/lib/observationCategories"
 import type { Category } from "@/types/observation"
 import { cn } from "@/lib/utils"
-
-const labelClass = "text-xs font-medium text-muted-foreground"
 
 export type ObservationFormFieldsProps = {
   category: Category
@@ -58,7 +57,7 @@ export function ObservationFormFields({
       )}
     >
       <div className="flex flex-col gap-1.5">
-        <span className={labelClass}>Category</span>
+        <FormLabel variant="default">Category</FormLabel>
         {categoryAsButtons ? (
           <div className="flex flex-wrap gap-2">
             {categories.map((cat) => (
@@ -92,7 +91,9 @@ export function ObservationFormFields({
 
       {hideNotes ? null : (
         <label className="flex flex-col gap-1.5">
-          <span className={labelClass}>{variant === "pills" ? "Notes" : "Observation"}</span>
+          <FormLabel variant="default">
+            {variant === "pills" ? "Notes" : "Observation"}
+          </FormLabel>
           <Textarea
             rows={variant === "pills" ? 4 : 4}
             placeholder={
@@ -113,7 +114,9 @@ export function ObservationFormFields({
       )}
 
       <label className="flex flex-col gap-1.5">
-        <span className={labelClass}>{variant === "pills" ? "Logged by" : "Your name"}</span>
+        <FormLabel variant="default">
+          {variant === "pills" ? "Logged by" : "Your name"}
+        </FormLabel>
         <Input
           placeholder="Your name"
           value={loggedBy}

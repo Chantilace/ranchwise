@@ -30,13 +30,13 @@ export function HomeSmartSuggestionsCard({ suggestions }: HomeSmartSuggestionsCa
     <section className="flex flex-col rounded-lg border border-ai-accent/20 bg-ai-accent-wash p-5">
       <div className="mb-3 flex items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-md border border-ai-accent bg-ai-accent-bg px-2 py-1">
-          <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
+          <Sparkles className="size-5 fill-current text-ai-accent" strokeWidth={1.5} aria-hidden />
           <span className="text-[13px] font-semibold uppercase tracking-[0.05em] text-ai-accent">
             Smart suggestions
           </span>
         </span>
         {active.length > 0 && (
-          <span className="inline-flex items-center rounded-full bg-ai-accent-bg px-2 py-[3px] text-[11px] font-medium text-ai-accent">
+          <span className="inline-flex items-center rounded-full bg-ai-accent px-2 py-[3px] text-[11px] font-medium text-white">
             {active.length} today
           </span>
         )}
