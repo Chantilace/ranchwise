@@ -10,7 +10,7 @@ export function SmartSuggestionsSparkleIcon({
 }) {
   return (
     <svg
-      className={cn("shrink-0 text-ai-accent-text", className)}
+      className={cn("shrink-0 text-ai-accent", className)}
       width={size}
       height={size}
       viewBox="0 0 16 16"
@@ -56,7 +56,7 @@ export function SmartSuggestionsBlock({ suggestions, className }: SmartSuggestio
 
   return (
     <div className={className}>
-      <div className="mb-2 inline-flex items-center gap-1.5 text-ai-accent-text">
+      <div className="mb-2 inline-flex items-center gap-1.5 text-ai-accent">
         <SmartSuggestionsSparkleIcon size={18} />
         <span className="text-xs leading-none font-normal">Smart suggestions</span>
       </div>
@@ -66,7 +66,7 @@ export function SmartSuggestionsBlock({ suggestions, className }: SmartSuggestio
             key={i}
             className="mb-[5px] flex items-start gap-2 text-sm leading-[1.55] text-muted-foreground last:mb-0"
           >
-            <SmartSuggestionBulletIcon className="mt-[3px] h-3 w-3 text-ai-accent-text" />
+            <SmartSuggestionBulletIcon className="mt-[3px] h-3 w-3 text-ai-accent" />
             <span>{text}</span>
           </div>
         ))}

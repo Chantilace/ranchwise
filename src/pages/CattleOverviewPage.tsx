@@ -215,7 +215,7 @@ function PastureCard({
               setAiExpanded((o) => !o)
             }}
           >
-            <Sparkles className="size-5 text-ai-accent-text" strokeWidth={1.5} aria-hidden />
+            <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
           </button>
         ) : null}
       </div>

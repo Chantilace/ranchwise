@@ -275,13 +275,15 @@ export function HorseLogSheet({ horse, onClose }: HorseLogSheetProps) {
                       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground opacity-70">
                         Confirm status
                       </p>
-                      <p className="mt-0.5 text-xs text-ai-accent-text">
-                        ✦ AI assessed:{" "}
-                        {aiResult.riskLevel === "call-vet"
-                          ? "Flag"
-                          : aiResult.riskLevel === "monitor"
-                            ? "Monitor"
-                            : "Good"}
+                      <p className="mt-0.5 text-xs">
+                        <span className="text-ai-accent">✦ AI assessed:</span>{" "}
+                        <span className="text-foreground">
+                          {aiResult.riskLevel === "call-vet"
+                            ? "Flag"
+                            : aiResult.riskLevel === "monitor"
+                              ? "Monitor"
+                              : "Good"}
+                        </span>
                       </p>
                     </div>
                     <div className="flex gap-2">

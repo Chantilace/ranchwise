@@ -847,8 +847,9 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                                 Confirm status
                               </p>
                               <div className="mb-3 flex items-center gap-1.5">
-                                <span className="text-[12px] text-ai-accent-text">
-                                  ✦ AI assessed: {aiAssessedLabel}
+                                <span className="text-[12px]">
+                                  <span className="text-ai-accent">✦ AI assessed:</span>{" "}
+                                  <span className="text-foreground">{aiAssessedLabel}</span>
                                 </span>
                               </div>
                               <div className="flex flex-wrap gap-2">

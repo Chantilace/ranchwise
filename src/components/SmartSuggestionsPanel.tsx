@@ -22,8 +22,8 @@ function SmartSuggestionsLabelRow({ onTint, hero }: { onTint?: boolean; hero?: b
   if (hero) {
     return (
       <div className="mb-3 flex items-center gap-2">
-        <Sparkles className="size-5 text-ai-accent-text" strokeWidth={1.5} aria-hidden />
-        <span className="text-sm font-medium uppercase tracking-[0.08em] text-ai-accent-text">
+        <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
+        <span className="text-sm font-medium uppercase tracking-[0.08em] text-ai-accent">
           Smart suggestions
         </span>
       </div>
@@ -39,8 +39,8 @@ function SmartSuggestionsLabelRow({ onTint, hero }: { onTint?: boolean; hero?: b
             : "border border-ai-accent bg-ai-accent-bg"
         )}
       >
-        <Sparkles className="size-3.5 text-ai-accent-text" strokeWidth={1.5} aria-hidden />
-        <span className="text-xs font-semibold uppercase tracking-wide text-ai-accent-text">Smart suggestions</span>
+        <Sparkles className="size-3.5 text-ai-accent" strokeWidth={1.5} aria-hidden />
+        <span className="text-xs font-semibold uppercase tracking-wide text-ai-accent">Smart suggestions</span>
       </span>
     </div>
   )
@@ -84,7 +84,7 @@ function SingleLineCard({ suggestion }: { suggestion: string }) {
           setExpanded((o) => !o)
         }}
       >
-        <Sparkles className="size-5 text-ai-accent-text" strokeWidth={1.5} aria-hidden />
+        <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
       </button>
     </div>
   )

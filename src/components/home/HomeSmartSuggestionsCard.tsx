@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, Sparkles, X } from "lucide-react"
+import { ArrowRight, Sparkles } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -19,14 +19,12 @@ const MAX_VISIBLE = 3
 
 export function HomeSmartSuggestionsCard({ suggestions }: HomeSmartSuggestionsCardProps) {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
-  const [snoozed, setSnoozed] = useState<Set<string>>(new Set())
 
-  const active = suggestions.filter((s) => !dismissed.has(s.id) && !snoozed.has(s.id))
+  const active = suggestions.filter((s) => !dismissed.has(s.id))
   const visible = active.slice(0, MAX_VISIBLE)
   const overflow = active.length - visible.length
 
   const dismiss = (id: string) => setDismissed((prev) => new Set(prev).add(id))
-  const snooze = (id: string) => setSnoozed((prev) => new Set(prev).add(id))
 
   return (
     <section className="flex flex-col rounded-lg border border-ai-accent/20 bg-ai-accent-wash p-5">
@@ -67,7 +65,7 @@ export function HomeSmartSuggestionsCard({ suggestions }: HomeSmartSuggestionsCa
               >
                 <p className="text-sm font-medium leading-[1.4] text-foreground">{s.title}</p>
                 <p className="text-xs leading-[1.5] text-muted-foreground">{s.reasoning}</p>
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-3">
                   {s.action.href ? (
                     <Link
                       to={s.action.href}
@@ -80,14 +78,13 @@ export function HomeSmartSuggestionsCard({ suggestions }: HomeSmartSuggestionsCa
                       {s.action.label}
                     </Button>
                   )}
-                  <Button type="button" variant="outline" size="sm" onClick={() => snooze(s.id)}>
-                    <Clock aria-hidden />
-                    Snooze
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => dismiss(s.id)}>
-                    <X aria-hidden />
+                  <button
+                    type="button"
+                    onClick={() => dismiss(s.id)}
+                    className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-transparent px-3 py-1.5 text-xs font-medium text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+                  >
                     Dismiss
-                  </Button>
+                  </button>
                 </div>
               </div>
             ))}

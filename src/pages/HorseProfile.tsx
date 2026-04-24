@@ -170,11 +170,11 @@ function HorseProfileHealthSummary({ horse }: { horse: HorseTableRow }) {
       <div className="mb-3">
         <span className="inline-flex items-center gap-1.5 rounded-md border border-ai-accent bg-ai-accent-bg px-2 py-1">
           <Sparkles
-            className="size-3.5 text-ai-accent-text"
+            className="size-3.5 text-ai-accent"
             strokeWidth={1.5}
             aria-hidden
           />
-          <span className="text-xs font-semibold uppercase tracking-wide text-ai-accent-text">
+          <span className="text-xs font-semibold uppercase tracking-wide text-ai-accent">
             Health summary
           </span>
         </span>
@@ -191,11 +191,11 @@ function HorseProfileHealthSummary({ horse }: { horse: HorseTableRow }) {
       <div className="mb-3">
         <span className="inline-flex items-center gap-1.5 rounded-md border border-ai-accent bg-ai-accent-bg px-2 py-1">
           <Sparkles
-            className="size-3.5 text-ai-accent-text"
+            className="size-3.5 text-ai-accent"
             strokeWidth={1.5}
             aria-hidden
           />
-          <span className="text-xs font-semibold uppercase tracking-wide text-ai-accent-text">
+          <span className="text-xs font-semibold uppercase tracking-wide text-ai-accent">
             Health summary
           </span>
         </span>
@@ -668,7 +668,7 @@ export function HorseProfile() {
                             }}
                           >
                             <Sparkles
-                              className="size-5 text-ai-accent-text"
+                              className="size-5 text-ai-accent"
                               strokeWidth={1.5}
                               aria-hidden
                             />

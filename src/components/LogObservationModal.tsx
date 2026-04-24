@@ -252,8 +252,9 @@ export function LogObservationForm({
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground opacity-70">
                   Confirm status
                 </p>
-                <p className="mt-0.5 text-xs text-ai-accent-text">
-                  ✦ AI assessed: {riskLabel(aiResult.riskLevel)}
+                <p className="mt-0.5 text-xs">
+                  <span className="text-ai-accent">✦ AI assessed:</span>{" "}
+                  <span className="text-foreground">{riskLabel(aiResult.riskLevel)}</span>
                 </p>
               </div>
               <div className="flex gap-2">

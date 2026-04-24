@@ -88,7 +88,7 @@ export function ObservationTimeline({ observations, contentClassName }: Observat
                         setAiExpandedIds((prev) => ({ ...prev, [entry.id]: !prev[entry.id] }))
                       }}
                     >
-                      <Sparkles className="size-5 text-ai-accent-text" strokeWidth={1.5} aria-hidden />
+                      <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
                     </button>
                   ) : null}
                 </div>
