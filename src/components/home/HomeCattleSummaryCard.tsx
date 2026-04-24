@@ -1,314 +1,180 @@
-import { ArrowUpRight } from "lucide-react"
+import { AlertCircle, AlertTriangle, ArrowUpRight, Clock, Flag, type LucideIcon } from "lucide-react"
 import { useMemo } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useRanchData } from "@/contexts/RanchDataContext"
-import {
-  daysRemainingInSeason,
-  daysUntilSeasonStart,
-  getCurrentSeason,
-  RANCH_SEASONS,
-} from "@/lib/calendarUtils"
-import { countCattleCareDue, type CattleCareDueKind } from "@/lib/cattleCareDue"
+import { daysRemainingInSeason, getCurrentSeason, RANCH_SEASONS } from "@/lib/calendarUtils"
 import { getCalvingStatus } from "@/lib/calvingStatus"
-import type { RanchSeason } from "@/lib/calendarUtils"
-import { CareDuePill } from "@/components/home/CareDuePill"
 import { cn } from "@/lib/utils"
+import type { Cattle } from "@/types/cattle"
 
 const CALVING_SEASON = RANCH_SEASONS.find((s) => s.id === "calving")!
 
-type Phase = "pre-calving" | "calving" | "branding" | "turnout" | "dry"
-
-function phaseFromSeason(season: RanchSeason): Phase {
-  if (season.id === "calving") return "calving"
-  if (season.id === "branding") return "branding"
-  if (season.id === "turnout") return "turnout"
-  if (season.id === "winter") return "pre-calving"
-  if (season.id === "gathering") return "dry"
-  return "dry"
+type StateCard = {
+  id: string
+  label: string
+  context: string
+  count: number
+  href: string
+  icon: LucideIcon
+  iconBg: string
+  iconColor: string
 }
 
-function pastureLabelShort(name: string): string {
-  const first = name.split(/\s+/)[0] ?? name
-  return first.length <= 9 ? first : `${first.slice(0, 8)}…`
+function describePastureDistribution(
+  animals: Cattle[],
+  pastureNameById: Map<string, string>
+): string {
+  if (animals.length === 0) return "—"
+  const counts = new Map<string, number>()
+  for (const a of animals) {
+    const name = pastureNameById.get(a.pastureId) ?? "Unknown"
+    counts.set(name, (counts.get(name) ?? 0) + 1)
+  }
+  const top = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+  return top.map(([name, n]) => `${n} in ${name.split(/\s+/)[0]}`).join(", ")
 }
 
-type StatRow = { label: string; value: string; warn: boolean; pastureId?: string }
+function countDistinctPastures(
+  animals: Cattle[],
+  pastureNameById: Map<string, string>
+): number {
+  const set = new Set<string>()
+  for (const a of animals) set.add(pastureNameById.get(a.pastureId) ?? a.pastureId)
+  return set.size
+}
 
 export function HomeCattleSummaryCard() {
   const { cattle, pastures } = useRanchData()
-  const navigate = useNavigate()
   const today = new Date()
   const season = getCurrentSeason(today)
-  const phase = phaseFromSeason(season)
+  const isCalvingSeason = season.id === "calving"
+  const daysLeft = isCalvingSeason ? daysRemainingInSeason(CALVING_SEASON, today) : null
 
-  const total = cattle.length
-  const calved = useMemo(
-    () => cattle.filter((c) => getCalvingStatus(c) === "calved").length,
-    [cattle]
-  )
-  const calvingSoon = useMemo(
-    () => cattle.filter((c) => getCalvingStatus(c) === "calving-soon").length,
-    [cattle]
-  )
-  const complications = useMemo(
-    () => cattle.filter((c) => getCalvingStatus(c) === "complications").length,
-    [cattle]
-  )
-  const pregnant = useMemo(
-    () => cattle.filter((c) => getCalvingStatus(c) === "pregnant").length,
-    [cattle]
-  )
-  const flagged = useMemo(() => cattle.filter((c) => c.healthStatus === "Flag").length, [cattle])
-  const onMonitor = useMemo(() => cattle.filter((c) => c.healthStatus === "Monitor").length, [cattle])
+  const pastureNameById = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const p of pastures) m.set(p.id, p.name)
+    return m
+  }, [pastures])
 
-  const onRange = useMemo(
-    () =>
-      cattle.filter((c) => {
-        const p = pastures.find((x) => x.id === c.pastureId)
-        return p && p.type !== "bulls"
-      }).length,
-    [cattle, pastures]
-  )
-
-  const branded = calved
-
-  const pastureCounts = useMemo(() => {
-    return pastures
-      .map((p) => ({
-        id: p.id,
-        label: pastureLabelShort(p.name),
-        n: cattle.filter((c) => c.pastureId === p.id).length,
-      }))
-      .filter((x) => x.n > 0)
-      .sort((a, b) => b.n - a.n)
-  }, [cattle, pastures])
-
-  const { phaseLabel, headerMeta, heroPrimary, heroSecondary, progressPct, stats } = useMemo(() => {
-    if (phase === "calving") {
-      const pct = total > 0 ? Math.min(100, Math.round((calved / total) * 100)) : 0
-      return {
-        phaseLabel: "Calving",
-        headerMeta: `${daysRemainingInSeason(season, today)} days left`,
-        heroPrimary: String(calved),
-        heroSecondary: `/ ${total} calved`,
-        progressPct: pct,
-        stats: [
-          { label: "Calving soon", value: String(calvingSoon), warn: false },
-          { label: "Complications", value: String(complications), warn: complications > 0 },
-          { label: "Flagged", value: String(flagged), warn: flagged > 0 },
-        ] satisfies StatRow[],
-      }
-    }
-    if (phase === "pre-calving") {
-      const daysTo = daysUntilSeasonStart(CALVING_SEASON, today)
-      return {
-        phaseLabel: "Pre-calving",
-        headerMeta: "",
-        heroPrimary: String(daysTo),
-        heroSecondary: " days to calving",
-        progressPct: total > 0 ? Math.min(100, Math.round((pregnant / total) * 100)) : 0,
-        stats: [
-          { label: "Pregnant", value: String(pregnant), warn: false },
-          { label: "Flagged", value: String(flagged), warn: flagged > 0 },
-          { label: "Monitor", value: String(onMonitor), warn: false },
-        ] satisfies StatRow[],
-      }
-    }
-    if (phase === "branding") {
-      const pct = total > 0 ? Math.min(100, Math.round((branded / total) * 100)) : 0
-      return {
-        phaseLabel: "Branding",
-        headerMeta: "",
-        heroPrimary: String(branded),
-        heroSecondary: `/ ${total} branded`,
-        progressPct: pct,
-        stats: [
-          { label: "Pre-sorted", value: "0", warn: false },
-          { label: "Flagged", value: String(flagged), warn: flagged > 0 },
-          { label: "Paperwork", value: "0", warn: false },
-        ] satisfies StatRow[],
-      }
-    }
-    if (phase === "turnout") {
-      const pct = total > 0 ? Math.min(100, Math.round((onRange / total) * 100)) : 0
-      const [a, b] = pastureCounts
-      let turnoutStats: StatRow[]
-      if (a && b) {
-        turnoutStats = [
-          { label: a.label, value: String(a.n), warn: false, pastureId: a.id },
-          { label: b.label, value: String(b.n), warn: false, pastureId: b.id },
-          { label: "Flagged", value: String(flagged), warn: flagged > 0 },
-        ]
-      } else if (a) {
-        turnoutStats = [
-          { label: a.label, value: String(a.n), warn: false, pastureId: a.id },
-          { label: "Monitor", value: String(onMonitor), warn: false },
-          { label: "Flagged", value: String(flagged), warn: flagged > 0 },
-        ]
-      } else {
-        turnoutStats = [
-          { label: "Flagged", value: String(flagged), warn: flagged > 0 },
-          { label: "Monitor", value: String(onMonitor), warn: false },
-          { label: "Calving soon", value: String(calvingSoon), warn: calvingSoon > 0 },
-        ]
-      }
-      return {
-        phaseLabel: "Turnout",
-        headerMeta: "",
-        heroPrimary: String(onRange),
-        heroSecondary: `/ ${total} on range`,
-        progressPct: pct,
-        stats: turnoutStats,
-      }
-    }
-    const herdHealthPct =
-      total > 0 ? Math.min(100, Math.round(((total - flagged) / total) * 100)) : 0
-    return {
-      phaseLabel: "At home",
-      headerMeta: "",
-      heroPrimary: String(total),
-      heroSecondary: " cattle",
-      progressPct: herdHealthPct,
-      stats: [
-        { label: "Flagged", value: String(flagged), warn: flagged > 0 },
-        { label: "Monitor", value: String(onMonitor), warn: false },
-        { label: "Calving soon", value: String(calvingSoon), warn: calvingSoon > 0 },
-      ] satisfies StatRow[],
-    }
-  }, [
-    phase,
-    season,
-    today,
-    total,
-    calved,
-    calvingSoon,
-    complications,
-    pregnant,
-    flagged,
-    onMonitor,
-    onRange,
-    branded,
-    pastureCounts,
-  ])
-
-  const cattleCarePills = useMemo(() => {
-    const defs: { kind: CattleCareDueKind; label: string }[] = [
-      { kind: "vaccination", label: "Vax" },
-      { kind: "deworming", label: "Deworm" },
-      { kind: "pregnancy-check", label: "Preg" },
-      { kind: "branding", label: "Brand" },
-    ]
-    return defs
-      .map((d) => ({ ...d, count: countCattleCareDue(cattle, d.kind) }))
-      .filter((p) => p.count > 0)
+  const { calved, inLabor, calvingSoon, complications, flagged } = useMemo(() => {
+    const calved = cattle.filter((c) => getCalvingStatus(c) === "calved")
+    const inLabor = cattle.filter((c) => getCalvingStatus(c) === "in-labor")
+    const calvingSoon = cattle.filter((c) => getCalvingStatus(c) === "calving-soon")
+    const complications = cattle.filter((c) => getCalvingStatus(c) === "complications")
+    const flagged = cattle.filter((c) => c.healthStatus === "Flag")
+    return { calved, inLabor, calvingSoon, complications, flagged }
   }, [cattle])
 
-  function navigateForStatRow(s: StatRow) {
-    if (s.pastureId) {
-      navigate(`/cattle/${s.pastureId}`)
-      return
-    }
-    if (s.label === "Calving soon") {
-      navigate("/cattle?calvingStatus=calving-soon")
-      return
-    }
-    if (s.label === "Complications") {
-      navigate("/cattle?calvingStatus=complications")
-      return
-    }
-    if (s.label === "Flagged") {
-      navigate("/cattle?healthStatus=flag")
-      return
-    }
-    if (s.label === "Pregnant") {
-      navigate("/cattle?calvingStatus=pregnant")
-      return
-    }
-    if (s.label === "Monitor") {
-      navigate("/cattle?healthStatus=monitor")
-      return
-    }
-    navigate("/cattle")
-  }
+  const total = cattle.length
+  const progressPct = total > 0 ? Math.round((calved.length / total) * 100) : 0
+
+  const stateCards: StateCard[] = [
+    {
+      id: "in-labor",
+      label: "In labor",
+      context: describePastureDistribution(inLabor, pastureNameById),
+      count: inLabor.length,
+      href: "/cattle?calvingStatus=in-labor",
+      icon: AlertTriangle,
+      iconBg: "bg-status-flag-bg",
+      iconColor: "text-status-flag-text",
+    },
+    {
+      id: "calving-soon",
+      label: "Calving soon",
+      context: "Within 14 days",
+      count: calvingSoon.length,
+      href: "/cattle?calvingStatus=calving-soon",
+      icon: Clock,
+      iconBg: "bg-status-monitor-bg",
+      iconColor: "text-status-monitor-text",
+    },
+    {
+      id: "complications",
+      label: "Complications",
+      // TODO: replace with real trend once historical data is wired.
+      context: "Up 3 from last week",
+      count: complications.length,
+      href: "/cattle?calvingStatus=complications",
+      icon: AlertCircle,
+      iconBg: "bg-status-flag-bg",
+      iconColor: "text-status-flag-text",
+    },
+    {
+      id: "flagged",
+      label: "Flagged",
+      context: `Across ${countDistinctPastures(flagged, pastureNameById)} pastures`,
+      count: flagged.length,
+      href: "/cattle?healthStatus=flag",
+      icon: Flag,
+      iconBg: "bg-status-flag-bg",
+      iconColor: "text-status-flag-text",
+    },
+  ]
+
+  const visibleStateCards = stateCards.filter((c) => c.count > 0)
 
   return (
-    <div className="shadow-card-strong flex h-full min-h-[240px] min-w-0 w-full flex-col rounded-xl border-[0.5px] border-border bg-card px-[18px] py-4 text-left">
-      <Link
-        to="/cattle"
-        className="group block rounded-lg outline-none transition-colors duration-[120ms] focus-visible:ring-2 focus-visible:ring-ring/40"
-        aria-label="Open cattle overview"
-      >
-        <div className="mb-[14px] flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="text-[16px] font-medium text-foreground">Cattle</span>
-            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
-              {phaseLabel}
+    <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h3 className="text-lg font-medium leading-none text-foreground">Cattle</h3>
+          {isCalvingSeason && daysLeft !== null && (
+            <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-foreground">
+              Calving · {daysLeft} {daysLeft === 1 ? "day" : "days"} left
             </span>
-          </div>
+          )}
+        </div>
+        <Link
+          to="/cattle"
+          aria-label="Open cattle overview"
+          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <ArrowUpRight className="size-4" />
+        </Link>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <p className="flex items-baseline gap-1">
+          <span className="text-2xl font-medium leading-none tabular-nums text-foreground">
+            {calved.length}
+          </span>
+          <span className="text-[13px] text-muted-foreground"> / {total} calved</span>
+        </p>
+        <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-muted transition-colors duration-[120ms] group-hover:bg-muted-deeper"
+            className="h-full rounded-full bg-action transition-[width] duration-300"
+            style={{ width: `${progressPct}%` }}
             aria-hidden
-          >
-            <ArrowUpRight className="h-[13px] w-[13px] text-foreground" strokeWidth={2} />
-          </div>
+          />
         </div>
+      </div>
 
-        <div className="mb-1.5 flex items-end justify-between gap-2">
-          <div className="flex min-w-0 items-end gap-1">
-            <span className="text-[26px] font-medium tracking-tight text-foreground">{heroPrimary}</span>
-            <span className="shrink-0 pb-1 text-[13px] text-muted-foreground">{heroSecondary}</span>
-          </div>
-          {headerMeta ? (
-            <span className="shrink-0 pb-1 text-right text-xs leading-snug text-muted-foreground">
-              {headerMeta}
-            </span>
-          ) : null}
-        </div>
-        <div className="mb-[14px] h-[5px] rounded-[3px] bg-muted">
-          <div className="h-full rounded-[3px] bg-action" style={{ width: `${progressPct}%` }} />
-        </div>
-      </Link>
-
-      <div className="mt-auto flex min-w-0 flex-col">
-        <div className="mb-4 flex min-w-0 flex-col gap-1.5">
-          {stats.map((s, i) => (
-            <button
-              key={`${i}-${s.label}`}
-              type="button"
-              onClick={() => navigateForStatRow(s)}
-              className="flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-lg border-[0.5px] border-border px-3 py-2 text-left transition-colors duration-[120ms] hover:border-[var(--border-strong)] hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/40"
+      {visibleStateCards.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {visibleStateCards.map((card) => (
+            <Link
+              key={card.id}
+              to={card.href}
+              className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted"
             >
-              <p className="min-w-0 shrink text-xs text-muted-foreground">{s.label}</p>
-              <p
-                className={cn(
-                  "shrink-0 text-right text-base font-medium tabular-nums",
-                  s.warn ? "text-status-flag-text" : "text-foreground"
-                )}
-              >
-                {s.value}
-              </p>
-            </button>
+              <div className={cn("flex size-7 shrink-0 items-center justify-center rounded-md", card.iconBg)}>
+                <card.icon className={cn("size-4", card.iconColor)} aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium leading-tight text-foreground">{card.label}</p>
+                <p className="text-[11px] leading-tight text-muted-foreground">{card.context}</p>
+              </div>
+              <span className="shrink-0 text-[22px] font-medium tabular-nums text-foreground">
+                {card.count}
+              </span>
+              <ArrowUpRight className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+            </Link>
           ))}
         </div>
-
-        {cattleCarePills.length > 0 ? (
-          <div className="pt-[14px]">
-            <p className="mb-2 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
-              Care due
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {cattleCarePills.map((p) => (
-                <CareDuePill
-                  key={p.kind}
-                  label={p.label}
-                  count={p.count}
-                  onClick={() => navigate(`/cattle?careDue=${encodeURIComponent(p.kind)}`)}
-                />
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </div>
-    </div>
+      )}
+    </section>
   )
 }

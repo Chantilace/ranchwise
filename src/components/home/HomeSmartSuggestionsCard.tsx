@@ -1,52 +1,109 @@
-import { Sparkles } from "lucide-react"
-
+import { ArrowRight, Clock, Sparkles, X } from "lucide-react"
+import { useState } from "react"
+import { Link } from "react-router-dom"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-const MAX_HOME_SUGGESTIONS = 3
+export interface SmartSuggestion {
+  id: string
+  title: string
+  reasoning: string
+  action: { label: string; href?: string; onClick?: () => void }
+}
 
-export function HomeSmartSuggestionsCard({
-  suggestions,
-  className,
-}: {
-  suggestions: readonly string[]
-  className?: string
-}) {
-  const list = suggestions.slice(0, MAX_HOME_SUGGESTIONS)
-  if (!list.length) return null
+type HomeSmartSuggestionsCardProps = {
+  suggestions: readonly SmartSuggestion[]
+}
+
+const MAX_VISIBLE = 3
+
+export function HomeSmartSuggestionsCard({ suggestions }: HomeSmartSuggestionsCardProps) {
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+  const [snoozed, setSnoozed] = useState<Set<string>>(new Set())
+
+  const active = suggestions.filter((s) => !dismissed.has(s.id) && !snoozed.has(s.id))
+  const visible = active.slice(0, MAX_VISIBLE)
+  const overflow = active.length - visible.length
+
+  const dismiss = (id: string) => setDismissed((prev) => new Set(prev).add(id))
+  const snooze = (id: string) => setSnoozed((prev) => new Set(prev).add(id))
 
   return (
-    <div
-      className={cn(
-        "shadow-ai-smart flex w-full min-w-0 flex-col self-start rounded-xl border-[0.5px] border-[var(--smart-suggestions-card-border)] bg-ai-accent-bg px-[18px] py-4",
-        className
-      )}
-    >
-      <div className="mb-3 flex items-center gap-2">
-        <Sparkles className="size-5 shrink-0 text-ai-accent-text" strokeWidth={1.7} aria-hidden />
-        <span className="text-xs font-medium uppercase tracking-[0.08em] text-ai-accent-text">
-          Smart suggestions
+    <section className="flex flex-col rounded-lg border border-ai-accent/20 bg-ai-accent-wash p-5">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-ai-accent bg-ai-accent-bg px-2 py-1">
+          <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
+          <span className="text-[13px] font-semibold uppercase tracking-[0.05em] text-ai-accent">
+            Smart suggestions
+          </span>
         </span>
-      </div>
-      <ul
-        className={cn(
-          "m-0 list-none p-0",
-          "flex flex-col gap-2.5",
-          "md:max-lg:grid md:max-lg:grid-cols-3 md:max-lg:gap-x-4 md:max-lg:gap-y-2"
+        {active.length > 0 && (
+          <span className="inline-flex items-center rounded-full bg-ai-accent-bg px-2 py-[3px] text-[11px] font-medium text-ai-accent">
+            {active.length} today
+          </span>
         )}
-      >
-        {list.map((s, i) => (
-          <li
-            key={`${i}-${s.slice(0, 20)}`}
-            className="relative min-w-0 pl-3 text-xs leading-[1.45] text-foreground"
-          >
-            <span
-              className="absolute left-0 top-[6px] h-1 w-1 rounded-full bg-ai-accent-text"
-              aria-hidden
-            />
-            {s}
-          </li>
-        ))}
-      </ul>
-    </div>
+      </div>
+
+      {active.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-lg bg-muted p-6 text-center">
+          <div className="flex size-8 items-center justify-center rounded-md bg-ai-accent-bg">
+            <Sparkles className="size-4 text-ai-accent" aria-hidden />
+          </div>
+          <p className="text-xs font-medium text-foreground">You're all caught up</p>
+          <p className="text-[11px] leading-[1.5] text-muted-foreground">
+            AI is watching your ranch data. New suggestions will appear here.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col">
+            {visible.map((s, idx) => (
+              <div
+                key={s.id}
+                className={cn(
+                  "flex flex-col gap-2 py-3",
+                  idx > 0 && "border-t-[0.5px] border-border"
+                )}
+              >
+                <p className="text-sm font-medium leading-[1.4] text-foreground">{s.title}</p>
+                <p className="text-xs leading-[1.5] text-muted-foreground">{s.reasoning}</p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {s.action.href ? (
+                    <Link
+                      to={s.action.href}
+                      className={buttonVariants({ variant: "primary", size: "sm" })}
+                    >
+                      {s.action.label}
+                    </Link>
+                  ) : (
+                    <Button type="button" variant="primary" size="sm" onClick={s.action.onClick}>
+                      {s.action.label}
+                    </Button>
+                  )}
+                  <Button type="button" variant="outline" size="sm" onClick={() => snooze(s.id)}>
+                    <Clock aria-hidden />
+                    Snooze
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => dismiss(s.id)}>
+                    <X aria-hidden />
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          {overflow > 0 && (
+            <button
+              type="button"
+              // TODO: wire up expand behavior when overflow is non-zero.
+              className="mt-2 inline-flex items-center gap-1 self-start text-[12px] font-medium text-action hover:underline"
+            >
+              View {overflow} more {overflow === 1 ? "suggestion" : "suggestions"}
+              <ArrowRight className="size-3" aria-hidden />
+            </button>
+          )}
+        </>
+      )}
+    </section>
   )
 }

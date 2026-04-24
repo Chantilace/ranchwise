@@ -3,6 +3,7 @@ import {
   Menu,
   MoreHorizontal,
   PanelLeft,
+  Plus,
   Settings,
   Sparkles,
   X,
@@ -25,6 +26,7 @@ import { NavItem } from "@/components/NavItem";
 import { Button } from "@/components/ui/button";
 import { WorkspaceSearchField } from "@/components/WorkspaceSearchField";
 import { useRanchData } from "@/contexts/RanchDataContext";
+import { useLogObservation } from "@/contexts/LogObservationContext";
 import { cn } from "@/lib/utils";
 
 /** Matches home smart-suggestions list length until wired to real data. */
@@ -222,6 +224,7 @@ export function RanchWorkspaceShell({
 }: RanchWorkspaceShellProps) {
   const handleSearchChange = onSearchChange ?? (() => {});
   const { sidebarOpen, setSidebarOpen, cattle, herdRows } = useRanchData();
+  const { open: openLogObservation } = useLogObservation();
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
@@ -322,27 +325,27 @@ export function RanchWorkspaceShell({
               <div className="min-h-0 flex-1" aria-hidden />
 
               {sidebarOpen ? (
-                <div className="mx-1 mb-1 flex items-center gap-2 rounded-2xl bg-[var(--ai-accent-bg)] px-[10px] py-[7px]">
+                <div className="mx-1 mb-1 flex items-center gap-2 rounded-md border border-ai-accent bg-[var(--ai-accent-bg)] px-[10px] py-[7px]">
                   <Sparkles
-                    className="size-[20px] shrink-0 stroke-[var(--ai-accent-text)] text-[var(--ai-accent-text)]"
+                    className="size-[20px] shrink-0 stroke-[var(--ai-accent)] text-[var(--ai-accent)]"
                     strokeWidth={1.5}
                     aria-hidden
                   />
-                  <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--ai-accent-text)]">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--ai-accent)]">
                     Smart suggestions
                   </span>
-                  <span className="ml-auto rounded-full bg-[var(--ai-accent-text)] px-[5px] py-[1px] text-[10px] font-medium text-white">
+                  <span className="ml-auto rounded-full bg-[var(--ai-accent)] px-[5px] py-[1px] text-[10px] font-medium text-white">
                     {SMART_SUGGESTIONS_SIDEBAR_COUNT}
                   </span>
                 </div>
               ) : (
                 <div
-                  className="mx-1 mb-1 flex h-9 min-h-9 shrink-0 items-center justify-center rounded-2xl bg-[var(--ai-accent-bg)] px-2 py-1"
+                  className="mx-1 mb-1 flex h-9 min-h-9 shrink-0 items-center justify-center rounded-md border border-ai-accent bg-[var(--ai-accent-bg)] px-2 py-1"
                   title={`Smart suggestions (${SMART_SUGGESTIONS_SIDEBAR_COUNT})`}
                   role="status"
                   aria-label={`${SMART_SUGGESTIONS_SIDEBAR_COUNT} smart suggestions`}
                 >
-                  <span className="rounded-full bg-[var(--ai-accent-text)] px-[5px] py-[1px] text-[10px] font-medium text-white">
+                  <span className="rounded-full bg-[var(--ai-accent)] px-[5px] py-[1px] text-[10px] font-medium text-white">
                     {SMART_SUGGESTIONS_SIDEBAR_COUNT}
                   </span>
                 </div>
@@ -433,6 +436,16 @@ export function RanchWorkspaceShell({
                   ariaLabel={searchAriaLabel}
                 />
               ) : null}
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                className="hidden md:inline-flex"
+                onClick={openLogObservation}
+              >
+                <Plus aria-hidden />
+                Log observation
+              </Button>
               <Button
                 type="button"
                 variant="icon"
