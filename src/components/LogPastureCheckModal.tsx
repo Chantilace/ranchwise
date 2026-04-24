@@ -1,5 +1,5 @@
 import { Dialog } from "@base-ui/react/dialog"
-import { Sparkles, X } from "lucide-react"
+import { X } from "lucide-react"
 import { useState } from "react"
 import { LogPastureCheckFormFields } from "@/components/LogPastureCheckFormFields"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -71,11 +71,10 @@ function LogPastureCheckModalInner({ pastureName, onClose, onSave }: InnerProps)
         <Button
           type="button"
           variant="default"
-          className="h-9 min-h-9 gap-2 px-4 py-0 disabled:opacity-60"
+          className="h-9 min-h-9 px-4 py-0 disabled:opacity-60"
           disabled={!canSave}
           onClick={handleSave}
         >
-          <Sparkles className="size-5 text-[var(--ai-mark)]" strokeWidth={1.5} aria-hidden />
           Save pasture check
         </Button>
       </div>

@@ -54,7 +54,9 @@ function CattleDetailHeader({
       <div className="shrink-0 border-b border-border px-4 pb-3 pt-4">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           <span className="min-w-0" aria-hidden />
-          <p className="text-center text-base font-medium text-foreground">Log observation</p>
+          <p className="text-center text-base font-medium text-foreground">
+            {cattle.displayName?.trim() || "Cattle detail"}
+          </p>
           <div className="flex justify-end">
             <Button
               type="button"

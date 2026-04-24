@@ -81,11 +81,11 @@ export function LogPastureCheckSheet({ pastureName, onClose, onSave }: LogPastur
             />
           </div>
 
-          <div className="flex shrink-0 gap-2 border-t border-border px-4 py-3">
+          <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-border px-4 py-3">
             <Button
               type="button"
               variant="tertiary"
-              className="min-w-0 flex-1"
+              className="h-9 min-h-9 px-4 py-0"
               onClick={onClose}
               disabled={isSaving}
             >
@@ -93,12 +93,12 @@ export function LogPastureCheckSheet({ pastureName, onClose, onSave }: LogPastur
             </Button>
             <Button
               type="button"
-              variant="primary"
-              className="min-w-0 flex-[2]"
+              variant="default"
+              className="h-9 min-h-9 px-4 py-0 disabled:opacity-60"
               onClick={() => void handleSave()}
-              disabled={isSaving || !loggedBy.trim() || (!allClear && !notes.trim())}
+              disabled={!canSave || isSaving}
             >
-              {isSaving ? "Saving..." : "Save check"}
+              {isSaving ? "Saving..." : "Save pasture check"}
             </Button>
           </div>
         </Drawer.Content>
