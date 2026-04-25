@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp, Sparkles } from "lucide-react"
-import { useId, useMemo, useState } from "react"
+import { useId, useState } from "react"
 import { AiSparkleDisclosureButton } from "@/components/ui/ai-sparkle-disclosure-button"
 import { cn } from "@/lib/utils"
 
@@ -67,22 +67,28 @@ function SingleLineCard({ suggestion }: { suggestion: string }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="flex items-center justify-between gap-2">
-      <div className={cn("min-w-0 flex-1 text-sm text-foreground", !expanded && "")}>
-        {expanded ? (
-          <p className="leading-relaxed">{suggestion}</p>
-        ) : (
+    <div>
+      <div className="flex items-center justify-between gap-2">
+        <div className={cn("min-w-0 flex-1 text-sm text-foreground")}>
           <p className="truncate">{suggestion}</p>
-        )}
+        </div>
+        <AiSparkleDisclosureButton
+          ariaLabel={expanded ? "Hide AI suggestion" : "Show AI suggestion"}
+          expanded={expanded}
+          onClick={(e) => {
+            e.stopPropagation()
+            setExpanded((o) => !o)
+          }}
+        />
       </div>
-      <AiSparkleDisclosureButton
-        ariaLabel={expanded ? "Hide AI suggestion" : "Show AI suggestion"}
-        expanded={expanded}
-        onClick={(e) => {
-          e.stopPropagation()
-          setExpanded((o) => !o)
-        }}
-      />
+      <div
+        className={cn(
+          "overflow-hidden transition-all duration-300 ease-out",
+          expanded ? "mt-3 max-h-[500px] opacity-100" : "mt-0 max-h-0 opacity-0"
+        )}
+      >
+        <p className="text-sm leading-relaxed text-foreground">{suggestion}</p>
+      </div>
     </div>
   )
 }
@@ -108,10 +114,8 @@ export function SmartSuggestionsPanel({
   if (!suggestions.length) return null
 
   const firstSuggestion = suggestions[0] ?? ""
-  const collapsedSuggestion = useMemo(() => {
-    if (suggestions.length <= 1) return firstSuggestion
-    return `${firstSuggestion}…`
-  }, [firstSuggestion, suggestions.length])
+  const collapsedSuggestion =
+    suggestions.length <= 1 ? firstSuggestion : `${firstSuggestion}…`
 
   const effectiveVariant: "bullets" | "single-line" = mode === "modal" ? "bullets" : variant
 

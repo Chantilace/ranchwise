@@ -24,7 +24,7 @@ export function AiSparkleDisclosureButton({
     <button
       type="button"
       className={cn(
-        "flex shrink-0 cursor-pointer items-center justify-center rounded p-1 transition-colors",
+        "group flex shrink-0 cursor-pointer items-center justify-center rounded p-1 transition-colors",
         "hover:bg-ai-accent-bg/70",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-accent/40 focus-visible:ring-offset-1",
         expanded && "bg-ai-accent-bg/40",
@@ -34,7 +34,11 @@ export function AiSparkleDisclosureButton({
       aria-expanded={expanded}
       onClick={onClick}
     >
-      <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
+      <Sparkles
+        className="size-5 text-ai-accent transition-transform duration-200 group-hover:scale-110"
+        strokeWidth={1.5}
+        aria-hidden
+      />
     </button>
   )
 }

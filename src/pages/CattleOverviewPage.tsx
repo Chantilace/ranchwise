@@ -217,14 +217,19 @@ function PastureCard({
       </div>
 
       {/* 3. AI suggestion expanded block */}
-      {aiExpanded && pastureAiSuggestion ? (
+      {pastureAiSuggestion ? (
         <div
-          className="mt-2 rounded-lg bg-muted px-3 py-2 text-xs leading-relaxed text-foreground"
+          className={cn(
+            "overflow-hidden transition-all duration-300 ease-out",
+            aiExpanded ? "mt-3 max-h-[500px] opacity-100" : "mt-0 max-h-0 opacity-0"
+          )}
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
           role="presentation"
         >
-          {pastureAiSuggestion}
+          <div className="rounded-lg bg-muted px-3 py-2 text-xs leading-relaxed text-foreground">
+            {pastureAiSuggestion}
+          </div>
         </div>
       ) : null}
     </div>

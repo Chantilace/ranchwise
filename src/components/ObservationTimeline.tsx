@@ -93,9 +93,16 @@ export function ObservationTimeline({ observations, contentClassName }: Observat
                   ) : null}
                 </div>
                 <p className="text-sm leading-relaxed text-foreground">{entry.notes}</p>
-                {expanded && aiSuggestion ? (
-                  <div className="mt-1.5 rounded-lg bg-muted px-3 py-2 text-sm leading-relaxed text-foreground">
-                    {aiSuggestion}
+                {aiSuggestion ? (
+                  <div
+                    className={cn(
+                      "overflow-hidden transition-all duration-300 ease-out",
+                      expanded ? "mt-3 max-h-[500px] opacity-100" : "mt-0 max-h-0 opacity-0"
+                    )}
+                  >
+                    <div className="rounded-lg bg-muted px-3 py-2 text-sm leading-relaxed text-foreground">
+                      {aiSuggestion}
+                    </div>
                   </div>
                 ) : null}
               </li>

@@ -258,23 +258,16 @@ export function HorseProfile() {
   const [tabsScrolledPast, setTabsScrolledPast] = useState(false);
 
   useEffect(() => {
-    setEditProfileOpen(false);
-  }, [horseId]);
-
-  useEffect(() => {
-    setIsSticky(false);
-    setTabsScrolledPast(false);
-  }, [horseId]);
-
-  useEffect(() => {
-    setObsSort("desc");
-    setObsCategoryFilter("all");
-    setObsStatusFilters(createDefaultObservationStatusFilterSet());
-    setAiExpandedIds({});
-  }, [horseId]);
-
-  useEffect(() => {
-    const t = window.setTimeout(() => setLogSheetOpen(false), 0);
+    const t = window.setTimeout(() => {
+      setEditProfileOpen(false);
+      setIsSticky(false);
+      setTabsScrolledPast(false);
+      setObsSort("desc");
+      setObsCategoryFilter("all");
+      setObsStatusFilters(createDefaultObservationStatusFilterSet());
+      setAiExpandedIds({});
+      setLogSheetOpen(false);
+    }, 0);
     return () => window.clearTimeout(t);
   }, [horseId]);
 
@@ -383,13 +376,11 @@ export function HorseProfile() {
   const profileHorse = horse;
   const profileHorseId = horseId;
 
-  const pastureSelectOptions = useMemo(() => {
+  const pastureSelectOptions = (() => {
     const set = new Set(pastureOptions);
     if (profileHorse.pasture) set.add(profileHorse.pasture);
-    return [...set].sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: "base" }),
-    );
-  }, [pastureOptions, profileHorse.pasture]);
+    return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  })();
 
   function openEditProfile() {
     setNameDraft(profileHorse.name);
@@ -672,9 +663,16 @@ export function HorseProfile() {
                         {entry.notes}
                       </p>
 
-                      {expanded && aiSuggestion ? (
-                        <div className="mt-1.5 rounded-lg bg-muted px-3 py-2 text-xs leading-relaxed text-foreground">
-                          {aiSuggestion}
+                      {aiSuggestion ? (
+                        <div
+                          className={cn(
+                            "overflow-hidden transition-all duration-300 ease-out",
+                            expanded ? "mt-3 max-h-[500px] opacity-100" : "mt-0 max-h-0 opacity-0",
+                          )}
+                        >
+                          <div className="rounded-lg bg-muted px-3 py-2 text-xs leading-relaxed text-foreground">
+                            {aiSuggestion}
+                          </div>
                         </div>
                       ) : null}
                     </div>
