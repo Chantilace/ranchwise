@@ -10,6 +10,7 @@ import { PageTitleStrip } from "@/components/PageTitleStrip"
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell"
 import { Button } from "@/components/ui/button"
 import { WorkspaceFilterButton } from "@/components/WorkspaceFilterButton"
+import { WorkspaceSearchField } from "@/components/WorkspaceSearchField"
 import { HorseFilterPanel } from "@/components/workspace/HorseFilterPanel"
 import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles"
 import { useRanchData } from "@/contexts/RanchDataContext"
@@ -129,8 +130,6 @@ export function HorsesPage() {
     setPastureFilters(createDefaultHorsePastureFilterSet(pastureNamesForFilter))
   }, [pastureNamesForFilter])
 
-  const horseTodoQueryKey = searchParams.toString()
-
   const filteredRows = useMemo(() => {
     let list = filterHorseList(herdRows, {
       searchTrimmed: search,
@@ -186,7 +185,7 @@ export function HorsesPage() {
     farrierDueFromQuery,
     dentalDueFromQuery,
     observationsByHorse,
-    horseTodoQueryKey,
+    searchParams,
   ])
 
   const horseFilterControl = (
@@ -227,20 +226,28 @@ export function HorsesPage() {
     </div>
   )
 
+  const hasAnyHorses = herdRows.length > 0
+  const isUnfiltered =
+    search.trim() === "" &&
+    searchParams.toString() === "" &&
+    statusFilters.size === createDefaultHorseStatusFilterSet().size &&
+    [...statusFilters].every((v) => createDefaultHorseStatusFilterSet().has(v)) &&
+    behaviorStatusFilters.size === createDefaultHorseBehaviorStatusFilterSet().size &&
+    [...behaviorStatusFilters].every((v) => createDefaultHorseBehaviorStatusFilterSet().has(v))
+
   return (
     <>
       <RanchWorkspaceShell
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search"
-        searchAriaLabel="Search horses by name"
+        searchValue=""
+        onSearchChange={() => {}}
+        searchPlaceholder="Search everything (coming soon)"
+        searchAriaLabel="Search everything"
         contentClassName={WORKSPACE_PAGE_SCROLL_CLASS}
       >
         <div className={WORKSPACE_PAGE_CARD_CLASS}>
           <PageTitleStrip
             className="border-b-0 pb-0"
             title="Horses"
-            inlineAfterTitle={<div className="flex shrink-0 items-center">{horseFilterControl}</div>}
             actions={
               <div className="hidden shrink-0 sm:inline-flex">
                 <Button type="button" variant="primary" onClick={() => setAddHorseOpen(true)}>
@@ -249,6 +256,18 @@ export function HorsesPage() {
               </div>
             }
           />
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <WorkspaceSearchField
+              variant="inline"
+              value={search}
+              onChange={setSearch}
+              placeholder="Search horses by name..."
+              ariaLabel="Search horses by name"
+              className="w-full sm:w-[320px] sm:max-w-none"
+            />
+            {horseFilterControl}
+          </div>
           <Button type="button" variant="primary" className="w-full sm:hidden" onClick={() => setAddHorseOpen(true)}>
             Add horse
           </Button>
@@ -259,6 +278,43 @@ export function HorsesPage() {
               if (isMobile) setLogSheetHorse(row)
               else openLogModal(row)
             }}
+            emptyState={
+              filteredRows.length === 0
+                ? isUnfiltered && !hasAnyHorses
+                  ? {
+                      title: "No horses yet",
+                      description: "Add your first horse to get started.",
+                      action: (
+                        <Button type="button" variant="primary" onClick={() => setAddHorseOpen(true)}>
+                          Add horse
+                        </Button>
+                      ),
+                    }
+                  : {
+                      title: "No horses match your filters",
+                      description: "Try adjusting search or filters.",
+                      action: (
+                        <Button
+                          type="button"
+                          variant="tertiary"
+                          onClick={() => {
+                            resetHorseToolbarFilters({
+                              setSearch,
+                              setStatusFilters,
+                              setPastureFilters,
+                              setSexFilters,
+                              pastureNames: pastureNamesForFilter,
+                            })
+                            setBehaviorStatusFilters(createDefaultHorseBehaviorStatusFilterSet())
+                            navigate("/horses")
+                          }}
+                        >
+                          Clear filters
+                        </Button>
+                      ),
+                    }
+                : undefined
+            }
           />
         </div>
       </RanchWorkspaceShell>

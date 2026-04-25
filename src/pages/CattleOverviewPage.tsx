@@ -12,6 +12,7 @@ import { CattleDetailPanel } from "@/components/CattleDetailPanel"
 import { PageTitleStrip } from "@/components/PageTitleStrip"
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell"
 import { WorkspaceFilterButton } from "@/components/WorkspaceFilterButton"
+import { WorkspaceSearchField } from "@/components/WorkspaceSearchField"
 import { CattleFilterPanel } from "@/components/workspace/CattleFilterPanel"
 import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles"
 import { AddAnimalModal } from "@/components/AddAnimalModal"
@@ -271,12 +272,24 @@ export function CattleOverviewPage() {
     </div>
   )
 
+  const hasAnyCattle = cattle.length > 0
+  const defaultCalving = createDefaultCalvingFilterSet()
+  const defaultHealth = new Set<HerdHealthFilterId>(["Flag", "Monitor", "Good"])
+  const isUnfiltered =
+    herdSearch.trim() === "" &&
+    herdBreedFilter === "all" &&
+    herdCareDueKind == null &&
+    herdCalvingFilters.size === defaultCalving.size &&
+    [...herdCalvingFilters].every((v) => defaultCalving.has(v)) &&
+    herdHealthFilters.size === defaultHealth.size &&
+    [...herdHealthFilters].every((v) => defaultHealth.has(v))
+
   return (
     <RanchWorkspaceShell
-      searchValue={herdSearch}
-      onSearchChange={setHerdSearch}
-      searchPlaceholder="Search"
-      searchAriaLabel="Search"
+      searchValue=""
+      onSearchChange={() => {}}
+      searchPlaceholder="Search everything (coming soon)"
+      searchAriaLabel="Search everything"
       contentClassName={WORKSPACE_PAGE_SCROLL_CLASS}
     >
       <div className={WORKSPACE_PAGE_CARD_CLASS}>
@@ -284,11 +297,6 @@ export function CattleOverviewPage() {
           className="border-b-0 pb-0"
           title="Cattle"
           titleClassName="text-xl font-bold tracking-normal text-foreground lg:font-semibold lg:text-foreground"
-          inlineAfterTitle={
-            <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-              {herdFilterControl}
-            </div>
-          }
           actions={
             <div className="hidden shrink-0 sm:flex">
               <Button type="button" variant="primary" className="h-9 min-h-9 px-4" onClick={() => setAddAnimalOpen(true)}>
@@ -297,6 +305,18 @@ export function CattleOverviewPage() {
             </div>
           }
         />
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <WorkspaceSearchField
+            variant="inline"
+            value={herdSearch}
+            onChange={setHerdSearch}
+            placeholder="Search cattle by tag #..."
+            ariaLabel="Search cattle by tag number"
+            className="w-full sm:w-[320px] sm:max-w-none"
+          />
+          {herdFilterControl}
+        </div>
         <Button
           type="button"
           variant="primary"
@@ -320,6 +340,41 @@ export function CattleOverviewPage() {
                 selectedCattleId={slideCattleId}
                 onOpenObservationLog={openCattleSlideToObservationLog}
                 emphasizeObservationColumn={Boolean(selectedSlideCattle)}
+                emptyState={
+                  allHerdRows.length === 0
+                    ? isUnfiltered && !hasAnyCattle
+                      ? {
+                          title: "No cattle yet",
+                          description: "Add your first cattle to get started.",
+                          action: (
+                            <Button type="button" variant="primary" onClick={() => setAddAnimalOpen(true)}>
+                              Add cattle
+                            </Button>
+                          ),
+                        }
+                      : {
+                          title: "No cattle match your filters",
+                          description: "Try adjusting search or filters.",
+                          action: (
+                            <Button
+                              type="button"
+                              variant="tertiary"
+                              onClick={() =>
+                                resetCattleToolbarFilters({
+                                  setSearch: setHerdSearch,
+                                  setCalvingFilters: setHerdCalvingFilters,
+                                  setHealthFilters: setHerdHealthFilters,
+                                  setBreedFilter: setHerdBreedFilter,
+                                  setCareDueKind: setHerdCareDueKind,
+                                })
+                              }
+                            >
+                              Clear filters
+                            </Button>
+                          ),
+                        }
+                    : undefined
+                }
               />
             </div>
             <CattleDetailPanel

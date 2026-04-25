@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- shared cells + helpers live with table */
 import { ArrowDown, ArrowUp, ArrowUpDown, Check, Info } from "lucide-react"
 import type { ReactNode } from "react"
 import { CattleRosterObservationCell } from "@/components/CattleRosterObservationCell"
@@ -133,6 +134,11 @@ export type CattleRosterTableProps = {
   onOpenObservationLog?: (row: Cattle, initialObservation: ObservationEntry | null) => void
   /** Desktop: light tint on scrollable columns so the sticky Observation column reads as the focus (e.g. panel open). */
   emphasizeObservationColumn?: boolean
+  emptyState?: {
+    title: string
+    description: string
+    action?: ReactNode
+  }
 }
 
 export function CattleRosterTable({
@@ -146,7 +152,9 @@ export function CattleRosterTable({
   selectedCattleId = null,
   onOpenObservationLog,
   emphasizeObservationColumn = false,
+  emptyState,
 }: CattleRosterTableProps) {
+  const colSpan = showPastureColumn ? 13 : 12
   return (
     <Table
       className="border-separate border-spacing-0"
@@ -211,6 +219,17 @@ export function CattleRosterTable({
         </TableRow>
       </TableHeader>
       <TableBody>
+        {rows.length === 0 && emptyState ? (
+          <TableRow className="border-neutral-200 hover:bg-transparent">
+            <TableCell colSpan={colSpan} className="h-32 border-b-0 bg-white text-center align-middle">
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-sm font-medium text-foreground">{emptyState.title}</p>
+                <p className="text-sm text-muted-foreground">{emptyState.description}</p>
+                {emptyState.action ? emptyState.action : null}
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : null}
         {rows.map((row) => {
           const selected = selectedCattleId === row.id
           const cellBg = cn(

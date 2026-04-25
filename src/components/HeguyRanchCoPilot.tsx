@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- exports constants + helpers used across app */
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
@@ -1841,6 +1842,7 @@ function HorseRosterAvatar({ name, photoUrl }: { name: string; photoUrl?: string
   const showImg = Boolean(trimmed) && !imgFailed
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset derived state on input change
     setImgFailed(false)
   }, [trimmed])
 
@@ -2035,6 +2037,11 @@ type HeguyRanchCoPilotProps = {
   onHorseRowNavigate?: (row: HorseTableRow) => void
   onHorseLog?: (row: HorseTableRow) => void
   filterSlot?: ReactNode
+  emptyState?: {
+    title: string
+    description: string
+    action?: ReactNode
+  }
 }
 
 export function HeguyRanchCoPilot({
@@ -2042,6 +2049,7 @@ export function HeguyRanchCoPilot({
   onHorseRowNavigate,
   onHorseLog,
   filterSlot,
+  emptyState,
 }: HeguyRanchCoPilotProps) {
   const [sortKey, setSortKey] = useState<HorseSortKey>("name")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
@@ -2182,6 +2190,17 @@ export function HeguyRanchCoPilot({
                 </TableRow>
             </TableHeader>
             <TableBody className="[&_tr:last-child_td]:border-b-0 [&_tr:last-child]:!border-b-0">
+              {sortedHorseRows.length === 0 && emptyState ? (
+                <TableRow className="border-neutral-200 hover:bg-transparent">
+                  <TableCell colSpan={12} className="h-32 border-b-0 bg-white text-center align-middle">
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{emptyState.title}</p>
+                      <p className="text-sm text-muted-foreground">{emptyState.description}</p>
+                      {emptyState.action ? emptyState.action : null}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : null}
               {sortedHorseRows.map((row) => (
                 <TableRow
                   key={row.id ?? row.name}

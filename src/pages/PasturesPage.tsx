@@ -1,10 +1,11 @@
 import { Dialog } from "@base-ui/react/dialog"
 import { ArrowDown, ArrowUp, ArrowUpDown, X } from "lucide-react"
 import { useMemo, useState } from "react"
-import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { PageTitleStrip } from "@/components/PageTitleStrip"
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell"
 import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
+import { WorkspaceSearchField } from "@/components/WorkspaceSearchField"
 import { AiSparkleDisclosureButton } from "@/components/ui/ai-sparkle-disclosure-button"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -96,7 +97,9 @@ function pastureAiSuggestion(p: Pasture, cattle: Cattle[]): string | null {
 }
 
 export function PasturesPage() {
+  const navigate = useNavigate()
   const { pastures, cattle, observationsByCattleId, openPastureCheckModal } = useRanchData()
+  const [search, setSearch] = useState("")
 
   const [sortKey, setSortKey] = useState<SortKey>("lastCheck")
   const [sortDir, setSortDir] = useState<SortDir>("asc") // oldest first
@@ -105,7 +108,10 @@ export function PasturesPage() {
   const [aiPastureId, setAiPastureId] = useState<string | null>(null)
 
   const rows = useMemo(() => {
-    const list = [...pastures]
+    const q = search.trim().toLowerCase()
+    const list = q
+      ? pastures.filter((p) => p.name.toLowerCase().includes(q))
+      : [...pastures]
     list.sort((a, b) => {
       if (sortKey === "name") {
         const cmp = a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
@@ -117,7 +123,7 @@ export function PasturesPage() {
       return sortDir === "asc" ? aT - bT : bT - aT
     })
     return list
-  }, [pastures, sortKey, sortDir])
+  }, [pastures, search, sortKey, sortDir])
 
   const selectedPasture = useMemo(() => {
     if (!aiPastureId) return null
@@ -147,8 +153,8 @@ export function PasturesPage() {
     <RanchWorkspaceShell
       searchValue=""
       onSearchChange={() => {}}
-      searchPlaceholder="Search"
-      searchAriaLabel="Search pastures"
+      searchPlaceholder="Search everything (coming soon)"
+      searchAriaLabel="Search everything"
       contentClassName={WORKSPACE_PAGE_SCROLL_CLASS}
     >
       <div className={WORKSPACE_PAGE_CARD_CLASS}>
@@ -159,11 +165,22 @@ export function PasturesPage() {
           actions={addPastureCta}
         />
 
-        {rows.length === 0 ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <WorkspaceSearchField
+            variant="inline"
+            value={search}
+            onChange={setSearch}
+            placeholder="Search pastures..."
+            ariaLabel="Search pastures by name"
+            className="w-full sm:w-[320px] sm:max-w-none"
+          />
+        </div>
+
+        {pastures.length === 0 ? (
           <div className="mt-6 rounded-lg border border-border bg-card p-6">
             <p className="text-sm font-medium text-foreground">No pastures yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Add your first pasture to track checks and surface AI suggestions.
+              Add your first pasture to get started.
             </p>
             <div className="mt-4">{addPastureCta}</div>
           </div>
@@ -230,6 +247,19 @@ export function PasturesPage() {
               </TableHeader>
 
               <TableBody>
+                {rows.length === 0 ? (
+                  <TableRow className="border-neutral-200 hover:bg-transparent">
+                    <TableCell colSpan={4} className="h-32 border-b-0 bg-white text-center align-middle">
+                      <div className="flex flex-col items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">No pastures match your search</p>
+                        <p className="text-sm text-muted-foreground">Try a different search term.</p>
+                        <Button type="button" variant="tertiary" onClick={() => setSearch("")}>
+                          Clear search
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : null}
                 {rows.map((p) => {
                   const hc = countPastureHerdComposition(cattle, p.id)
                   const suggestion = pastureAiSuggestion(p, cattle)
@@ -238,15 +268,14 @@ export function PasturesPage() {
                     "border-b border-neutral-200 bg-white group-hover:bg-muted/50"
 
                   return (
-                    <TableRow key={p.id} className="group cursor-pointer border-neutral-200">
+                    <TableRow
+                      key={p.id}
+                      className="group cursor-pointer border-neutral-200"
+                      onClick={() => navigate(`/pastures/${p.id}`)}
+                    >
                       <TableCell className={`${cellBg} whitespace-normal`}>
-                        <Link
-                          to={`/pastures/${p.id}`}
-                          className="block min-w-0 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
-                        >
-                          <p className="text-sm font-medium text-foreground">{p.name}</p>
-                          <p className="mt-0.5 text-[11px] text-muted-foreground">{stockMeta(hc)}</p>
-                        </Link>
+                        <p className="text-sm font-medium text-foreground">{p.name}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">{stockMeta(hc)}</p>
                       </TableCell>
 
                       <TableCell className={`${cellBg} whitespace-normal`}>
