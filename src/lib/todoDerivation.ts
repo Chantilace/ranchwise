@@ -215,7 +215,7 @@ export function deriveActiveTodos(input: {
       type: "pasture-checks",
       title: "Pasture checks",
       count: overduePastures.length,
-      destination: "/cattle?view=pasture",
+      destination: "/pastures",
       icon: Fence,
       chipVariant: "pasture",
     })

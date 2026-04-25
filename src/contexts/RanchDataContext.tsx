@@ -24,25 +24,9 @@ import { getObservationDomain, observationDomainFromCategory } from "@/lib/obser
 import { buildInitialObservationsMap, formatObservationDate } from "@/lib/initialObservations"
 import { HORSE_OBSERVATION_CATEGORIES } from "@/lib/observationCategories"
 import { buildCalvingObservationNotes } from "@/lib/calvingStatus"
-import type { CalvingRecord, Cattle, CattleGroupBy, Pasture, PastureCheck } from "@/types/cattle"
+import type { CalvingRecord, Cattle, Pasture, PastureCheck } from "@/types/cattle"
 import type { AIResult, Category, ObservationEntry, RiskLevel } from "@/types/observation"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
-
-const CATTLE_GROUP_STORAGE_KEY = "ranchwise_cattle_groupby"
-const CATTLE_GROUP_STORAGE_KEY_LEGACY = "ranchwise_cattle_group_by"
-
-function readCattleGroupBy(): CattleGroupBy {
-  try {
-    let v = localStorage.getItem(CATTLE_GROUP_STORAGE_KEY)
-    if (!v) v = localStorage.getItem(CATTLE_GROUP_STORAGE_KEY_LEGACY)
-    if (v === "pasture" || v === "all") return v
-    if (v === "type") return "all"
-    if (v === "calving") return "pasture"
-    return "all"
-  } catch {
-    return "all"
-  }
-}
 
 function horseStatusFromAiRiskLevel(level: RiskLevel | null): HorseTableRow["healthStatus"] {
   if (level === "call-vet") return "flag"
@@ -130,8 +114,6 @@ type RanchDataContextValue = {
   cattle: Cattle[]
   pastureChecks: PastureCheck[]
   appendPastureCheck: (check: PastureCheck) => void
-  cattleGroupBy: CattleGroupBy
-  setCattleGroupBy: (value: CattleGroupBy | ((prev: CattleGroupBy) => CattleGroupBy)) => void
   observationsByCattleId: Record<string, ObservationEntry[]>
   appendCattleObservation: (cattleId: string, entry: ObservationEntry) => void
   removeCattleObservation: (cattleId: string, observationId: string) => void
@@ -184,21 +166,8 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
   const [observationsByCattleId, setObservationsByCattleId] = useState<
     Record<string, ObservationEntry[]>
   >(buildInitialCattleObservationsMap)
-  const [cattleGroupBy, setCattleGroupByState] = useState<CattleGroupBy>(readCattleGroupBy)
   const [pastureCheckUi, setPastureCheckUi] = useState<PastureCheckUiState | null>(null)
   const [recordCalvingModal, setRecordCalvingModal] = useState<RecordCalvingModalTarget | null>(null)
-
-  const setCattleGroupBy = useCallback((value: CattleGroupBy | ((prev: CattleGroupBy) => CattleGroupBy)) => {
-    setCattleGroupByState((prev) => {
-      const next = typeof value === "function" ? value(prev) : value
-      try {
-        localStorage.setItem(CATTLE_GROUP_STORAGE_KEY, next)
-      } catch {
-        /* ignore */
-      }
-      return next
-    })
-  }, [])
 
   const herdRows = useMemo(
     () =>
@@ -220,11 +189,13 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       return next
     })
     setHorseOverrides((prev) => {
-      const { [horseKey]: _, ...rest } = prev
+      const rest = { ...prev }
+      delete rest[horseKey]
       return rest
     })
     setObservationsByHorse((prev) => {
-      const { [horseKey]: _, ...rest } = prev
+      const rest = { ...prev }
+      delete rest[horseKey]
       return rest
     })
   }, [])
@@ -678,8 +649,6 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       cattle,
       pastureChecks,
       appendPastureCheck,
-      cattleGroupBy,
-      setCattleGroupBy,
       observationsByCattleId,
       appendCattleObservation,
       removeCattleObservation,
@@ -716,8 +685,6 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       cattle,
       pastureChecks,
       appendPastureCheck,
-      cattleGroupBy,
-      setCattleGroupBy,
       observationsByCattleId,
       appendCattleObservation,
       removeCattleObservation,

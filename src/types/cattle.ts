@@ -127,5 +127,3 @@ export interface PastureCheck {
    */
   linkedObservationIds?: string[]
 }
-
-export type CattleGroupBy = "all" | "pasture"

@@ -9,7 +9,7 @@ export function CattleProfileStubPage() {
   return (
     <RanchWorkspaceShell searchValue="" onSearchChange={() => {}}>
       <Link
-        to={fromPastureContext ? `/cattle/${pastureId}` : "/cattle"}
+        to={fromPastureContext ? `/pastures/${pastureId}` : "/cattle"}
         className="inline-flex w-fit items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" aria-hidden />

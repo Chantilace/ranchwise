@@ -1,5 +1,6 @@
 import {
   Bell,
+  Fence,
   Menu,
   MoreHorizontal,
   PanelLeft,
@@ -20,8 +21,8 @@ import {
   type ReactNode,
   type UIEvent,
 } from "react";
-import { HorseshoeMark } from "@/components/icons/HorseshoeMark";
 import { NavItem } from "@/components/NavItem";
+import { RanchWiseMark } from "@/components/RanchWiseMark";
 import { Button } from "@/components/ui/button";
 import { WorkspaceSearchField } from "@/components/WorkspaceSearchField";
 import { useRanchData } from "@/contexts/RanchDataContext";
@@ -30,17 +31,6 @@ import { cn } from "@/lib/utils";
 
 /** Matches home smart-suggestions list length until wired to real data. */
 const SMART_SUGGESTIONS_SIDEBAR_COUNT = 3;
-
-function SidebarHorseshoeMark() {
-  return (
-    <div
-      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px] bg-[var(--sidebar-mark-bg)] p-1.5"
-      aria-hidden
-    >
-      <HorseshoeMark className="size-2.5 scale-y-[-1] text-[var(--sidebar-mark-fg)]" />
-    </div>
-  );
-}
 
 function RanchWiseWordmark({ className }: { className?: string }) {
   return (
@@ -222,7 +212,7 @@ export function RanchWorkspaceShell({
   showHeaderSearch = true,
 }: RanchWorkspaceShellProps) {
   const handleSearchChange = onSearchChange ?? (() => {});
-  const { sidebarOpen, setSidebarOpen, cattle, herdRows } = useRanchData();
+  const { sidebarOpen, setSidebarOpen, cattle, herdRows, pastures } = useRanchData();
   const { open: openLogObservation } = useLogObservation();
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -289,7 +279,11 @@ export function RanchWorkspaceShell({
               )}
               aria-label="RanchWise home"
             >
-              <SidebarHorseshoeMark />
+              <RanchWiseMark
+                size={sidebarOpen ? "md" : "sm"}
+                className="text-white"
+                aria-hidden
+              />
               {sidebarOpen ? <RanchWiseWordmark className="flex-1" /> : null}
             </Link>
 
@@ -318,6 +312,13 @@ export function RanchWorkspaceShell({
                 icon={LiaHorseSolid}
                 label="Horses"
                 count={herdRows.length}
+                sidebarOpen={sidebarOpen}
+              />
+              <NavItem
+                href="/pastures"
+                icon={Fence}
+                label="Pastures"
+                count={pastures.length}
                 sidebarOpen={sidebarOpen}
               />
 
@@ -416,9 +417,11 @@ export function RanchWorkspaceShell({
               className="flex shrink-0 items-center gap-2 rounded-sm no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               aria-label="RanchWise home"
             >
-              <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-[var(--primary-pressed)] lg:hidden">
-                <HorseshoeMark className="h-[13px] w-[13px] text-white" />
-              </span>
+              <RanchWiseMark
+                size="sm"
+                className="shrink-0 text-[var(--primary-pressed)] lg:hidden"
+                aria-hidden
+              />
               <span className="hidden text-base font-semibold tracking-[-0.01em] text-[var(--primary-pressed)] lg:inline">
                 <span>Ranch</span>
                 <span>Wise</span>
@@ -507,7 +510,7 @@ export function RanchWorkspaceShell({
                   className="flex min-w-0 flex-1 items-center gap-2 rounded-lg pr-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring/35"
                   aria-label="RanchWise home"
                 >
-                  <SidebarHorseshoeMark />
+                  <RanchWiseMark size="md" className="text-white" aria-hidden />
                   <RanchWiseWordmark className="flex-1" />
                 </Link>
                 <button
@@ -552,6 +555,14 @@ export function RanchWorkspaceShell({
                   }
                   label="Horses"
                   count={herdRows.length}
+                  onNavigate={dismissMobileNav}
+                />
+                <MobileNavItem
+                  to="/pastures"
+                  theme="dark"
+                  icon={<Fence className="size-5 shrink-0" aria-hidden />}
+                  label="Pastures"
+                  count={pastures.length}
                   onNavigate={dismissMobileNav}
                 />
               </nav>

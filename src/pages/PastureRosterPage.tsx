@@ -298,8 +298,8 @@ export function PastureRosterPage() {
         searchAriaLabel="Search"
       >
         <p className="text-muted-foreground">Pasture not found.</p>
-        <Link className={cn(buttonVariants({ variant: "tertiary" }), "mt-4")} to="/cattle">
-          Back to cattle
+        <Link className={cn(buttonVariants({ variant: "tertiary" }), "mt-4")} to="/pastures">
+          Back to pastures
         </Link>
       </RanchWorkspaceShell>
     )
@@ -316,11 +316,11 @@ export function PastureRosterPage() {
       <div className="flex min-w-0 flex-col gap-4">
         <header className="flex flex-col gap-2">
           <Link
-            to="/cattle"
+            to="/pastures"
             className="inline-flex w-fit items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-4 shrink-0" aria-hidden />
-            Cattle
+            Pastures
           </Link>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-4">
