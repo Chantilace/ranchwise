@@ -130,9 +130,9 @@ export function HomeCattleSummaryCard() {
         <Link
           to="/cattle"
           aria-label="Open cattle overview"
-          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="group inline-flex size-7 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-muted"
         >
-          <ArrowUpRight className="size-4" />
+          <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-all duration-200 group-hover:text-action group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </Link>
       </div>
 
@@ -158,7 +158,7 @@ export function HomeCattleSummaryCard() {
             <Link
               key={card.id}
               to={card.href}
-              className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted"
+              className="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted"
             >
               <div className={cn("flex size-7 shrink-0 items-center justify-center rounded-md", card.iconBg)}>
                 <card.icon className={cn("size-4", card.iconColor)} aria-hidden />
@@ -167,10 +167,10 @@ export function HomeCattleSummaryCard() {
                 <p className="text-sm font-medium leading-tight text-foreground">{card.label}</p>
                 <p className="text-[11px] leading-tight text-muted-foreground">{card.context}</p>
               </div>
-              <span className="shrink-0 text-[22px] font-medium tabular-nums text-foreground">
+              <span className="shrink-0 text-[18px] font-medium tabular-nums text-foreground">
                 {card.count}
               </span>
-              <ArrowUpRight className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+              <ArrowUpRight className="size-3 shrink-0 text-muted-foreground transition-all duration-200 group-hover:text-action group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
             </Link>
           ))}
         </div>

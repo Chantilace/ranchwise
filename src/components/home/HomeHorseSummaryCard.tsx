@@ -61,9 +61,9 @@ export function HomeHorseSummaryCard() {
         <Link
           to="/horses"
           aria-label="Open horses overview"
-          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="group inline-flex size-7 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-muted"
         >
-          <ArrowUpRight className="size-4" />
+          <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-all duration-200 group-hover:text-action group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </Link>
       </div>
 
