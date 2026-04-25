@@ -92,7 +92,7 @@ export function RanchCalendarPage() {
     </RanchWorkspaceShell>
     <Button
       type="button"
-      variant="primary-dark"
+      variant="primary"
       onClick={openLogObservation}
       className="fixed right-6 z-[60] h-auto min-h-0 px-5 py-[10px] text-[13px] font-medium md:hidden"
       style={{

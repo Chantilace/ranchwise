@@ -1,4 +1,3 @@
-import { addDays, differenceInDays, parseISO } from "date-fns"
 import { startTransition, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { AddHorseModal } from "@/components/AddHorseModal"
@@ -23,6 +22,7 @@ import {
   createDefaultHorseSexFilterSet,
   createDefaultHorseStatusFilterSet,
 } from "@/lib/horseFilterReset"
+import { getDentalStatus, getFarrierStatus } from "@/lib/horseCareUtils"
 import { filterHorseList } from "@/lib/horseListFilter"
 import {
   isBehaviorRecheckHorse,
@@ -143,24 +143,12 @@ export function HorsesPage() {
 
     list = list.filter((h) => {
       if (!farrierDueFromQuery && !dentalDueFromQuery) return true
-      const FARRIER_INTERVAL_DAYS = 84
-      const DENTAL_INTERVAL_DAYS = 365
-      const FARRIER_DUE_WINDOW = 30
-      const DENTAL_DUE_WINDOW = 60
-      const isDueSoon = (lastDate: string | null | undefined, interval: number, window: number): boolean => {
-        if (!lastDate) return false
-        try {
-          const next = addDays(parseISO(lastDate), interval)
-          const daysUntil = differenceInDays(next, new Date())
-          return daysUntil <= window
-        } catch {
-          return false
-        }
-      }
-      const farrierDue = isDueSoon(h.lastFarrier ?? h.lastFarrierDate, FARRIER_INTERVAL_DAYS, FARRIER_DUE_WINDOW)
-      const dentalDue = isDueSoon(h.lastDentalDate, DENTAL_INTERVAL_DAYS, DENTAL_DUE_WINDOW)
-      if (farrierDueFromQuery && !farrierDue) return false
-      if (dentalDueFromQuery && !dentalDue) return false
+      const farrier = getFarrierStatus(h.lastFarrier ?? h.lastFarrierDate)
+      const dental = getDentalStatus(h.lastDentalDate)
+      const farrierMatches = farrier.status === "overdue" || farrier.status === "due_soon"
+      const dentalMatches = dental.status === "overdue" || dental.status === "due_soon"
+      if (farrierDueFromQuery && !farrierMatches) return false
+      if (dentalDueFromQuery && !dentalMatches) return false
       return true
     })
 
@@ -255,13 +243,13 @@ export function HorsesPage() {
             inlineAfterTitle={<div className="flex shrink-0 items-center">{horseFilterControl}</div>}
             actions={
               <div className="hidden shrink-0 sm:inline-flex">
-                <Button type="button" variant="primary-dark" onClick={() => setAddHorseOpen(true)}>
+                <Button type="button" variant="primary" onClick={() => setAddHorseOpen(true)}>
                   Add horse
                 </Button>
               </div>
             }
           />
-          <Button type="button" variant="primary-dark" className="w-full sm:hidden" onClick={() => setAddHorseOpen(true)}>
+          <Button type="button" variant="primary" className="w-full sm:hidden" onClick={() => setAddHorseOpen(true)}>
             Add horse
           </Button>
           <HeguyRanchCoPilot

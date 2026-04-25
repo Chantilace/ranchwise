@@ -584,7 +584,7 @@ export function CattleOverviewPage() {
           }
           actions={
             <div className="hidden shrink-0 sm:flex">
-              <Button type="button" variant="primary-dark" className="h-9 min-h-9 px-4" onClick={() => setAddAnimalOpen(true)}>
+              <Button type="button" variant="primary" className="h-9 min-h-9 px-4" onClick={() => setAddAnimalOpen(true)}>
                 Add cattle
               </Button>
             </div>
@@ -592,7 +592,7 @@ export function CattleOverviewPage() {
         />
         <Button
           type="button"
-          variant="primary-dark"
+          variant="primary"
           className="h-9 w-full px-4 sm:hidden"
           onClick={() => setAddAnimalOpen(true)}
         >
