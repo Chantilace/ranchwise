@@ -62,7 +62,7 @@ export function RanchCalendarPage() {
   const weather = { temp: 52, condition: "Partly cloudy", location: "Spring Creek, WY" }
 
   const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) /
+    (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) /
       86400000,
   )
   const currentQuote = RANCH_QUOTES[dayOfYear % RANCH_QUOTES.length]!
@@ -79,12 +79,12 @@ export function RanchCalendarPage() {
       <div className="flex min-w-0 w-full max-w-full flex-col gap-4 px-12">
         <GreetingStrip firstName={firstName} date={today} weather={weather} quote={currentQuote} />
 
-        <div className="flex flex-col gap-[14px] lg:flex-row lg:items-start lg:gap-5">
-          <div className="flex min-w-0 flex-1 flex-col gap-[14px]">
+        <div className="grid grid-cols-1 gap-[14px] lg:grid-cols-[1fr_minmax(380px,_460px)] lg:items-start lg:gap-5">
+          <div className="flex min-w-0 flex-col gap-[14px]">
             <HomeCattleSummaryCard />
             <HomeHorseSummaryCard />
           </div>
-          <aside className="w-full shrink-0 lg:w-[400px]">
+          <aside className="min-w-0 w-full">
             <HomeSmartSuggestionsCard suggestions={HOME_SMART_SUGGESTIONS} />
           </aside>
         </div>

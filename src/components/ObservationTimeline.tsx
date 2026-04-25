@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 import { ObservationCategoryBadge } from "@/components/ObservationCategoryBadge"
 import { AiSparkleDisclosureButton } from "@/components/ui/ai-sparkle-disclosure-button"
@@ -37,11 +37,15 @@ export type ObservationTimelineProps = {
 export function ObservationTimeline({ observations, contentClassName }: ObservationTimelineProps) {
   const [aiExpandedIds, setAiExpandedIds] = useState<Record<string, boolean>>({})
 
-  useEffect(() => {
-    setAiExpandedIds({})
-  }, [observations])
-
   const timeline = useMemo(() => sortObservationsNewestFirst(observations), [observations])
+  const visibleExpandedIds = useMemo(() => {
+    if (timeline.length === 0) return {}
+    const next: Record<string, boolean> = {}
+    for (const entry of timeline) {
+      if (aiExpandedIds[entry.id]) next[entry.id] = true
+    }
+    return next
+  }, [aiExpandedIds, timeline])
   const pad = contentClassName
 
   return (
@@ -62,7 +66,7 @@ export function ObservationTimeline({ observations, contentClassName }: Observat
           {timeline.map((entry) => {
             const level = observationRiskLevel(entry)
             const aiSuggestion = observationAiSuggestionText(entry)
-            const expanded = Boolean(aiExpandedIds[entry.id])
+            const expanded = Boolean(visibleExpandedIds[entry.id])
             return (
               <li key={entry.id} className="rounded-xl border border-border bg-background px-4 py-3 shadow-sm">
                 <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -88,7 +92,7 @@ export function ObservationTimeline({ observations, contentClassName }: Observat
                     />
                   ) : null}
                 </div>
-                <p className="text-sm font-medium leading-relaxed text-foreground">{entry.notes}</p>
+                <p className="text-sm leading-relaxed text-foreground">{entry.notes}</p>
                 {expanded && aiSuggestion ? (
                   <div className="mt-1.5 rounded-lg bg-muted px-3 py-2 text-sm leading-relaxed text-foreground">
                     {aiSuggestion}

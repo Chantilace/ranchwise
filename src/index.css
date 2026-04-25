@@ -164,11 +164,13 @@
   --status-monitor-primary: #E5A221;
   --status-monitor-primary-fg: #FFFFFF;
   --status-monitor-bg: #FAEBC1;
+  --status-monitor-bg-soft: #FCF1D5;
   --status-monitor-text: #8D6108;
 
   --status-flag-primary: #E14A4A;
   --status-flag-primary-fg: #FFFFFF;
   --status-flag-bg: #FADEDE;
+  --status-flag-bg-soft: #FBE0E0;
   --status-flag-text: #9E2428;
 }
 
@@ -288,9 +290,11 @@
   --color-status-monitor-primary: var(--status-monitor-primary);
   --color-status-monitor-primary-fg: var(--status-monitor-primary-fg);
   --color-status-monitor-bg: var(--status-monitor-bg);
+  --color-status-monitor-bg-soft: var(--status-monitor-bg-soft);
   --color-status-monitor-text: var(--status-monitor-text);
   --color-status-flag-primary: var(--status-flag-primary);
   --color-status-flag-primary-fg: var(--status-flag-primary-fg);
   --color-status-flag-bg: var(--status-flag-bg);
+  --color-status-flag-bg-soft: var(--status-flag-bg-soft);
   --color-status-flag-text: var(--status-flag-text);
 }
