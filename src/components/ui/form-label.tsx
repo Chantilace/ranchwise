@@ -4,7 +4,7 @@ import type { HTMLAttributes, ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 // eslint-disable-next-line react-refresh/only-export-components -- variant map (see buttonVariants)
-export const formLabelVariants = cva("block text-xs uppercase", {
+export const formLabelVariants = cva("block text-[13px] uppercase", {
   variants: {
     variant: {
       default: "font-medium tracking-wide text-muted-foreground",

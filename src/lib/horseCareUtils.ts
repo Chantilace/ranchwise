@@ -1,6 +1,11 @@
 import { differenceInDays, parseISO } from "date-fns"
 
-import { horseRowKey, type HorseTableRow } from "@/components/HeguyRanchCoPilot"
+import { horseRowKey, type HorseTableRow } from "@/components/RanchWiseHorseRoster"
+import {
+  getHorseEffectiveLastDentalIso,
+  getHorseEffectiveLastFarrierIso,
+} from "@/lib/horseCareObservationSelectors"
+import type { ObservationEntry } from "@/types/observation"
 
 export const FARRIER_INTERVAL_DAYS = 84
 export const DENTAL_INTERVAL_DAYS = 365
@@ -59,17 +64,42 @@ export function getDentalStatus(
   return careStatusFromLastDate(lastDentalDate, DENTAL_INTERVAL_DAYS, today)
 }
 
+export function getFarrierStatusForHorse(
+  horse: HorseTableRow,
+  today: Date = new Date(),
+  observationsByHorse?: Record<string, ObservationEntry[]>
+): CareStatusResult {
+  const iso =
+    observationsByHorse !== undefined
+      ? getHorseEffectiveLastFarrierIso(horseRowKey(horse), observationsByHorse, horse)
+      : horse.lastFarrierDate?.trim() || horse.lastFarrier?.trim() || null
+  return getFarrierStatus(iso, today)
+}
+
+export function getDentalStatusForHorse(
+  horse: HorseTableRow,
+  today: Date = new Date(),
+  observationsByHorse?: Record<string, ObservationEntry[]>
+): CareStatusResult {
+  const iso =
+    observationsByHorse !== undefined
+      ? getHorseEffectiveLastDentalIso(horseRowKey(horse), observationsByHorse, horse)
+      : horse.lastDentalDate?.trim() || null
+  return getDentalStatus(iso, today)
+}
+
 export function getCareDueSummary(
   horses: HorseTableRow[],
-  today: Date = new Date()
+  today: Date = new Date(),
+  observationsByHorse?: Record<string, ObservationEntry[]>
 ): { farrierHorses: HorseTableRow[]; dentalHorses: HorseTableRow[]; totalUnique: number } {
   const farrierHorses: HorseTableRow[] = []
   const dentalHorses: HorseTableRow[] = []
   const anyKeys = new Set<string>()
 
   for (const h of horses) {
-    const f = getFarrierStatus(h.lastFarrier ?? h.lastFarrierDate, today)
-    const d = getDentalStatus(h.lastDentalDate, today)
+    const f = getFarrierStatusForHorse(h, today, observationsByHorse)
+    const d = getDentalStatusForHorse(h, today, observationsByHorse)
     const farrierQualifies = f.status === "overdue" || f.status === "due_soon"
     const dentalQualifies = d.status === "overdue" || d.status === "due_soon"
     if (farrierQualifies) farrierHorses.push(h)

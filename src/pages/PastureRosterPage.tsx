@@ -1,39 +1,45 @@
-import { format, parseISO } from "date-fns"
-import { AlertCircle, ArrowDownWideNarrow, ArrowLeft, Check } from "lucide-react"
+import { format } from "date-fns"
+import { ArrowDownWideNarrow, ArrowLeft, NotebookPen } from "lucide-react"
 import { useCallback, useMemo, useRef, useState } from "react"
 import { Link, useParams, useSearchParams } from "react-router-dom"
 import { AddAnimalModal } from "@/components/AddAnimalModal"
 import { CattleRosterTable } from "@/components/CattleRosterTable"
 import { CattleDetailPanel } from "@/components/CattleDetailPanel"
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell"
-import { SegmentedControl } from "@/components/SegmentedControl"
+import { Tabs, type TabItem } from "@/components/ui/tabs"
 import { WorkspaceFilterButton, WorkspaceMenuTrigger } from "@/components/WorkspaceFilterButton"
-import { WorkspaceSearchField } from "@/components/WorkspaceSearchField"
+import { SearchField } from "@/components/ui/search-field"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { CattleFilterPanel } from "@/components/workspace/CattleFilterPanel"
 import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles"
-import {
-  PastureCheckFilterPanel,
-  type PastureCheckStatusFilter,
-} from "@/components/workspace/PastureCheckFilterPanel"
+import { EntityFilterPanel, type EntityFilterDimension } from "@/components/workspace/EntityFilterPanel"
+import { EntityFilterToolbar } from "@/components/workspace/EntityFilterToolbar"
 import { PastureCheckSortPanel } from "@/components/workspace/PastureCheckSortPanel"
 import { useRanchData } from "@/contexts/RanchDataContext"
 import { resetCattleToolbarFilters } from "@/lib/cattleFilterReset"
-import { pastureSignalBadgeFill } from "@/lib/statusTagTokens"
+import { CATEGORY_METADATA_BADGE_CLASS } from "@/lib/categoryBadgeClass"
+import { PASTURE_CHECK_CATEGORY_LABELS } from "@/lib/pastureCheckTypes"
 import { createDefaultCalvingFilterSet, type EffectiveCalvingStatus } from "@/lib/calvingStatus"
-import { filterCattleList, sortCattleList, type CattleSortKey } from "@/lib/cattleRosterQuery"
+import { filterCattleList, sortCattleList } from "@/lib/cattleRosterQuery"
 import type { Breed, Cattle } from "@/types/cattle"
 import type { ObservationEntry } from "@/types/observation"
 import { useCloseOnOutsidePointerDown } from "@/hooks/useCloseOnOutsidePointerDown"
+import { StatusBadge } from "@/components/StatusBadge"
+import { WORKSPACE_PAGE_ROSTER_FILL_CLASS } from "@/lib/workspacePageCard"
 import { cn } from "@/lib/utils"
 
 type PastureRosterTab = "animals" | "checks"
+
+const PASTURE_CHECK_OUTCOME_OPTIONS = [
+  { id: "stable", label: "Stable" },
+  { id: "attention", label: "Needs attention" },
+] as const
 
 function PastureChecksPanel({ pastureId }: { pastureId: string }) {
   const { pastureChecks } = useRanchData()
   const [checksFilterOpen, setChecksFilterOpen] = useState(false)
   const [checkSearch, setCheckSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState<PastureCheckStatusFilter>("all")
+  const [outcomeFilters, setOutcomeFilters] = useState<Set<string>>(() => new Set())
   const [dateSortDir, setDateSortDir] = useState<"desc" | "asc">("desc")
   const [sortOpen, setSortOpen] = useState(false)
   const checksFilterRef = useRef<HTMLDivElement>(null)
@@ -56,64 +62,102 @@ function PastureChecksPanel({ pastureId }: { pastureId: string }) {
     [pastureChecks, pastureId]
   )
 
+  const checkOutcomeActiveCount = useMemo(() => {
+    return outcomeFilters.size > 0 && outcomeFilters.size < PASTURE_CHECK_OUTCOME_OPTIONS.length
+      ? outcomeFilters.size
+      : 0
+  }, [outcomeFilters])
+
+  const checkOutcomeDimensions = useMemo((): EntityFilterDimension[] => {
+    return [
+      {
+        kind: "multi",
+        id: "outcome",
+        label: "Check outcome",
+        options: [...PASTURE_CHECK_OUTCOME_OPTIONS],
+        selectedIds: outcomeFilters,
+        allSelectedLabel: "All",
+        placeholder: "All",
+        "aria-label": "Pasture check outcome filters",
+      },
+    ]
+  }, [outcomeFilters])
+
+  const onCheckOutcomeMultiChange = useCallback((_id: string, next: Set<string>) => {
+    setOutcomeFilters(next)
+  }, [])
+
+  const onCheckOutcomeRadioChange = useCallback(() => {}, [])
+
+  const clearCheckOutcomeFilters = useCallback(() => {
+    setOutcomeFilters(new Set())
+  }, [])
+
   const entries = useMemo(() => {
     let list = checksForPasture.slice()
-    if (statusFilter === "clear") list = list.filter((c) => c.allClear)
-    if (statusFilter === "attention") list = list.filter((c) => !c.allClear)
+    if (outcomeFilters.size > 0 && outcomeFilters.size < PASTURE_CHECK_OUTCOME_OPTIONS.length) {
+      if (outcomeFilters.has("stable")) {
+        list = list.filter((c) => c.status === "stable")
+      } else {
+        list = list.filter((c) => c.status === "concern" || c.status === "action_needed")
+      }
+    }
     const q = checkSearch.trim().toLowerCase()
     if (q) {
       list = list.filter((c) => {
-        const by = (c.loggedBy ?? "").toLowerCase()
-        const notes = (c.notes ?? "").toLowerCase()
-        return by.includes(q) || notes.includes(q)
+        const by = (c.author ?? "").toLowerCase()
+        const body = (c.body ?? "").toLowerCase()
+        return by.includes(q) || body.includes(q)
       })
     }
     list.sort((a, b) => {
-      const ta = parseISO(a.date).getTime()
-      const tb = parseISO(b.date).getTime()
+      const ta = a.date
+      const tb = b.date
       return dateSortDir === "desc" ? tb - ta : ta - tb
     })
     return list
-  }, [checksForPasture, statusFilter, checkSearch, dateSortDir])
+  }, [checksForPasture, outcomeFilters, checkSearch, dateSortDir])
 
   if (checksForPasture.length === 0) {
     return (
-      <div className="py-10 text-center text-sm text-muted-foreground">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center py-10 text-center text-sm text-muted-foreground">
         No pasture checks logged yet.
         <br />
-        <span className="text-xs">Use &quot;Log pasture check&quot; to record your first check.</span>
+        <span className="text-[13px]">Use &quot;Log pasture check&quot; to record your first check.</span>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2.5 py-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+      <div className="flex shrink-0 flex-wrap items-center gap-2.5 py-2">
         <div className="relative shrink-0" ref={checksFilterRef}>
-          <WorkspaceFilterButton
-            type="button"
-            aria-expanded={checksFilterOpen}
-            aria-haspopup="true"
-            onClick={() => setChecksFilterOpen((o) => !o)}
+          <EntityFilterToolbar
+            open={checksFilterOpen}
+            onToggleOpen={() => setChecksFilterOpen((o) => !o)}
+            activeCategoryCount={checkOutcomeActiveCount}
+            onClearAll={clearCheckOutcomeFilters}
+            filterButtonAriaLabel="Filter pasture checks"
           />
           {checksFilterOpen ? (
             <div className={workspaceFilterPanelClass}>
-              <PastureCheckFilterPanel
-                statusFilter={statusFilter}
-                setStatusFilter={setStatusFilter}
-                onReset={() => setStatusFilter("all")}
-                onApply={() => setChecksFilterOpen(false)}
+              <EntityFilterPanel
+                dimensions={checkOutcomeDimensions}
+                onMultiChange={onCheckOutcomeMultiChange}
+                onRadioChange={onCheckOutcomeRadioChange}
               />
             </div>
           ) : null}
         </div>
-        <WorkspaceSearchField
+        <SearchField
+          size="sm"
           value={checkSearch}
           onChange={setCheckSearch}
-          placeholder="Search notes or name"
-          ariaLabel="Search pasture checks by notes or logged by"
+          placeholder="Search notes or author"
+          ariaLabel="Search pasture checks by notes or author"
           variant="inline"
-          className="h-8 min-h-8 min-w-0 flex-1 max-w-none shadow-[0_1px_2px_rgba(0,0,0,0.05)] md:max-w-[194px] md:flex-none md:shrink-0"
+          fullWidth
+          className="min-w-0 flex-1 max-w-none md:max-w-[194px] md:flex-none md:shrink-0"
         />
         <div ref={sortRef} className="relative w-full min-w-0 shrink-0 sm:w-auto">
           <WorkspaceMenuTrigger
@@ -143,43 +187,37 @@ function PastureChecksPanel({ pastureId }: { pastureId: string }) {
       </div>
 
       {entries.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">No checks match your filters.</p>
+        <p className="shrink-0 py-6 text-center text-sm text-muted-foreground">
+          No checks match your filters.
+        </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
           {entries.map((entry) => (
             <li
               key={entry.id}
               className="flex items-start gap-2 rounded-lg border border-border bg-white p-3"
             >
-              <div
-                className={cn(
-                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                  entry.allClear ? "bg-status-good-bg" : "bg-status-monitor-bg"
-                )}
-              >
-                {entry.allClear ? (
-                  <Check className="h-3 w-3 text-status-good-text" aria-hidden />
+              <div className="mt-0.5 shrink-0">
+                {entry.status ? (
+                  <StatusBadge status={entry.status} size="sm" />
                 ) : (
-                  <AlertCircle className="h-3 w-3 text-status-monitor-text" aria-hidden />
+                  <span className="inline-flex rounded-md bg-muted px-1.5 py-px text-[13px] font-medium text-muted-foreground">
+                    —
+                  </span>
                 )}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-medium text-foreground">
-                    {format(parseISO(entry.date), "MMM d, yyyy")} · {format(parseISO(entry.date), "h:mm a")}
+                  <p className="text-[13px] font-medium text-foreground">
+                    {format(entry.date, "MMM d, yyyy")} · {format(entry.date, "h:mm a")}
                   </p>
-                  <span
-                    className={cn(
-                      "inline-flex shrink-0 text-xs font-semibold",
-                      entry.allClear ? pastureSignalBadgeFill.clear : pastureSignalBadgeFill.flagged
-                    )}
-                  >
-                    {entry.allClear ? "All clear" : "Needs attention"}
+                  <span className={CATEGORY_METADATA_BADGE_CLASS}>
+                    {PASTURE_CHECK_CATEGORY_LABELS[entry.category]}
                   </span>
                 </div>
-                <p className="mt-0.5 mb-1 text-xs text-muted-foreground">{entry.loggedBy}</p>
-                {entry.notes ? (
-                  <p className="text-xs leading-relaxed text-foreground">{entry.notes}</p>
+                <p className="mt-0.5 mb-1 text-[13px] text-muted-foreground">{entry.author}</p>
+                {entry.body ? (
+                  <p className="text-[13px] leading-relaxed text-foreground">{entry.body}</p>
                 ) : null}
               </div>
             </li>
@@ -210,8 +248,6 @@ export function PastureRosterPage() {
   const [healthFilters, setHealthFilters] = useState<Set<"Flag" | "Monitor" | "Good">>(
     () => new Set(["Flag", "Monitor", "Good"])
   )
-  const [sortKey, setSortKey] = useState<CattleSortKey>("tag")
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
   const filterRef = useRef<HTMLDivElement>(null)
   const [pastureTab, setPastureTab] = useState<PastureRosterTab>("animals")
   const [slideCattleId, setSlideCattleId] = useState<string | null>(null)
@@ -266,8 +302,9 @@ export function PastureRosterPage() {
       calvingFilters,
       healthFilters,
       dueWeekOnly: calvingSoonParam,
+      observationsByCattleId,
     })
-    return sortCattleList(filtered, sortKey, sortDir, {})
+    return sortCattleList(filtered, { column: "tag", direction: "asc" }, {}, observationsByCattleId)
   }, [
     cattle,
     pastureId,
@@ -275,19 +312,17 @@ export function PastureRosterPage() {
     breedFilter,
     calvingFilters,
     healthFilters,
-    sortKey,
-    sortDir,
     calvingSoonParam,
+    observationsByCattleId,
   ])
 
-  function handleSort(column: CattleSortKey) {
-    if (column === sortKey) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
-    } else {
-      setSortKey(column)
-      setSortDir("asc")
-    }
-  }
+  const pastureTabItems = useMemo(
+    (): TabItem[] => [
+      { id: "animals", label: "Animals", count: roster.length },
+      { id: "checks", label: "Pasture Check", count: pastureChecksCount },
+    ],
+    [roster.length, pastureChecksCount],
+  )
 
   if (!pastureId || !pasture) {
     return (
@@ -298,7 +333,7 @@ export function PastureRosterPage() {
         searchAriaLabel="Search"
       >
         <p className="text-muted-foreground">Pasture not found.</p>
-        <Link className={cn(buttonVariants({ variant: "tertiary" }), "mt-4")} to="/pastures">
+        <Link className={cn(buttonVariants({ variant: "secondary" }), "mt-4")} to="/pastures">
           Back to pastures
         </Link>
       </RanchWorkspaceShell>
@@ -307,17 +342,17 @@ export function PastureRosterPage() {
 
   return (
     <RanchWorkspaceShell
-      contentClassName="pt-6"
+      contentClassName={cn(WORKSPACE_PAGE_ROSTER_FILL_CLASS, "pt-0")}
       searchValue={search}
       onSearchChange={setSearch}
       searchPlaceholder="Search"
       searchAriaLabel="Search"
     >
-      <div className="flex min-w-0 flex-col gap-4">
-        <header className="flex flex-col gap-2">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+        <header className="flex shrink-0 flex-col gap-2">
           <Link
             to="/pastures"
-            className="inline-flex w-fit items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            className="inline-flex w-fit items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-4 shrink-0" aria-hidden />
             Pastures
@@ -325,31 +360,38 @@ export function PastureRosterPage() {
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-4">
               <div className="min-w-0 shrink-0">
-                <h1 className="text-xl font-semibold tracking-normal text-foreground">{pasture.name}</h1>
+                <Link
+                  to={`/pastures/${pasture.id}`}
+                  className="inline-block text-xl font-semibold tracking-normal text-foreground underline-offset-4 hover:underline"
+                >
+                  {pasture.name}
+                </Link>
               </div>
               <div className="flex min-w-0 shrink-0 flex-wrap items-center">
-                <SegmentedControl
-                  items={[
-                    { id: "animals", label: `Animals (${roster.length})` },
-                    { id: "checks", label: `Pasture Check (${pastureChecksCount})` },
-                  ]}
-                  value={pastureTab}
-                  onChange={setPastureTab}
+                <Tabs
+                  items={pastureTabItems}
+                  activeTab={pastureTab}
+                  onChange={(id) => setPastureTab(id as PastureRosterTab)}
                   ariaLabel="Pasture roster sections"
+                  className="inline-flex min-w-0 max-w-full shrink-0 gap-0 border-b border-border"
+                  tabClassName="text-sm font-medium"
                 />
               </div>
             </div>
             <div className="hidden shrink-0 flex-wrap items-center justify-end gap-2 sm:flex">
               <Button
                 type="button"
-                variant="tertiary"
+                variant="secondary"
                 size="sm"
-                className="h-9 min-h-9 px-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+                className="h-9 min-h-9 gap-1.5 px-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+                aria-label="Log pasture check"
                 onClick={() =>
                   openPastureCheckModal({ pastureId: pasture.id, pastureName: pasture.name })
                 }
               >
-                Log pasture check
+                <NotebookPen className="size-4 shrink-0" aria-hidden />
+                <span className="hidden md:inline">Log pasture check</span>
+                <span className="md:hidden">Log</span>
               </Button>
               <Button type="button" variant="primary" className="h-9 min-h-9 px-4" onClick={() => setAddAnimalOpen(true)}>
                 Add cattle
@@ -359,14 +401,17 @@ export function PastureRosterPage() {
           <div className="flex flex-col gap-2 sm:hidden">
             <Button
               type="button"
-              variant="tertiary"
+              variant="secondary"
               size="sm"
-              className="h-9 min-h-9 w-full justify-center px-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+              className="h-9 min-h-9 w-full justify-center gap-1.5 px-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+              aria-label="Log pasture check"
               onClick={() =>
                 openPastureCheckModal({ pastureId: pasture.id, pastureName: pasture.name })
               }
             >
-              Log pasture check
+              <NotebookPen className="size-4 shrink-0" aria-hidden />
+              <span className="hidden md:inline">Log pasture check</span>
+              <span className="md:hidden">Log</span>
             </Button>
             <Button
               type="button"
@@ -380,8 +425,8 @@ export function PastureRosterPage() {
         </header>
 
         {pastureTab === "animals" ? (
-          <div className="flex min-w-0 flex-col gap-6">
-            <div className="flex flex-wrap items-center gap-2.5 py-2">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden">
+            <div className="flex shrink-0 flex-wrap items-center gap-2.5 py-2">
               <div className="relative shrink-0" ref={filterRef}>
               <WorkspaceFilterButton
                 type="button"
@@ -415,28 +460,26 @@ export function PastureRosterPage() {
                 </div>
               ) : null}
               </div>
-              <WorkspaceSearchField
+              <SearchField
+                size="sm"
                 value={search}
                 onChange={setSearch}
                 placeholder="Search"
                 ariaLabel="Search by tag number"
                 variant="inline"
-                className="h-8 min-h-8 w-full max-w-[194px] shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+                className="w-full max-w-[194px] shrink-0"
               />
             </div>
-            <div className="flex min-h-[calc(100vh-180px)] min-w-0 flex-col gap-6 md:flex-row md:items-start md:gap-6">
-              <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden md:flex-row md:items-stretch md:gap-6">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                 <CattleRosterTable
                   rows={roster}
                   showPastureColumn={false}
                   pastureNames={{}}
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onSort={handleSort}
+                  observationsByCattleId={observationsByCattleId}
                   onRowClick={openCattleSlide}
                   selectedCattleId={slideCattleId}
                   onOpenObservationLog={openCattleSlideToObservationLog}
-                  emphasizeObservationColumn={Boolean(selectedSlideCattle)}
                 />
               </div>
               <CattleDetailPanel
@@ -454,7 +497,9 @@ export function PastureRosterPage() {
             </div>
           </div>
         ) : (
-          <PastureChecksPanel pastureId={pasture.id} />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <PastureChecksPanel pastureId={pasture.id} />
+          </div>
         )}
       </div>
       <AddAnimalModal

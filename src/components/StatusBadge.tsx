@@ -1,7 +1,20 @@
 import { cn } from "@/lib/utils"
-import { STATUS_TOKENS, type StatusCanonical, type StatusEmphasis } from "@/lib/statusUtils"
+import {
+  PASTURE_STATUS_LABELS,
+  getPastureStatusBadgeClass,
+  getTablePastureStatusBadgeClass,
+  getTableStatusBadgeClass,
+  getStatusBadgeClass,
+  STATUS_TOKENS,
+  type PastureStatus,
+  type StatusCanonical,
+  type StatusEmphasis,
+} from "@/lib/statusUtils"
 
-export type StatusBadgeStatus = "good" | "monitor" | "call-vet"
+export type { PastureStatus } from "@/lib/statusUtils"
+
+/** Health / risk + pasture semantic statuses (pasture reuses good / monitor / flag ramps). */
+export type StatusBadgeStatus = "good" | "monitor" | "call-vet" | PastureStatus
 
 export interface StatusBadgeProps {
   status: StatusBadgeStatus
@@ -9,33 +22,65 @@ export interface StatusBadgeProps {
   label?: string
   /** With `label`, shows only the dimension text (e.g. `Health`); fill still follows `status`. */
   compactLabel?: boolean
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "table"
   emphasis?: StatusEmphasis
   className?: string
 }
 
-const statusConfig = {
-  good: { label: "Good" as const },
-  monitor: { label: "Monitor" as const },
-  "call-vet": { label: "Flag" as const },
-} as const
+const statusConfig: Record<StatusBadgeStatus, { label: string }> = {
+  good: { label: "Good" },
+  monitor: { label: "Monitor" },
+  "call-vet": { label: "Flag" },
+  stable: { label: PASTURE_STATUS_LABELS.stable },
+  concern: { label: PASTURE_STATUS_LABELS.concern },
+  action_needed: { label: PASTURE_STATUS_LABELS.action_needed },
+}
 
 const canonicalByStatus: Record<StatusBadgeStatus, StatusCanonical> = {
   good: "good",
   monitor: "monitor",
   "call-vet": "flag",
+  stable: "good",
+  concern: "monitor",
+  action_needed: "flag",
 }
 
-const sizeClass: Record<NonNullable<StatusBadgeProps["size"]>, string> = {
-  sm: "rounded-md px-[6px] py-px text-[10px] font-medium",
-  md: "rounded-lg px-2 py-0.5 text-[11px] font-medium",
-  lg: "rounded-lg px-3 py-1 text-sm font-semibold",
+function isPastureBadgeStatus(s: StatusBadgeStatus): s is PastureStatus {
+  return s === "stable" || s === "concern" || s === "action_needed"
 }
+
+const sizeClassSm =
+  "whitespace-nowrap rounded-md px-[6px] py-px text-[13px] font-medium"
+const sizeClassLg =
+  "whitespace-nowrap rounded-lg px-3 py-1 text-sm font-semibold"
 
 function getFillClass(canonical: StatusCanonical, emphasis: StatusEmphasis): string {
   if (emphasis === "primary") return STATUS_TOKENS[canonical].badgePrimary
   if (emphasis === "outline") return STATUS_TOKENS[canonical].badgeOutline
+  if (emphasis === "outlineMuted") return STATUS_TOKENS[canonical].badgeOutlineMuted
   return STATUS_TOKENS[canonical].badge
+}
+
+function statusBadgeShellClass(
+  status: StatusBadgeStatus,
+  size: NonNullable<StatusBadgeProps["size"]>,
+  emphasis: StatusEmphasis,
+): string {
+  if (size === "sm") {
+    return cn(sizeClassSm, getFillClass(canonicalByStatus[status], emphasis))
+  }
+  if (size === "lg") {
+    return cn(sizeClassLg, getFillClass(canonicalByStatus[status], emphasis))
+  }
+  if (size === "table") {
+    return isPastureBadgeStatus(status)
+      ? getTablePastureStatusBadgeClass(status, emphasis)
+      : getTableStatusBadgeClass(status, emphasis)
+  }
+  // md (default)
+  return isPastureBadgeStatus(status)
+    ? getPastureStatusBadgeClass(status, emphasis)
+    : getStatusBadgeClass(status, emphasis)
 }
 
 export function StatusBadge({
@@ -53,9 +98,8 @@ export function StatusBadge({
       : label
         ? `${label} · ${cfg.label}`
         : cfg.label
-  const canonical = canonicalByStatus[status]
   return (
-    <span className={cn(sizeClass[size], getFillClass(canonical, emphasis), className)}>
+    <span className={cn(statusBadgeShellClass(status, size, emphasis), className)}>
       {text}
     </span>
   )

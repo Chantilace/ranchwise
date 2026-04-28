@@ -1,4 +1,5 @@
 import { formatDistanceToNow, parseISO } from "date-fns"
+import { NotebookPen } from "lucide-react"
 
 import { calvingStatusPill } from "@/components/CattleRosterTable"
 import { RichText } from "@/components/RichText"
@@ -32,7 +33,7 @@ export type CattleLoggingStatusSectionProps = {
  */
 export function CattleLoggingStatusSection({
   cattle,
-  pastureName,
+  pastureName: _pastureName,
   onRecordCalving,
   onLogObservation,
   showActions = true,
@@ -63,20 +64,20 @@ export function CattleLoggingStatusSection({
       <div className={cn("flex flex-wrap items-center gap-2", padTop)}>{calvingStatusPill(cattle)}</div>
 
       {cattle.calvingStatus === "in-labor" && inLaborRelative ? (
-        <p className={cn("pt-2 text-xs text-muted-foreground", pad)}>Marked {inLaborRelative} ago</p>
+        <p className={cn("pt-2 text-[13px] text-muted-foreground", pad)}>Marked {inLaborRelative} ago</p>
       ) : null}
 
       {effective === "calved" ? (
         <RichText
           variant={getComplicationVariant(cattle.deliveryType === "assisted" ? "Assisted" : "Normal")}
-          className={cn("mt-2 block text-xs", pad)}
+          className={cn("mt-2 block text-[13px]", pad)}
         >
           {deliveryType} · {calfStatus}
         </RichText>
       ) : null}
 
       {effective === "complications" ? (
-        <RichText variant={getComplicationVariant("Complications")} className={cn("mt-2 block text-xs", pad)}>
+        <RichText variant={getComplicationVariant("Complications")} className={cn("mt-2 block text-[13px]", pad)}>
           {deliveryType} · {complicationSummary}
         </RichText>
       ) : null}
@@ -88,7 +89,8 @@ export function CattleLoggingStatusSection({
               <Button type="button" variant="primary" className="w-full" onClick={onRecordCalving}>
                 Record calving
               </Button>
-              <Button type="button" variant="tertiary" className="w-full" onClick={onLogObservation}>
+              <Button type="button" variant="secondary" className="w-full gap-1.5" onClick={onLogObservation}>
+                <NotebookPen className="size-4 shrink-0" aria-hidden />
                 Log observation
               </Button>
               {showMarkInLabor ? (
@@ -104,7 +106,8 @@ export function CattleLoggingStatusSection({
           ) : null}
 
           {effective === "calved" ? (
-            <Button type="button" variant="primary" className="w-full" onClick={onLogObservation}>
+            <Button type="button" variant="primary" className="w-full gap-1.5" onClick={onLogObservation}>
+              <NotebookPen className="size-4 shrink-0" aria-hidden />
               Log observation
             </Button>
           ) : null}
@@ -114,13 +117,15 @@ export function CattleLoggingStatusSection({
               <Button type="button" variant="primary" className="w-full" onClick={onRecordCalving}>
                 Record calving outcome
               </Button>
-              <Button type="button" variant="tertiary" className="w-full" onClick={onLogObservation}>
+              <Button type="button" variant="secondary" className="w-full gap-1.5" onClick={onLogObservation}>
+                <NotebookPen className="size-4 shrink-0" aria-hidden />
                 Log observation
               </Button>
             </>
           ) : null}
           {effective === "none" ? (
-            <Button type="button" variant="primary" className="w-full" onClick={onLogObservation}>
+            <Button type="button" variant="primary" className="w-full gap-1.5" onClick={onLogObservation}>
+              <NotebookPen className="size-4 shrink-0" aria-hidden />
               Log observation
             </Button>
           ) : null}

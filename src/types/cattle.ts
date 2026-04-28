@@ -21,6 +21,13 @@ export interface Pasture {
   lastObservation?: string
   /** ISO timestamp of the most recent pasture check (derived). */
   lastCheckDate?: string
+  /** Profile / roster hero image. */
+  profileImageUrl?: string
+  /** Short terrain label (e.g. "Sage-scrub"). */
+  terrain: string
+  acreage: number
+  waterSource: string
+  fenceStatus: string
 }
 
 export const BREED_OPTIONS = [
@@ -85,7 +92,12 @@ export interface Cattle {
   calvingComplications?: CalvingComplication[]
   /** AI follow-up from the most recent calving flow (mirrors observation `aiResult` for detail UI). */
   calvingAiResult?: AIResult | null
+  /**
+   * Seed / pre-AI hint only. Authoritative health for UI comes from
+   * `getCattleDisplayHealth` / `getCattleEffectiveHealthRisk` + `observationsByCattleId`.
+   */
   healthStatus?: "Flag" | "Monitor" | "Good"
+  /** @deprecated Prefer `getCattleLastObservationLabel` from `@/lib/cattleSelectors` + observation map. */
   lastObservation?: string
   observations?: CattleObservation[]
   /** Optional display name from Add animal. */
@@ -111,19 +123,4 @@ export interface Cattle {
   lastPregnancyCheckAt?: string | null
   /** Last branding event; null until applicable / not logged. */
   lastBrandingAt?: string | null
-}
-
-export interface PastureCheck {
-  id: string
-  pastureId: string
-  date: string
-  loggedBy: string
-  allClear: boolean
-  /** Optional when `allClear`; required in the modal when not all clear. */
-  notes?: string
-  /**
-   * Future (AI): IDs of individual animal observations created or linked from this check.
-   * See product spec — entity extraction from pasture check notes, pattern surfacing, etc.
-   */
-  linkedObservationIds?: string[]
 }

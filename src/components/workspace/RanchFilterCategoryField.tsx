@@ -1,8 +1,9 @@
-import { Check, ChevronDown, Minus } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
 import { appDropdownPanelClass } from "@/lib/appDropdownTokens"
+import { CheckboxBox } from "@/components/ui/checkbox-box"
 
 export type RanchFilterOption = {
   id: string
@@ -16,11 +17,13 @@ function sortedOptions(options: readonly RanchFilterOption[]) {
 
 function computeChipDisplay(
   options: readonly RanchFilterOption[],
-  selectedIds: ReadonlySet<string>
+  selectedIds: ReadonlySet<string>,
+  treatAllSelectedAsNoSelection?: boolean
 ): { kind: "empty" } | { kind: "chips"; chips: RanchFilterOption[]; overflow: number } {
   const sorted = sortedOptions(options)
   if (selectedIds.size === 0) return { kind: "empty" }
   const allSelected = options.length > 0 && options.every((o) => selectedIds.has(o.id))
+  if (allSelected && treatAllSelectedAsNoSelection) return { kind: "empty" }
   const selectedSorted = sorted.filter((o) => selectedIds.has(o.id))
 
   if (allSelected) {
@@ -48,30 +51,16 @@ export type RanchFilterCategoryFieldProps = {
    * When false, checklist is absolutely positioned under the chips (nested panel).
    */
   usePortal?: boolean
+  /**
+   * When true, collapsed chips show the empty placeholder if every option is selected
+   * (checklist stays fully checked). Use for optional dimensions where “all” means no filter.
+   */
+  treatAllSelectedAsNoSelection?: boolean
 }
 
-function CheckboxBox({
-  state,
-  className,
-}: {
-  state: "empty" | "mixed" | "full"
-  className?: string
-}) {
-  return (
-    <span
-      className={cn(
-        "flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
-        state === "empty" && "border-border bg-white",
-        state === "mixed" && "border-action bg-action/10",
-        state === "full" && "border-action bg-action",
-        className
-      )}
-      aria-hidden
-    >
-      {state === "full" ? <Check className="size-3 text-white" strokeWidth={2.5} /> : null}
-      {state === "mixed" ? <Minus className="size-3 text-action" strokeWidth={2} /> : null}
-    </span>
-  )
+function checkboxStateToChecked(state: "empty" | "mixed" | "full"): boolean | "mixed" {
+  if (state === "mixed") return "mixed"
+  return state === "full"
 }
 
 function ChecklistBody({
@@ -103,12 +92,11 @@ function ChecklistBody({
           e.stopPropagation()
           onToggleAll()
         }}
-        className="flex w-full cursor-pointer items-center gap-2 border-b border-border px-3 py-2 text-left outline-none hover:bg-neutral-50/90 focus-visible:bg-neutral-50/90"
+        className="mb-1.5 flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left outline-none hover:bg-neutral-50/90 focus-visible:bg-neutral-50/90"
       >
-        <CheckboxBox state={toggleAllCheckboxState} />
-        <span className="text-xs font-medium text-action">{toggleAllLabel}</span>
+        <CheckboxBox checked={checkboxStateToChecked(toggleAllCheckboxState)} />
+        <span className="text-[13px] font-medium text-action">{toggleAllLabel}</span>
       </button>
-      <div className="h-px bg-border" aria-hidden />
       {sorted.map((opt) => {
         const checked = selectedIds.has(opt.id)
         return (
@@ -122,12 +110,9 @@ function ChecklistBody({
               toggleOne(opt.id)
             }}
             onPointerDown={(e) => e.stopPropagation()}
-            className="flex w-full cursor-pointer items-center gap-2 border-b border-border px-3 py-2 text-left text-sm text-foreground outline-none last:border-b-0 hover:bg-neutral-50/90 focus-visible:bg-neutral-50/90"
+            className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm text-foreground outline-none hover:bg-neutral-50/90 focus-visible:bg-neutral-50/90"
           >
-            <CheckboxBox state={checked ? "full" : "empty"} />
-            {opt.swatchClassName ? (
-              <span className={cn("size-2 shrink-0 rounded-full", opt.swatchClassName)} aria-hidden />
-            ) : null}
+            <CheckboxBox checked={checked} />
             <span className="min-w-0 flex-1">{opt.label}</span>
           </button>
         )
@@ -151,13 +136,17 @@ export function RanchFilterCategoryField({
   emptyPlaceholder = "Nothing selected",
   selectionMode = "multi",
   usePortal = true,
+  treatAllSelectedAsNoSelection = false,
 }: RanchFilterCategoryFieldProps) {
   const anchorRef = useRef<HTMLDivElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
   const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({})
 
   const sorted = useMemo(() => sortedOptions(options), [options])
-  const chipDisplay = useMemo(() => computeChipDisplay(options, selectedIds), [options, selectedIds])
+  const chipDisplay = useMemo(
+    () => computeChipDisplay(options, selectedIds, treatAllSelectedAsNoSelection),
+    [options, selectedIds, treatAllSelectedAsNoSelection]
+  )
 
   const allSelected = options.length > 0 && options.every((o) => selectedIds.has(o.id))
   const noneSelected = selectedIds.size === 0
@@ -267,7 +256,7 @@ export function RanchFilterCategoryField({
 
   return (
     <div className={cn("flex flex-col gap-1.5", !usePortal && "relative")}>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{sectionLabel}</p>
+      <p className="text-[13px] font-medium uppercase tracking-wide text-muted-foreground">{sectionLabel}</p>
 
       <div ref={anchorRef} className={cn(!usePortal && "relative")}>
         <div
@@ -281,7 +270,7 @@ export function RanchFilterCategoryField({
               onToggleExpand()
             }
           }}
-          className="flex w-full min-h-0 cursor-pointer items-stretch gap-2 rounded-[10px] border border-border bg-white px-[10px] py-[7px] text-left text-xs text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] outline-none focus-visible:ring-2 focus-visible:ring-action/25 focus-visible:ring-offset-0"
+          className="flex w-full min-h-0 cursor-pointer items-stretch gap-2 rounded-[10px] border border-border bg-white px-[10px] py-[7px] text-left text-[13px] text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)] outline-none focus-visible:ring-2 focus-visible:ring-action/25 focus-visible:ring-offset-0"
         >
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
             {chipDisplay.kind === "empty" ? (
@@ -291,7 +280,7 @@ export function RanchFilterCategoryField({
                 {chipDisplay.chips.map((opt) => (
                   <div
                     key={opt.id}
-                    className="inline-flex max-w-full items-center gap-1 rounded-lg border border-border bg-white px-2 py-[3px] text-xs text-foreground"
+                    className="inline-flex max-w-full items-center gap-1 rounded-lg border border-border bg-white px-2 py-[3px] text-[13px] text-foreground"
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
                   >
@@ -312,7 +301,7 @@ export function RanchFilterCategoryField({
                   </div>
                 ))}
                 {chipDisplay.overflow > 0 ? (
-                  <span className="inline-flex shrink-0 rounded-lg bg-muted px-2 py-[3px] text-xs font-medium text-foreground">
+                  <span className="inline-flex shrink-0 rounded-lg bg-muted px-2 py-[3px] text-[13px] font-medium text-foreground">
                     +{chipDisplay.overflow} more
                   </span>
                 ) : null}

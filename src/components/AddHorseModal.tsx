@@ -117,7 +117,7 @@ function AddHorseFormInner({ pastures, onClose, onSave }: InnerProps) {
       </div>
 
       <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
-        <Button type="button" variant="tertiary" onClick={onClose}>
+        <Button type="button" variant="secondary" onClick={onClose}>
           Cancel
         </Button>
         <Button type="button" variant="primary" disabled={!requiredOk} onClick={handleCreate}>

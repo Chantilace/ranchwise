@@ -1,4 +1,5 @@
 import { differenceInYears, parseISO } from "date-fns"
+import { cattleTagBare } from "@/lib/cattleUi"
 import { BREED_OPTIONS, type Breed, type Cattle, type CattleInventoryStatus } from "@/types/cattle"
 
 export const ADD_ANIMAL_BREED_OPTIONS = BREED_OPTIONS
@@ -95,7 +96,7 @@ export function buildCattleFromAddAnimalForm(
 
   const row: Cattle = {
     id: `ct-${crypto.randomUUID()}`,
-    tagNumber: s.tagNumber.trim(),
+    tagNumber: cattleTagBare(s.tagNumber.trim()),
     breed: s.breed as Breed,
     age: ageFromDateOfBirth(s.dateOfBirth || undefined),
     pastureId,
@@ -121,7 +122,7 @@ export function formStateToNewAnimal(s: AddAnimalFormState): NewAnimal | null {
   const weightLbs =
     weightTrim === "" ? undefined : Number.parseFloat(weightTrim.replace(/,/g, ""))
   return {
-    tagNumber: s.tagNumber.trim(),
+    tagNumber: cattleTagBare(s.tagNumber.trim()),
     name: s.name.trim() || undefined,
     breed: s.breed,
     sex: s.sex,

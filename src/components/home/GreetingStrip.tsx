@@ -21,7 +21,7 @@ export function GreetingStrip({ firstName, date, weather, quote }: GreetingStrip
         <p className="text-base font-medium leading-tight text-foreground">
           Howdy, {firstName}
         </p>
-        <p className="text-xs leading-tight text-muted-foreground">
+        <p className="text-[13px] leading-tight text-muted-foreground">
           {formattedDate}
         </p>
       </div>
@@ -31,14 +31,14 @@ export function GreetingStrip({ firstName, date, weather, quote }: GreetingStrip
         <span className="text-sm font-medium leading-none text-foreground">
           {weather.temp}°
         </span>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-[13px] text-muted-foreground">
           {weather.condition} · {weather.location}
         </span>
       </div>
 
       <span aria-hidden className="h-6 w-px shrink-0 bg-border" />
 
-      <p className="min-w-0 shrink truncate text-[11px] italic text-muted-foreground">
+      <p className="min-w-0 shrink truncate text-[13px] italic text-muted-foreground">
         "{quote.text}" — {quote.attribution}
       </p>
     </section>

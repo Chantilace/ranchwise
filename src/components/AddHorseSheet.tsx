@@ -115,7 +115,7 @@ export function AddHorseSheet({ pastures, onClose, onSave }: AddHorseSheetProps)
           </div>
 
           <div className="flex shrink-0 gap-2 border-t border-border px-4 py-3">
-            <Button type="button" variant="tertiary" className="min-w-0 flex-1" onClick={onClose}>
+            <Button type="button" variant="secondary" className="min-w-0 flex-1" onClick={onClose}>
               Cancel
             </Button>
             <Button

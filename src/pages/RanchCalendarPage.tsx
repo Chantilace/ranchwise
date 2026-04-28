@@ -1,35 +1,12 @@
+import { format } from "date-fns"
 import { useState } from "react"
 import { HomeCattleSummaryCard } from "@/components/home/HomeCattleSummaryCard"
 import { HomeHorseSummaryCard } from "@/components/home/HomeHorseSummaryCard"
-import { HomeSmartSuggestionsCard, type SmartSuggestion } from "@/components/home/HomeSmartSuggestionsCard"
-import { GreetingStrip } from "@/components/home/GreetingStrip"
+import { HomeRecentObservationsCard } from "@/components/home/HomeRecentObservationsCard"
+import { HomeSmartSuggestionsSection } from "@/components/home/HomeSmartSuggestionsSection"
+import { HomeWeatherQuotePill } from "@/components/home/HomeWeatherQuotePill"
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell"
-import { useLogObservation } from "@/contexts/LogObservationContext"
-import { Button } from "@/components/ui/button"
-
-const HOME_SMART_SUGGESTIONS: SmartSuggestion[] = [
-  {
-    id: "review-flagged-horses",
-    title: "Review flagged horses before the next rotation.",
-    reasoning:
-      "2 horses have flag-level observations in the past 5 days. Cross-check their pasture assignments before the next rotation.",
-    action: { label: "Review horses", href: "/horses?healthStatus=flag" },
-  },
-  {
-    id: "log-overdue-pasture-checks",
-    title: "Log overdue pasture checks this week.",
-    reasoning:
-      "3 pastures haven't been checked in over 10 days. Regular cadence catches emerging issues before they escalate.",
-    action: { label: "Open pastures", href: "/cattle" },
-  },
-  {
-    id: "ace-wound-stalled",
-    title: "Ace's wound healing has stalled",
-    reasoning:
-      "No improvement noted in the last 3 observations — typically 5-day recovery.",
-    action: { label: "Review Ace", href: "/horses/ace" },
-  },
-]
+import { CURRENT_USER } from "@/lib/workspaceIdentity"
 
 const RANCH_QUOTES = [
   {
@@ -56,8 +33,7 @@ const RANCH_QUOTES = [
 
 export function RanchCalendarPage() {
   const [search, setSearch] = useState("")
-  const { open: openLogObservation } = useLogObservation()
-  const firstName = "Chantale"
+  const firstName = CURRENT_USER.name
   const today = new Date()
   const weather = { temp: 52, condition: "Partly cloudy", location: "Spring Creek, WY" }
 
@@ -68,40 +44,40 @@ export function RanchCalendarPage() {
   const currentQuote = RANCH_QUOTES[dayOfYear % RANCH_QUOTES.length]!
 
   return (
-    <>
     <RanchWorkspaceShell
-      contentClassName="min-w-0 bg-background px-0 pb-10 pt-6"
+      contentClassName="min-w-0 bg-background pb-10"
       searchValue={search}
       onSearchChange={setSearch}
       searchPlaceholder="Search"
       searchAriaLabel="Search"
     >
-      <div className="flex min-w-0 w-full max-w-full flex-col gap-4 px-12">
-        <GreetingStrip firstName={firstName} date={today} weather={weather} quote={currentQuote} />
+      <div className="flex min-w-0 w-full max-w-full flex-col gap-4">
+        <div className="mb-4 flex min-w-0 flex-col flex-nowrap gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0 shrink-0 md:min-w-0 md:shrink">
+            <p className="mb-0.5 whitespace-nowrap text-[18px] font-medium leading-tight text-foreground xl:text-[22px]">
+              Howdy, {firstName}
+            </p>
+            <p className="text-[13px] text-muted-foreground">
+              <span className="xl:hidden">{format(today, "EEE, MMM d, yyyy")}</span>
+              <span className="hidden xl:inline">{format(today, "EEEE, MMMM d, yyyy")}</span>
+            </p>
+          </div>
+          <HomeWeatherQuotePill weather={weather} quoteText={currentQuote.text} className="min-w-0 w-full md:w-auto md:min-w-0 md:max-w-[min(100%,600px)] md:shrink" />
+        </div>
 
-        <div className="grid grid-cols-1 gap-[14px] lg:grid-cols-[1fr_minmax(380px,_460px)] lg:items-start lg:gap-5">
-          <div className="flex min-w-0 flex-col gap-[14px]">
+        <HomeSmartSuggestionsSection />
+
+        <div className="grid min-h-0 grid-cols-1 gap-3 md:grid-cols-[1fr_1.4fr]">
+          <div className="min-h-0 min-w-0 h-full">
             <HomeCattleSummaryCard />
+          </div>
+          <div className="min-h-0 min-w-0 h-full">
             <HomeHorseSummaryCard />
           </div>
-          <aside className="min-w-0 w-full">
-            <HomeSmartSuggestionsCard suggestions={HOME_SMART_SUGGESTIONS} />
-          </aside>
         </div>
+
+        <HomeRecentObservationsCard />
       </div>
     </RanchWorkspaceShell>
-    <Button
-      type="button"
-      variant="primary"
-      onClick={openLogObservation}
-      className="fixed right-6 z-[60] h-auto min-h-0 px-5 py-[10px] text-[13px] font-medium md:hidden"
-      style={{
-        boxShadow: "0 4px 14px rgba(72,37,72,0.4)",
-        bottom: "max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))",
-      }}
-    >
-      Log observation
-    </Button>
-    </>
   )
 }

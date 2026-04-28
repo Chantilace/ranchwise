@@ -1,46 +1,45 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { format, isValid, parseISO } from "date-fns";
-import {
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
-  Sparkles,
-  X,
-} from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
+import { ArrowDownWideNarrow, ChevronLeft, NotebookPen, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ADD_HORSE_MAX_PHOTO_BYTES,
   AddHorseFormFields,
   addHorseFormRequiredOk,
 } from "@/components/AddHorseFormFields";
-import type { HorseTableRow } from "@/components/HeguyRanchCoPilot";
-import { horseRowKey } from "@/components/HeguyRanchCoPilot";
-import { IdentityChip } from "@/components/IdentityChip";
+import type { HorseTableRow } from "@/components/RanchWiseHorseRoster";
+import { horseRowKey } from "@/components/RanchWiseHorseRoster";
+import { HorseshoeMark } from "@/components/icons/HorseshoeMark";
 import { HorseLogSheet } from "@/components/HorseLogSheet";
-import { ObservationCategoryBadge } from "@/components/ObservationCategoryBadge";
+import { ObservationTimelineEntryCard } from "@/components/ObservationTimelineEntryCard";
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell";
 import { useRanchData } from "@/contexts/RanchDataContext";
+import { useCloseOnOutsidePointerDown } from "@/hooks/useCloseOnOutsidePointerDown";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import {
-  AppOverflowMenu,
-  AppOverflowMenuContent,
-  AppOverflowMenuItem,
-  AppOverflowMenuTrigger,
-} from "@/components/ui/app-menu";
 import { AppMenuSelect } from "@/components/ui/app-menu-select";
-import {
-  HorseObservationCombinedFilter,
-  type ProfileObsCategoryFilter,
-} from "@/components/workspace/HorseObservationCombinedFilter";
+import { EntityFilterPanel, type EntityFilterDimension } from "@/components/workspace/EntityFilterPanel";
+import { EntityFilterToolbar } from "@/components/workspace/EntityFilterToolbar";
+import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles";
+import { FilteredCountDisplay } from "@/components/workspace/FilteredCountDisplay";
 import { StatusBadge, type StatusBadgeStatus } from "@/components/StatusBadge";
+import {
+  getHorseEffectiveLastDentalIso,
+  getHorseEffectiveLastFarrierIso,
+} from "@/lib/horseCareObservationSelectors";
 import { formatFarrierDateDisplay } from "@/lib/horseUtils";
 import { parseObservationDate } from "@/lib/initialObservations";
-import { getStatusDotClass } from "@/lib/statusUtils";
-import { WORKSPACE_PAGE_SCROLL_CLASS } from "@/lib/workspacePageCard";
-import type { ObservationEntry, RiskLevel } from "@/types/observation";
+import { computeLatestObservationEntryIdsByCategory } from "@/lib/observationTimelineDisplay";
+import {
+  WORKSPACE_PAGE_SCROLL_CLASS,
+  WORKSPACE_PAGE_SHELL_FLUSH_TOP_CLASS,
+} from "@/lib/workspacePageCard";
+import { HORSE_OBSERVATION_CATEGORIES } from "@/lib/observationCategories";
+import { getObservationDomain } from "@/lib/observationDomain";
+import type { ObservationEntry } from "@/types/observation";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { AiSparkleDisclosureButton } from "@/components/ui/ai-sparkle-disclosure-button";
+import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 function farrierIso(horse: HorseTableRow): string | null {
@@ -72,17 +71,19 @@ function parseAgeYears(ageDisplay: string): string {
   return m ? m[0] : "";
 }
 
-const PROFILE_TABS = [
-  "Observations",
-  "Vet records",
-  "Breeding",
-  "Photos",
+const HORSE_PROFILE_TAB_IDS = [
+  "observations",
+  "vet",
+  "breeding",
+  "photos",
 ] as const;
+
+type HorseProfileTabId = (typeof HORSE_PROFILE_TAB_IDS)[number];
 
 const OBSERVATION_STATUS_IDS = ["good", "monitor", "flag"] as const;
 
 function createDefaultObservationStatusFilterSet(): Set<string> {
-  return new Set(OBSERVATION_STATUS_IDS);
+  return new Set();
 }
 
 function isFullObservationStatusFilterSet(s: ReadonlySet<string>): boolean {
@@ -93,8 +94,7 @@ function observationEntryMatchesStatusFilters(
   entry: ObservationEntry,
   filters: ReadonlySet<string>,
 ): boolean {
-  if (filters.size === 0) return false;
-  if (isFullObservationStatusFilterSet(filters)) return true;
+  if (filters.size === 0 || isFullObservationStatusFilterSet(filters)) return true;
   const r = entry.aiResult?.riskLevel;
   if (!r) return false;
   const id = r === "call-vet" ? "flag" : r;
@@ -108,42 +108,6 @@ function initials(name: string) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-}
-
-function observationRiskLevel(entry: ObservationEntry): RiskLevel | null {
-  return entry.aiResult?.riskLevel ?? null;
-}
-
-function observationLogDotClass(level: RiskLevel | null): string {
-  if (!level) return "bg-muted";
-  if (level === "good") return getStatusDotClass("Good");
-  if (level === "monitor") return getStatusDotClass("Monitor");
-  if (level === "call-vet") return getStatusDotClass("Flag");
-  return "bg-muted";
-}
-
-function horseStatusDisplayLabel(
-  status: HorseTableRow["healthStatus"],
-): "Good" | "Monitor" | "Flag" {
-  if (status === "flag") return "Flag";
-  if (status === "monitor") return "Monitor";
-  return "Good";
-}
-
-function horseDualStatusSummary(horse: HorseTableRow): string {
-  if (horse.healthStatus === "good" && horse.behaviorStatus === "good")
-    return "All good";
-  return `${horseStatusDisplayLabel(horse.healthStatus)} health · ${horseStatusDisplayLabel(horse.behaviorStatus)} behavior`;
-}
-
-function observationAiSuggestionText(entry: ObservationEntry): string | null {
-  const ai = entry.aiResult;
-  if (!ai) return null;
-  const note = ai.patternNote?.trim();
-  if (note) return note;
-  const recs = ai.recommendations?.map((s) => s.trim()).filter(Boolean) ?? [];
-  if (recs.length) return recs.join(" ");
-  return null;
 }
 
 function formatCareDateShort(iso: string | null): string {
@@ -165,50 +129,64 @@ function horseTableStatusToBadge(
   return "good";
 }
 
-function HorseProfileHealthSummary({ horse }: { horse: HorseTableRow }) {
-  return horse.aiSummary?.trim() ? (
-    <div className="rounded-xl bg-muted p-4">
-      <div className="mb-3">
-        <span className="inline-flex items-center gap-1.5 rounded-md border border-ai-accent bg-ai-accent-bg px-2 py-1">
-          <Sparkles
-            className="size-3.5 text-ai-accent"
-            strokeWidth={1.5}
-            aria-hidden
-          />
-          <span className="text-xs font-semibold uppercase tracking-wide text-ai-accent">
-            Health summary
-          </span>
-        </span>
+/** Single badge priority: flag over monitor over good (health then behavior). */
+function horseProfileOverallBadgeStatus(horse: HorseTableRow): StatusBadgeStatus {
+  const order: Record<"flag" | "monitor" | "good", number> = {
+    flag: 0,
+    monitor: 1,
+    good: 2,
+  };
+  const h = order[horse.healthStatus];
+  const b = order[horse.behaviorStatus];
+  const worst = h <= b ? horse.healthStatus : horse.behaviorStatus;
+  return horseTableStatusToBadge(worst);
+}
+
+function HorseProfileCareCard({
+  careRows,
+  compact,
+  className,
+}: {
+  careRows: { label: string; value: string }[];
+  compact: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col rounded-lg border-[0.5px] border-border bg-card",
+        compact ? "p-3" : "px-4 py-3.5",
+        className,
+      )}
+    >
+      <p className={cn("mb-2.5 font-medium text-foreground", compact ? "text-[13px]" : "text-sm")}>Care</p>
+      <div>
+        {careRows.map((row, i) => (
+          <div
+            key={row.label}
+            className={cn(
+              "flex py-1.5",
+              compact ? "items-start justify-between gap-2" : "items-center justify-between gap-3",
+              i < careRows.length - 1 && "border-b-[0.5px] border-border",
+            )}
+          >
+            <span className={cn("shrink-0 text-muted-foreground", compact ? "text-[13px]" : "text-sm")}>
+              {row.label}
+            </span>
+            <span
+              className={cn(
+                "min-w-0 break-words text-right font-medium text-foreground",
+                compact ? "text-[13px]" : "text-sm",
+              )}
+            >
+              {row.value}
+            </span>
+          </div>
+        ))}
       </div>
-      <p className="mb-2 text-sm leading-relaxed text-foreground">
-        {horse.aiSummary.trim()}
-      </p>
-      <p className="text-xs text-muted-foreground">
-        {horseDualStatusSummary(horse)} · based on most recent observation
-      </p>
-    </div>
-  ) : (
-    <div className="rounded-xl bg-muted p-4">
-      <div className="mb-3">
-        <span className="inline-flex items-center gap-1.5 rounded-md border border-ai-accent bg-ai-accent-bg px-2 py-1">
-          <Sparkles
-            className="size-3.5 text-ai-accent"
-            strokeWidth={1.5}
-            aria-hidden
-          />
-          <span className="text-xs font-semibold uppercase tracking-wide text-ai-accent">
-            Health summary
-          </span>
-        </span>
-      </div>
-      <p className="text-sm italic text-muted-foreground">
-        Log an observation to generate a health summary.
-      </p>
     </div>
   );
 }
-
-// Smart suggestions interaction now uses shared collapsible panel component.
 
 export function HorseProfile() {
   const { horseId } = useParams<{ horseId: string }>();
@@ -224,8 +202,7 @@ export function HorseProfile() {
   /** Log observation as bottom sheet at &lt;768px — matches profile layout: stacked shell only below `md`. */
   const isNarrowMobile = useMediaQuery("(max-width: 767px)");
   const [logSheetOpen, setLogSheetOpen] = useState(false);
-  const [activeTab, setActiveTab] =
-    useState<(typeof PROFILE_TABS)[number]>("Observations");
+  const [activeTab, setActiveTab] = useState<HorseProfileTabId>("observations");
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editDetailsExpanded, setEditDetailsExpanded] = useState(true);
   const [nameDraft, setNameDraft] = useState("");
@@ -243,76 +220,32 @@ export function HorseProfile() {
   >(undefined);
   const editPhotoInputRef = useRef<HTMLInputElement>(null);
   const [obsSort, setObsSort] = useState<"desc" | "asc">("desc");
-  const [obsCategoryFilter, setObsCategoryFilter] =
-    useState<ProfileObsCategoryFilter>("all");
+  const [obsCategoryFilters, setObsCategoryFilters] = useState<Set<string>>(() => new Set());
   const [obsStatusFilters, setObsStatusFilters] = useState(() =>
     createDefaultObservationStatusFilterSet(),
   );
-  const [aiExpandedIds, setAiExpandedIds] = useState<Record<string, boolean>>(
-    {},
-  );
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const tabSentinelRef = useRef<HTMLDivElement>(null);
-  const tabSentinelTabletRef = useRef<HTMLDivElement>(null);
-  const [isSticky, setIsSticky] = useState(false);
-  const [tabsScrolledPast, setTabsScrolledPast] = useState(false);
+  const [obsTimeRange, setObsTimeRange] = useState<"all" | "7" | "30">("all");
+  const [horseObsFilterOpen, setHorseObsFilterOpen] = useState(false);
+  const horseObsFilterRef = useRef<HTMLDivElement>(null);
+
+  useCloseOnOutsidePointerDown({
+    open: horseObsFilterOpen,
+    setOpen: setHorseObsFilterOpen,
+    ref: horseObsFilterRef,
+  });
 
   useEffect(() => {
     const t = window.setTimeout(() => {
       setEditProfileOpen(false);
-      setIsSticky(false);
-      setTabsScrolledPast(false);
       setObsSort("desc");
-      setObsCategoryFilter("all");
+      setObsCategoryFilters(new Set());
       setObsStatusFilters(createDefaultObservationStatusFilterSet());
-      setAiExpandedIds({});
+      setObsTimeRange("all");
+      setHorseObsFilterOpen(false);
       setLogSheetOpen(false);
+      setActiveTab("observations");
     }, 0);
     return () => window.clearTimeout(t);
-  }, [horseId]);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsSticky(!entry.isIntersecting),
-      {
-        threshold: 0,
-      },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [horseId]);
-
-  useEffect(() => {
-    let observer: IntersectionObserver | null = null;
-
-    const bindTabSentinelObserver = () => {
-      observer?.disconnect();
-      observer = null;
-      if (window.matchMedia("(min-width: 1024px)").matches) {
-        setTabsScrolledPast(false);
-        return;
-      }
-      const el = window.matchMedia("(min-width: 768px)").matches
-        ? tabSentinelTabletRef.current
-        : tabSentinelRef.current;
-      if (!el) return;
-      observer = new IntersectionObserver(
-        ([entry]) => setTabsScrolledPast(!entry.isIntersecting),
-        {
-          threshold: 0,
-        },
-      );
-      observer.observe(el);
-    };
-
-    bindTabSentinelObserver();
-    window.addEventListener("resize", bindTabSentinelObserver);
-    return () => {
-      window.removeEventListener("resize", bindTabSentinelObserver);
-      observer?.disconnect();
-    };
   }, [horseId]);
 
   const horse = useMemo(
@@ -325,6 +258,11 @@ export function HorseProfile() {
     return observationsByHorse[horseRowKey(horse)] ?? [];
   }, [horse, observationsByHorse]);
 
+  const healthObservationsForHorse = useMemo(
+    () => allObservationsForHorse.filter((o) => getObservationDomain(o) === "health"),
+    [allObservationsForHorse],
+  );
+
   const obsSortMenuOptions = useMemo(
     () => [
       { value: "desc", label: "Newest first" },
@@ -335,19 +273,101 @@ export function HorseProfile() {
 
   const filteredSortedObservations = useMemo(() => {
     let list = [...allObservationsForHorse];
-    if (obsCategoryFilter === "none") {
-      list = [];
-    } else if (obsCategoryFilter !== "all") {
-      list = list.filter((o) => o.category === obsCategoryFilter);
+    if (obsCategoryFilters.size > 0 && obsCategoryFilters.size < HORSE_OBSERVATION_CATEGORIES.length) {
+      list = list.filter((o) => obsCategoryFilters.has(o.category));
     }
     list = list.filter((o) =>
       observationEntryMatchesStatusFilters(o, obsStatusFilters),
     );
+    if (obsTimeRange !== "all") {
+      const windowMs = obsTimeRange === "7" ? 7 * 86_400_000 : 30 * 86_400_000;
+      const cutoff = Date.now() - windowMs;
+      list = list.filter((o) => parseObservationDate(o.date) >= cutoff);
+    }
     const cmp = (a: ObservationEntry, b: ObservationEntry) =>
       parseObservationDate(a.date) - parseObservationDate(b.date);
     list.sort((a, b) => (obsSort === "desc" ? -1 : 1) * cmp(a, b));
     return list;
-  }, [allObservationsForHorse, obsSort, obsCategoryFilter, obsStatusFilters]);
+  }, [allObservationsForHorse, obsSort, obsCategoryFilters, obsStatusFilters, obsTimeRange]);
+
+  const horseObsActiveFilterCount = useMemo(() => {
+    let n = 0;
+    if (obsCategoryFilters.size > 0 && obsCategoryFilters.size < HORSE_OBSERVATION_CATEGORIES.length) {
+      n += obsCategoryFilters.size;
+    }
+    if (obsStatusFilters.size > 0 && obsStatusFilters.size < OBSERVATION_STATUS_IDS.length) {
+      n += obsStatusFilters.size;
+    }
+    if (obsTimeRange !== "all") n += 1;
+    return n;
+  }, [obsCategoryFilters, obsStatusFilters, obsTimeRange]);
+
+  const horseObsFilterDimensions = useMemo((): EntityFilterDimension[] => {
+    const categoryOptions = HORSE_OBSERVATION_CATEGORIES.map((c) => ({ id: c, label: c }));
+    const statusOptions = [
+      { id: "good", label: "Good" },
+      { id: "monitor", label: "Monitor" },
+      { id: "flag", label: "Flag" },
+    ];
+    return [
+      {
+        kind: "multi",
+        id: "category",
+        label: "Category",
+        options: categoryOptions,
+        selectedIds: obsCategoryFilters,
+        allSelectedLabel: "All",
+        placeholder: "All",
+        "aria-label": "Observation category filters",
+      },
+      {
+        kind: "multi",
+        id: "status",
+        label: "Status",
+        options: statusOptions,
+        selectedIds: obsStatusFilters,
+        allSelectedLabel: "All",
+        placeholder: "All",
+        "aria-label": "Observation status filters",
+      },
+      {
+        kind: "radio",
+        id: "time",
+        label: "Time range",
+        options: [
+          { id: "all", label: "All time" },
+          { id: "7", label: "Last 7 days" },
+          { id: "30", label: "Last 30 days" },
+        ],
+        value: obsTimeRange,
+        clearValueId: "all",
+        placeholder: "All time",
+        "aria-label": "Observation time range",
+      },
+    ];
+  }, [obsCategoryFilters, obsStatusFilters, obsTimeRange]);
+
+  const onHorseObsMultiChange = useCallback((id: string, next: Set<string>) => {
+    if (id === "category") setObsCategoryFilters(next);
+    else if (id === "status") setObsStatusFilters(next);
+  }, []);
+
+  const onHorseObsRadioChange = useCallback((id: string, value: string) => {
+    if (id === "time" && (value === "all" || value === "7" || value === "30")) {
+      setObsTimeRange(value);
+    }
+  }, []);
+
+  const clearHorseObsFilters = useCallback(() => {
+    setObsCategoryFilters(new Set());
+    setObsStatusFilters(createDefaultObservationStatusFilterSet());
+    setObsTimeRange("all");
+  }, []);
+
+  const observationLatestInCategoryIds = useMemo(
+    () => computeLatestObservationEntryIdsByCategory(allObservationsForHorse),
+    [allObservationsForHorse],
+  );
 
   if (!horseId || !horse) {
     return (
@@ -358,11 +378,11 @@ export function HorseProfile() {
         searchAriaLabel="Search horses by name"
         contentClassName={WORKSPACE_PAGE_SCROLL_CLASS}
       >
-        <div className="flex min-w-0 flex-col px-12 py-6">
+        <div className="flex min-w-0 flex-col">
           <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 py-12">
             <p className="text-muted-foreground">Horse not found.</p>
             <Link
-              className={cn(buttonVariants({ variant: "tertiary" }))}
+              className={cn(buttonVariants({ variant: "secondary" }))}
               to="/horses"
             >
               Back to horses
@@ -382,6 +402,29 @@ export function HorseProfile() {
     return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   })();
 
+  const healthSummaryUpdatedRelative = useMemo(() => {
+    let best = -Infinity;
+    for (const o of healthObservationsForHorse) {
+      const t = parseObservationDate(o.date);
+      if (Number.isFinite(t) && t > best) best = t;
+    }
+    if (!Number.isFinite(best) || best < 0) return "recently";
+    return formatDistanceToNow(new Date(best), { addSuffix: true });
+  }, [healthObservationsForHorse]);
+
+  const healthSummaryProse = useMemo(() => {
+    if (allObservationsForHorse.length === 0) return null;
+    const trimmed = profileHorse.aiSummary?.trim();
+    if (trimmed) return trimmed;
+    return "Health summary copy is not seeded for this horse yet. Logging additional observations will refine the narrative once summaries are wired.";
+  }, [profileHorse.aiSummary, allObservationsForHorse.length]);
+
+  const healthSummaryContextNote = useMemo(() => {
+    if (healthObservationsForHorse.length === 0) return null;
+    const n = healthObservationsForHorse.length;
+    return `Based on ${n} health observation${n === 1 ? "" : "s"} · updated ${healthSummaryUpdatedRelative}`;
+  }, [healthObservationsForHorse.length, healthSummaryUpdatedRelative]);
+
   function openEditProfile() {
     setNameDraft(profileHorse.name);
     setSexDraft(profileHorse.sex);
@@ -395,9 +438,17 @@ export function HorseProfile() {
         : "",
     );
     setPastureDraft(profileHorse.pasture);
-    setFarrierDraft(farrierIso(profileHorse) ?? "");
+    setFarrierDraft(
+      getHorseEffectiveLastFarrierIso(profileHorseId, observationsByHorse, profileHorse) ??
+        farrierIso(profileHorse) ??
+        "",
+    );
     setRoleDraft(profileHorse.role);
-    setDentalDraft(dentalIso(profileHorse) ?? "");
+    setDentalDraft(
+      getHorseEffectiveLastDentalIso(profileHorseId, observationsByHorse, profileHorse) ??
+        dentalIso(profileHorse) ??
+        "",
+    );
     setNotesDraft(profileHorse.notes ?? "");
     setPhotoDataUrlDraft(undefined);
     setEditDetailsExpanded(true);
@@ -480,210 +531,176 @@ export function HorseProfile() {
     navigate("/horses");
   }
 
-  const farrierDateIso = farrierIso(profileHorse);
-  const dentalDateIso = dentalIso(profileHorse);
+  const farrierDateIso =
+    getHorseEffectiveLastFarrierIso(profileHorseId, observationsByHorse, profileHorse) ??
+    farrierIso(profileHorse);
+  const dentalDateIso =
+    getHorseEffectiveLastDentalIso(profileHorseId, observationsByHorse, profileHorse) ??
+    dentalIso(profileHorse);
   const subtitleAge = /\byr/i.test(profileHorse.age)
     ? profileHorse.age
     : `${profileHorse.age} yrs`;
-  const breedChipText = profileHorse.health.trim() || "—";
+  const profileImageSrc =
+    (profileHorse as { imageUrl?: string }).imageUrl?.trim() ||
+    profileHorse.photoUrl?.trim() ||
+    "";
 
   function openHorseLog() {
     if (isNarrowMobile) setLogSheetOpen(true);
     else openLogModal(profileHorse);
   }
 
-  function renderTabs(wrapClassName: string, tabButtonClassName: string) {
-    return (
-      <div className={wrapClassName} role="tablist">
-        {PROFILE_TABS.map((t) => {
-          const isActive = t === activeTab;
-          const isSoon = t !== "Observations";
-          return (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => !isSoon && setActiveTab(t)}
-              className={cn(
-                tabButtonClassName,
-                "-mb-px border-b-2",
-                isSoon && "pointer-events-none opacity-40",
-                isActive
-                  ? "border-action font-medium text-action"
-                  : "border-transparent text-muted-foreground",
-              )}
-            >
-              {t}
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  const profileOverflowMenu = (
-    <AppOverflowMenu>
-      <AppOverflowMenuTrigger
-        type="button"
-        aria-label="More options"
-        className="flex size-8 shrink-0 items-center justify-center rounded-full border-none bg-action-tint p-0 text-action outline-none transition-colors hover:bg-action-tint-strong focus-visible:ring-2 focus-visible:ring-ring/40 [&_svg]:size-[14px] [&_svg]:shrink-0"
-      >
-        <MoreHorizontal
-          className="size-[14px] text-action"
-          strokeWidth={1.7}
-          aria-hidden
-        />
-      </AppOverflowMenuTrigger>
-      <AppOverflowMenuContent side="bottom" align="end" sideOffset={4}>
-        <AppOverflowMenuItem onClick={() => openEditProfile()}>
-          Edit profile
-        </AppOverflowMenuItem>
-        <AppOverflowMenuItem destructive onClick={handleDeleteHorse}>
-          Delete horse
-        </AppOverflowMenuItem>
-      </AppOverflowMenuContent>
-    </AppOverflowMenu>
+  const profileTabItems: TabItem[] = useMemo(
+    () => [
+      { id: "observations", label: "Observations" },
+      { id: "vet", label: "Vet records" },
+      { id: "breeding", label: "Breeding" },
+      { id: "photos", label: "Photos" },
+    ],
+    [],
   );
 
-  const careDateTiles = (layout: "horizontal" | "vertical") => (
-    <div
-      className={
-        layout === "horizontal"
-          ? "grid grid-cols-2 gap-2"
-          : "flex flex-col gap-2"
-      }
-    >
-      <div className="rounded-[10px] bg-muted p-[10px_12px]">
-        <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
-          Last farrier
-        </p>
-        <p className="text-[14px] font-medium text-foreground">
-          {formatCareDateShort(farrierDateIso)}
-        </p>
-      </div>
-      <div className="rounded-[10px] bg-muted p-[10px_12px]">
-        <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
-          Last dental
-        </p>
-        <p className="text-[14px] font-medium text-foreground">
-          {formatCareDateShort(dentalDateIso)}
-        </p>
-      </div>
+  const careRows = useMemo(() => {
+    const rows: { label: string; value: string }[] = [];
+    const feedText = profileHorse.feed.filter(Boolean).join(", ");
+    if (feedText) rows.push({ label: "Feed", value: feedText });
+    rows.push({ label: "Last farrier", value: formatCareDateShort(farrierDateIso) });
+    rows.push({ label: "Last dental", value: formatCareDateShort(dentalDateIso) });
+    const bcs = profileHorse.bodyConditionScore;
+    if (bcs != null && bcs >= 1 && bcs <= 9) {
+      rows.push({ label: "Body condition", value: `${bcs} / 9` });
+    }
+    return rows;
+  }, [profileHorse, farrierDateIso, dentalDateIso, observationsByHorse, profileHorseId]);
+
+  const horseObsFilterControl = (
+    <div className="relative shrink-0" ref={horseObsFilterRef}>
+      <EntityFilterToolbar
+        open={horseObsFilterOpen}
+        onToggleOpen={() => setHorseObsFilterOpen((o) => !o)}
+        activeCategoryCount={horseObsActiveFilterCount}
+        onClearAll={clearHorseObsFilters}
+        filterButtonAriaLabel="Filter observation log"
+      />
+      {horseObsFilterOpen ? (
+        <div className={workspaceFilterPanelClass}>
+          <EntityFilterPanel
+            dimensions={horseObsFilterDimensions}
+            onMultiChange={onHorseObsMultiChange}
+            onRadioChange={onHorseObsRadioChange}
+          />
+        </div>
+      ) : null}
     </div>
   );
 
-  const observationListSection =
-    activeTab === "Observations" ? (
-      <div>
-        {allObservationsForHorse.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              No observations logged yet.
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Tap Log observation to add the first entry.
-            </p>
+  const observationListSection = (
+    <div>
+      {allObservationsForHorse.length === 0 ? (
+        <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
+          No observations logged yet. Tap &quot;Log observation&quot; above to add the first entry.
+        </p>
+      ) : (
+        <>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <AppMenuSelect
+              variant="toolbar"
+              leadingIcon={ArrowDownWideNarrow}
+              className="min-w-[132px] shrink-0"
+              value={obsSort}
+              onValueChange={(v) => setObsSort(v as "desc" | "asc")}
+              options={obsSortMenuOptions}
+              aria-label="Sort observations"
+            />
+            {horseObsFilterControl}
           </div>
-        ) : (
-          <>
-            <div className="mb-3 flex flex-wrap gap-2">
-              <AppMenuSelect
-                variant="compact"
-                className="inline-flex h-auto min-h-0 w-auto min-w-[132px] shrink-0 items-center gap-2 rounded-lg border border-border bg-white px-3 py-1.5 text-sm font-normal text-muted-foreground shadow-none outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/35 [&>span]:text-muted-foreground"
-                chevronClassName="size-3.5"
-                value={obsSort}
-                onValueChange={(v) => setObsSort(v as "desc" | "asc")}
-                options={obsSortMenuOptions}
-                aria-label="Sort observations"
-              />
-              <HorseObservationCombinedFilter
-                categoryFilter={obsCategoryFilter}
-                onCategoryFilterChange={setObsCategoryFilter}
-                statusFilters={obsStatusFilters}
-                onStatusFiltersChange={setObsStatusFilters}
-              />
-            </div>
 
-            {filteredSortedObservations.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No observations match your filters.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {filteredSortedObservations.map((entry) => {
-                  const level = observationRiskLevel(entry);
-                  const aiSuggestion = observationAiSuggestionText(entry);
-                  const expanded = Boolean(aiExpandedIds[entry.id]);
-                  return (
-                    <div
-                      key={entry.id}
-                      className="rounded-xl border border-border px-4 py-3"
-                    >
-                      <div className="mb-1.5 flex items-center justify-between gap-2">
-                        <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                          <div
-                            className={cn(
-                              "h-2 w-2 shrink-0 rounded-full",
-                              observationLogDotClass(level),
-                            )}
-                            aria-hidden
-                          />
-                          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-xs">
-                            <span className="font-medium text-foreground">
-                              {entry.date}
-                            </span>
-                            <ObservationCategoryBadge
-                              category={entry.category}
-                            />
-                            <span className="text-muted-foreground">
-                              {entry.loggedBy}
-                            </span>
-                          </div>
-                        </div>
-                        {aiSuggestion ? (
-                          <AiSparkleDisclosureButton
-                            ariaLabel={
-                              expanded
-                                ? "Hide AI suggestion"
-                                : "Show AI suggestion"
-                            }
-                            expanded={expanded}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAiExpandedIds((prev) => ({
-                                ...prev,
-                                [entry.id]: !prev[entry.id],
-                              }));
-                            }}
-                          />
-                        ) : null}
-                      </div>
-                      <p className="text-sm font-normal text-foreground">
-                        {entry.notes}
-                      </p>
+          <FilteredCountDisplay
+            visible={horseObsActiveFilterCount > 0}
+            filteredCount={filteredSortedObservations.length}
+            totalCount={allObservationsForHorse.length}
+            entityName="observations"
+            className="mb-3"
+          />
 
-                      {aiSuggestion ? (
-                        <div
-                          className={cn(
-                            "overflow-hidden transition-all duration-300 ease-out",
-                            expanded ? "mt-3 max-h-[500px] opacity-100" : "mt-0 max-h-0 opacity-0",
-                          )}
-                        >
-                          <div className="rounded-lg bg-muted px-3 py-2 text-xs leading-relaxed text-foreground">
-                            {aiSuggestion}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
+          {filteredSortedObservations.length === 0 ? (
+            <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
+              No observations match your filters.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3 pb-9">
+              {filteredSortedObservations.map((entry) => (
+                <ObservationTimelineEntryCard
+                  key={entry.id}
+                  entry={entry}
+                  isLatestOfCategory={observationLatestInCategoryIds.has(entry.id)}
+                />
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </div>
+  );
+
+  const metadataOneLine = `${subtitleAge} · ${profileHorse.sex} · ${(profileHorse.role ?? "").trim() || "—"} · ${profileHorse.pasture}`;
+
+  const healthSummaryEl = healthSummaryProse ? (
+    <SmartSuggestionsPanel
+      mode="modal"
+      className="mt-0"
+      label="Health summary"
+      labelGlyphStyle="section"
+      bodyVariant="prose"
+      body={healthSummaryProse}
+      contextNote={healthSummaryContextNote ?? undefined}
+    />
+  ) : null;
+
+  const healthSummaryElTablet = healthSummaryProse ? (
+    <SmartSuggestionsPanel
+      mode="modal"
+      className="mt-0 flex h-full min-h-0 min-w-0 flex-col"
+      columnFill
+      label="Health summary"
+      labelGlyphStyle="section"
+      bodyVariant="prose"
+      body={healthSummaryProse}
+      contextNote={healthSummaryContextNote ?? undefined}
+    />
+  ) : null;
+
+  function renderProfileTabsAndContent() {
+    return (
+      <div className="min-w-0">
+        <Tabs
+          items={profileTabItems}
+          activeTab={activeTab}
+          onChange={(id) => setActiveTab(id as HorseProfileTabId)}
+          ariaLabel="Horse profile sections"
+          className="flex min-w-0 max-w-full gap-0 border-b border-border"
+          tabClassName="-mb-px px-4 py-2 text-base font-medium"
+        />
+        <div className="min-w-0 pt-4">
+          {activeTab === "observations" ? (
+            observationListSection
+          ) : activeTab === "vet" ? (
+            <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
+              Vet records coming soon.
+            </p>
+          ) : activeTab === "breeding" ? (
+            <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
+              Breeding coming soon.
+            </p>
+          ) : activeTab === "photos" ? (
+            <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
+              Photos coming soon.
+            </p>
+          ) : null}
+        </div>
       </div>
-    ) : null;
+    );
+  }
 
   return (
     <>
@@ -692,255 +709,189 @@ export function HorseProfile() {
         onSearchChange={() => {}}
         searchPlaceholder="Search"
         searchAriaLabel="Search horses by name"
-        contentClassName={WORKSPACE_PAGE_SCROLL_CLASS}
+        contentClassName={cn(
+          WORKSPACE_PAGE_SCROLL_CLASS,
+          WORKSPACE_PAGE_SHELL_FLUSH_TOP_CLASS,
+          "pb-9",
+        )}
       >
-        <div className="flex min-w-0 flex-col pt-[24px]">
-          <nav
-            className="flex min-w-0 items-center gap-2 bg-background px-12 pt-0 pb-1.5 text-base text-muted-foreground"
-            aria-label="Breadcrumb"
+        <div className="flex min-w-0 flex-col gap-4">
+          <header
+            className="flex flex-wrap items-center justify-between gap-3 bg-background py-3 md:py-5 max-md:sticky max-md:top-0 max-md:z-30 max-md:-mx-4 max-md:border-b max-md:border-border max-md:px-4 sm:max-md:-mx-6 sm:max-md:px-6"
           >
-            <Link
-              to="/horses"
-              className="shrink-0 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+            <nav
+              className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground"
+              aria-label="Breadcrumb"
             >
-              Horses
-            </Link>
-            <ChevronRight className="size-4 shrink-0 opacity-70" aria-hidden />
-            <span className="min-w-0 truncate font-medium text-foreground">
-              {profileHorse.name}
-            </span>
-          </nav>
+              <Link
+                to="/horses"
+                className="inline-flex items-center gap-1 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+              >
+                <ChevronLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                Horses
+              </Link>
+              <span className="text-muted-foreground" aria-hidden>
+                /
+              </span>
+              <span className="min-w-0 truncate font-medium text-foreground">{profileHorse.name}</span>
+            </nav>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-9 min-h-9 shrink-0 rounded-full px-4"
+                onClick={openEditProfile}
+              >
+                Edit
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                className="h-9 min-h-9 gap-1.5 rounded-full px-4"
+                aria-label="Log observation"
+                onClick={openHorseLog}
+              >
+                <NotebookPen className="size-4 shrink-0" aria-hidden />
+                <span className="hidden md:inline">Log observation</span>
+                <span className="md:hidden">Log</span>
+              </Button>
+            </div>
+          </header>
 
-          <div className="px-12 pt-2">
-            <div className="relative h-[240px] w-full shrink-0 overflow-hidden rounded-[14px] md:h-[220px] lg:h-[280px]">
-              {profileHorse.photoUrl ? (
+          {/* Mode B: &lt; md — square hero, floating name card only; Health summary + Care; tabs */}
+          <div className="flex min-w-0 flex-col md:hidden">
+            <div className="relative mx-auto mb-4 aspect-square w-full min-w-0 max-w-[400px] overflow-hidden rounded-xl">
+              {profileImageSrc ? (
                 <img
-                  src={profileHorse.photoUrl}
+                  src={profileImageSrc}
                   alt={profileHorse.name}
-                  className="absolute inset-0 h-full w-full object-cover object-center"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
                 />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-muted text-2xl font-semibold text-muted-foreground">
-                  {initials(profileHorse.name)}
+                <div className="flex h-full w-full items-center justify-center bg-secondary">
+                  <HorseshoeMark
+                    className="size-16 shrink-0 text-[var(--color-text-tertiary)] opacity-50"
+                    aria-hidden
+                  />
                 </div>
               )}
-              <div
-                className="pointer-events-none absolute bottom-0 left-0 right-0 z-[1] h-[120px]"
-                style={{
-                  background:
-                    "linear-gradient(to top, rgba(0,0,0,0.55), transparent)",
-                }}
-                aria-hidden
-              />
-              <div className="absolute bottom-4 left-4 z-[2] flex flex-wrap gap-1.5">
-                {profileHorse.healthStatus !== "good" && (
+              <div className="absolute bottom-3 left-3 right-3 z-10 rounded-[var(--border-radius-md)] bg-white p-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-[22px] font-medium leading-tight tracking-[-0.01em] text-foreground">
+                      {profileHorse.name}
+                    </h2>
+                    <p className="mt-0.5 text-[13px] leading-snug text-[var(--color-text-tertiary)]">
+                      {metadataOneLine}
+                    </p>
+                  </div>
                   <StatusBadge
-                    status={horseTableStatusToBadge(profileHorse.healthStatus)}
-                    label="Health"
+                    status={horseProfileOverallBadgeStatus(profileHorse)}
                     size="md"
+                    emphasis="secondary"
+                    className="shrink-0"
                   />
-                )}
-                {profileHorse.behaviorStatus !== "good" && (
-                  <StatusBadge
-                    status={horseTableStatusToBadge(
-                      profileHorse.behaviorStatus,
-                    )}
-                    label="Behavior"
-                    size="md"
-                  />
-                )}
-                {profileHorse.healthStatus === "good" &&
-                  profileHorse.behaviorStatus === "good" && (
-                    <StatusBadge status="good" size="md" />
-                  )}
+                </div>
               </div>
-              <div
-                ref={sentinelRef}
-                className="pointer-events-none absolute bottom-0 left-0 h-px w-full"
-                aria-hidden
-              />
             </div>
+
+            <div className="mb-4 flex min-w-0 flex-col gap-3">
+              {healthSummaryEl}
+              <HorseProfileCareCard careRows={careRows} compact={false} />
+            </div>
+
+            {renderProfileTabsAndContent()}
           </div>
 
-          <div
-            className={cn(
-              "sticky top-[-1px] z-40 border-b border-border bg-background/95 backdrop-blur-sm transition-opacity duration-200 lg:hidden",
-              isSticky
-                ? "pointer-events-auto opacity-100 shadow-card"
-                : "pointer-events-none max-h-0 overflow-hidden border-transparent opacity-0",
-            )}
-          >
-            <div className="flex items-center gap-2.5 px-12 py-2.5">
-              <button
-                type="button"
-                aria-label="Back"
-                onClick={() => navigate(-1)}
-                className="flex shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-              >
-                <ChevronLeft
-                  className="size-4 text-sidebar-accent-foreground"
-                  strokeWidth={2}
-                  aria-hidden
-                />
-              </button>
-              {profileHorse.photoUrl ? (
-                <div
-                  className="h-8 w-8 shrink-0 rounded-lg bg-cover bg-center"
-                  style={{ backgroundImage: `url(${profileHorse.photoUrl})` }}
-                  aria-hidden
-                />
-              ) : (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-[10px] font-semibold text-muted-foreground">
-                  {initials(profileHorse.name)}
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 flex-col gap-1">
-                  <p className="truncate text-[14px] font-medium leading-tight text-foreground">
-                    {profileHorse.name}
-                  </p>
-                  <div className="flex min-w-0 flex-nowrap items-center gap-1">
-                    {profileHorse.healthStatus !== "good" && (
-                      <StatusBadge
-                        status={horseTableStatusToBadge(
-                          profileHorse.healthStatus,
-                        )}
-                        label="Health"
-                        compactLabel
-                        size="sm"
-                        className="shrink-0 px-1.5 text-[9px]"
-                      />
-                    )}
-                    {profileHorse.behaviorStatus !== "good" && (
-                      <StatusBadge
-                        status={horseTableStatusToBadge(
-                          profileHorse.behaviorStatus,
-                        )}
-                        label="Behavior"
-                        compactLabel
-                        size="sm"
-                        className="shrink-0 px-1.5 text-[9px]"
-                      />
-                    )}
-                    {profileHorse.healthStatus === "good" &&
-                      profileHorse.behaviorStatus === "good" && (
-                        <StatusBadge
-                          status="good"
-                          size="sm"
-                          className="shrink-0 px-1.5 text-[9px]"
-                        />
-                      )}
+          {/* Mode A: ≥ md — tablet (md–lg) + desktop (lg+) unchanged inside */}
+          <div className="hidden min-w-0 md:block">
+            {/* Tablet: md–lg — fixed-width square photo column + HS / Care */}
+            <div className="min-w-0 lg:hidden">
+            <div className="mb-4 grid min-h-0 min-w-0 grid-cols-1 items-stretch gap-4 md:grid-cols-[280px_minmax(0,1fr)] md:gap-5">
+              <div className="relative aspect-square min-h-0 w-full min-w-0 overflow-hidden rounded-xl">
+                {profileImageSrc ? (
+                  <img
+                    src={profileImageSrc}
+                    alt={profileHorse.name}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-muted">
+                    <HorseshoeMark
+                      className="size-12 shrink-0 text-[var(--color-text-tertiary)] opacity-50"
+                      aria-hidden
+                    />
+                  </div>
+                )}
+                <div className="absolute bottom-3 left-3 right-3 z-10 rounded-[var(--border-radius-md)] bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-[22px] font-medium leading-tight tracking-[-0.01em] text-foreground">
+                        {profileHorse.name}
+                      </h2>
+                      <p className="mt-0.5 text-[13px] leading-snug text-[var(--color-text-tertiary)]">
+                        {metadataOneLine}
+                      </p>
+                    </div>
+                    <StatusBadge
+                      status={horseProfileOverallBadgeStatus(profileHorse)}
+                      size="md"
+                      emphasis="secondary"
+                      className="shrink-0"
+                    />
                   </div>
                 </div>
               </div>
-              <Button
-                type="button"
-                variant="primary-dark"
-                className="h-9 min-h-9 shrink-0 whitespace-nowrap px-3 text-[12px]"
-                onClick={openHorseLog}
-              >
-                Log obs
-              </Button>
-            </div>
-            <div
-              className={cn(
-                "overflow-x-auto border-t border-border transition-all duration-200",
-                tabsScrolledPast
-                  ? "pointer-events-auto max-h-[44px] opacity-100 md:max-h-[56px]"
-                  : "pointer-events-none max-h-0 overflow-hidden opacity-0",
-              )}
-            >
-              <div className="flex gap-0 px-12" role="tablist">
-                {PROFILE_TABS.map((t) => {
-                  const isActive = t === activeTab;
-                  const isSoon = t !== "Observations";
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      onClick={() => !isSoon && setActiveTab(t)}
-                      className={cn(
-                        "-mb-px shrink-0 whitespace-nowrap border-b-2 px-2.5 py-2.5 text-[12px] sm:px-4 md:text-base",
-                        isSoon && "pointer-events-none opacity-40",
-                        isActive
-                          ? "border-action font-medium text-action"
-                          : "border-transparent text-muted-foreground",
-                      )}
-                    >
-                      {t}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
 
-          <div className="px-12 pb-8 pt-0">
-            <div className="mt-4 mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div className="min-w-0">
-                <h1 className="mb-2 text-[20px] font-medium tracking-[-0.01em] text-foreground md:text-[22px]">
-                  {profileHorse.name}
-                </h1>
-                <div className="flex flex-wrap gap-1.5">
-                  <IdentityChip>{profileHorse.role}</IdentityChip>
-                  <IdentityChip>{profileHorse.sex}</IdentityChip>
-                  <IdentityChip>{subtitleAge}</IdentityChip>
-                  <IdentityChip>{breedChipText}</IdentityChip>
-                  <IdentityChip>{profileHorse.pasture}</IdentityChip>
-                </div>
-              </div>
-              <div className="flex w-full shrink-0 items-center gap-2 md:mt-1 md:w-auto">
-                <Button
-                  type="button"
-                  variant="primary-dark"
-                  className="h-9 min-h-9 w-full min-w-0 flex-1 px-4 md:w-auto md:flex-none md:shrink-0"
-                  onClick={openHorseLog}
-                >
-                  Log observation
-                </Button>
-                {profileOverflowMenu}
-              </div>
-            </div>
-
-            <div className="md:hidden">
-              <div className="mb-4">{careDateTiles("horizontal")}</div>
-              <div className="mb-4">
-                <HorseProfileHealthSummary horse={profileHorse} />
-              </div>
-              {renderTabs(
-                "mb-4 flex gap-0 overflow-x-auto border-b border-border",
-                "px-2.5 py-2 text-base sm:px-4",
-              )}
-              {/* Sentinel for Stage 2 sticky — place immediately after tab bar */}
-              <div ref={tabSentinelRef} className="h-px w-full" aria-hidden />
-            </div>
-
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[240px_1fr]">
-              <aside className="hidden min-w-0 lg:block">
-                <div className="sticky top-[56px] flex flex-col gap-4">
-                  {careDateTiles("vertical")}
-                  <HorseProfileHealthSummary horse={profileHorse} />
-                </div>
-              </aside>
-              <div className="min-w-0">
-                <div className="mb-4 hidden md:block lg:hidden">
-                  <div className="mb-4">{careDateTiles("horizontal")}</div>
-                  <HorseProfileHealthSummary horse={profileHorse} />
-                </div>
-                {renderTabs(
-                  "mb-4 hidden gap-0 border-b border-border md:flex",
-                  "px-2.5 py-2 text-base sm:px-4",
-                )}
-                {/* Stage 2 sentinel for tablet — in-page tabs are md:flex (mobile uses tabSentinelRef above) */}
-                <div
-                  ref={tabSentinelTabletRef}
-                  className="hidden h-px w-full md:block lg:hidden"
-                  aria-hidden
+              <div className="flex h-full min-h-0 min-w-0 flex-col gap-3">
+                {healthSummaryElTablet ? (
+                  <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col">{healthSummaryElTablet}</div>
+                ) : null}
+                <HorseProfileCareCard
+                  careRows={careRows}
+                  compact={false}
+                  className="h-full min-h-0 flex-1 basis-0 flex-col"
                 />
-                {observationListSection}
               </div>
+            </div>
+
+            {renderProfileTabsAndContent()}
+            </div>
+
+            {/* Desktop: lg+ — pasture-style two column */}
+            <div className="hidden min-w-0 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-5 lg:min-h-0 lg:flex-1 lg:overflow-hidden xl:grid-cols-[360px_minmax(0,1fr)] xl:gap-6">
+            <aside className="flex flex-col gap-3 lg:sticky lg:top-0 lg:self-start">
+              <div className="aspect-square min-h-0 w-full overflow-hidden rounded-xl">
+                {profileImageSrc ? (
+                  <img
+                    src={profileImageSrc}
+                    alt={profileHorse.name}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full min-h-0 w-full items-center justify-center bg-muted text-2xl font-semibold text-muted-foreground">
+                    {initials(profileHorse.name)}
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <h2 className="text-[24px] font-medium tracking-[-0.01em] text-foreground">{profileHorse.name}</h2>
+                  <StatusBadge
+                    status={horseProfileOverallBadgeStatus(profileHorse)}
+                    size="md"
+                    emphasis="secondary"
+                  />
+                </div>
+                <p className="text-[13px] text-[var(--color-text-tertiary)]">{metadataOneLine}</p>
+              </div>
+              {healthSummaryEl}
+              <HorseProfileCareCard careRows={careRows} compact={false} />
+            </aside>
+            <div className="min-w-0 lg:min-h-0 lg:overflow-y-auto">{renderProfileTabsAndContent()}</div>
             </div>
           </div>
         </div>
@@ -1003,23 +954,23 @@ export function HorseProfile() {
                   onLastDentalIsoChange={setDentalDraft}
                 />
               </div>
-              <div className="mt-6 flex justify-end gap-2 border-t border-border pt-6">
-                <Button
-                  type="button"
-                  variant="tertiary"
-                  className="text-sm"
-                  onClick={() => setEditProfileOpen(false)}
-                >
-                  Cancel
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
+                <Button type="button" variant="destructive" className="text-sm" onClick={handleDeleteHorse}>
+                  Delete horse
                 </Button>
-                <Button
-                  type="button"
-                  variant="primary"
-                  className="text-sm"
-                  onClick={saveProfileEdit}
-                >
-                  Save changes
-                </Button>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="text-sm"
+                    onClick={() => setEditProfileOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="button" variant="primary" className="text-sm" onClick={saveProfileEdit}>
+                    Save changes
+                  </Button>
+                </div>
               </div>
             </Dialog.Popup>
           </Dialog.Viewport>

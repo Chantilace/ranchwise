@@ -184,7 +184,7 @@ export function AddHorseFormFields({
               placeholder="Horse name"
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
-              className={isProfileEdit ? profileEditInputClass : "rounded-lg"}
+              className={isProfileEdit ? profileEditInputClass : undefined}
             />
           </label>
 
@@ -222,7 +222,7 @@ export function AddHorseFormFields({
                 placeholder="Years"
                 value={ageRaw}
                 onChange={(e) => onAgeRawChange(e.target.value)}
-                className={isProfileEdit ? profileEditInputClass : "rounded-lg"}
+                className={isProfileEdit ? profileEditInputClass : undefined}
               />
             </label>
           </div>
@@ -311,7 +311,7 @@ export function AddHorseFormFields({
                   <img
                     src={photoPreviewUrl}
                     alt=""
-                    className="size-20 rounded-lg border border-border object-cover object-center"
+                    className="size-20 rounded-xl border border-border object-cover object-center"
                   />
                 </div>
               ) : null}
@@ -329,7 +329,7 @@ export function AddHorseFormFields({
               >
                 <Camera className="size-8 text-muted-foreground" aria-hidden />
                 <span className="text-sm font-medium text-foreground">Upload photo</span>
-                <span className="text-xs text-muted-foreground">JPG or PNG, up to 5MB</span>
+                <span className="text-[13px] text-muted-foreground">JPG or PNG, up to 5MB</span>
               </button>
             </div>
 
@@ -352,7 +352,7 @@ export function AddHorseFormFields({
                 className={
                   isProfileEdit
                     ? cn(profileEditInputClass, "min-h-[4.5rem] resize-y")
-                    : "min-h-[4.5rem] rounded-lg border-border"
+                    : "min-h-[4.5rem]"
                 }
               />
             </label>
@@ -409,21 +409,17 @@ export function AddHorseFormFields({
     )
   }
 
-  const sheetInputClass =
-    "w-full rounded-xl border border-border p-3 text-sm focus:border-action focus:outline-none"
-
   return (
     <div className="flex flex-col gap-4">
       <div>
         <FormLabel variant="sheet" className="mb-2" htmlFor={sheetNameId}>
           Name
         </FormLabel>
-        <input
+        <Input
           id={sheetNameId}
           placeholder="Horse name"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
-          className={sheetInputClass}
         />
       </div>
 
@@ -449,7 +445,7 @@ export function AddHorseFormFields({
         <FormLabel variant="sheet" className="mb-2" htmlFor={sheetAgeId}>
           Age
         </FormLabel>
-        <input
+        <Input
           id={sheetAgeId}
           type="number"
           inputMode="numeric"
@@ -457,7 +453,6 @@ export function AddHorseFormFields({
           placeholder="e.g. 4"
           value={ageRaw}
           onChange={(e) => onAgeRawChange(e.target.value)}
-          className={sheetInputClass}
         />
       </div>
 
@@ -543,12 +538,13 @@ export function AddHorseFormFields({
               Notes{" "}
               <span className="font-normal normal-case tracking-normal text-muted-foreground">(optional)</span>
             </FormLabel>
-            <textarea
+            <Textarea
               id={sheetNotesId}
+              rows={3}
               placeholder="Any additional notes..."
               value={notes}
               onChange={(e) => onNotesChange(e.target.value)}
-              className="h-20 w-full resize-none rounded-xl border border-border p-3 text-sm focus:border-action focus:outline-none"
+              className="min-h-[4.5rem] resize-none"
             />
           </div>
 

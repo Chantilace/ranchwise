@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react"
 import type { CattleCareDueKind } from "@/lib/cattleCareDue"
-import { createDefaultCalvingFilterSet, type EffectiveCalvingStatus } from "@/lib/calvingStatus"
+import type { EffectiveCalvingStatus } from "@/lib/calvingStatus"
 import type { Breed } from "@/types/cattle"
 
 export function resetCattleToolbarFilters(args: {
@@ -9,10 +9,12 @@ export function resetCattleToolbarFilters(args: {
   setHealthFilters: Dispatch<SetStateAction<Set<"Flag" | "Monitor" | "Good">>>
   setBreedFilter: (b: "all" | Breed) => void
   setCareDueKind?: (v: CattleCareDueKind | null) => void
+  setPastureFilters?: Dispatch<SetStateAction<Set<string>>>
 }) {
   args.setSearch("")
-  args.setCalvingFilters(createDefaultCalvingFilterSet())
-  args.setHealthFilters(new Set(["Flag", "Monitor", "Good"]))
+  args.setCalvingFilters(new Set<EffectiveCalvingStatus>())
+  args.setHealthFilters(new Set<"Flag" | "Monitor" | "Good">())
   args.setBreedFilter("all")
   args.setCareDueKind?.(null)
+  args.setPastureFilters?.(() => new Set())
 }

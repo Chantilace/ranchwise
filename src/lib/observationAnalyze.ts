@@ -1,3 +1,4 @@
+import { PASTURE_CHECK_CATEGORY_LABELS, type PastureCheckCategory } from "@/lib/pastureCheckTypes"
 import type { AIResult, Category } from "@/types/observation"
 
 export const ANALYZE_DELAY_MS = 1400
@@ -41,7 +42,7 @@ export async function mockAnalyze(
         "Separate the horse from aggressive herdmates if injury or exhaustion is a concern.",
         "Withhold strenuous work until cleared; offer water and familiar forage.",
       ],
-      patternNote: `${animalName} had a similar health-related note in recent logs — escalate if symptoms worsen.`,
+      patternNote: `This entry reads like an urgent health concern for ${animalName}. Escalate quickly if symptoms worsen or spread.`,
     }
   }
   if (
@@ -67,7 +68,7 @@ export async function mockAnalyze(
         "Observe appetite over next 48 hours — reduced intake may warrant vet consult.",
         "Inspect skin condition; consider adding omega supplement if dryness persists.",
       ],
-      patternNote: `${animalName} had a similar health observation before — appetite and skin noted then too. If this persists, escalate to vet.`,
+      patternNote: `Keywords suggest a watch-level health pattern for ${animalName} (appetite or skin). Recheck in 48 hours and escalate if it persists.`,
     }
   }
   return {
@@ -76,6 +77,70 @@ export async function mockAnalyze(
     recommendations: [
       "Continue routine observation; log any appetite, manure, or behavior changes.",
       `Note ${category.toLowerCase()} context on the next check so trends stay visible.`,
+    ],
+    patternNote: null,
+  }
+}
+
+/** Placeholder AI for pasture checks — same `AIResult` shape as animal observations. */
+export async function mockAnalyzePastureCheck(
+  category: PastureCheckCategory,
+  notes: string,
+  pastureName: string
+): Promise<AIResult> {
+  await new Promise((r) => setTimeout(r, ANALYZE_DELAY_MS))
+  const lower = notes.toLowerCase()
+  if (
+    lower.includes("broken") ||
+    lower.includes("snapped") ||
+    lower.includes("down") ||
+    lower.includes("no water") ||
+    lower.includes("empty tank") ||
+    lower.includes("escaped") ||
+    lower.includes("leaning post") ||
+    lower.includes("needs reset") ||
+    lower.includes("urgent")
+  ) {
+    return {
+      riskLevel: "call-vet",
+      riskLabel: "Action needed",
+      recommendations: [
+        "Secure the perimeter before moving animals; flag the repair to your fence contractor or crew.",
+        "Photograph the damage for records and re-check voltage after any fix.",
+        "If water is compromised, offer alternate trough access today.",
+      ],
+      patternNote: `${pastureName}: infrastructure note reads urgent — prioritize walk-through after repair.`,
+    }
+  }
+  if (
+    lower.includes("rutting") ||
+    lower.includes("erosion") ||
+    lower.includes("gully") ||
+    lower.includes("muddy") ||
+    lower.includes("standing water") ||
+    lower.includes("rub") ||
+    lower.includes("monitor") ||
+    lower.includes("concern") ||
+    lower.includes("leaning oak")
+  ) {
+    return {
+      riskLevel: "monitor",
+      riskLabel: "Concern",
+      recommendations: [
+        "Schedule a follow-up walk-through after the next rain event.",
+        "Consider drainage, gravel at gates, or reseeding bare spots before they widen.",
+        "Note category " + PASTURE_CHECK_CATEGORY_LABELS[category] + " on the next drive-by for trend tracking.",
+      ],
+      patternNote: `${pastureName} had similar footing or water notes before — compare photos if you have them.`,
+    }
+  }
+  return {
+    riskLevel: "good",
+    riskLabel: "Stable",
+    recommendations: [
+      "Keep logging drive-bys and walk-throughs on a steady cadence.",
+      `Routine ${PASTURE_CHECK_CATEGORY_LABELS[category].toLowerCase()} looks adequate for now.`,
+      "If weather shifts, re-check water levels and fence tension the same week.",
     ],
     patternNote: null,
   }

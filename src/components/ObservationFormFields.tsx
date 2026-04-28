@@ -24,6 +24,10 @@ export type ObservationFormFieldsProps = {
   className?: string
   /** Hide the notes / observation field (e.g. summary shown elsewhere in result step). */
   hideNotes?: boolean
+  /** Hide logged-by row (e.g. shown in `LogReviewFilledField` in analyze–review step). */
+  hideLoggedBy?: boolean
+  /** When true, omit category UI (parent still persists `category` on save, e.g. cattle defaults to Health). */
+  hideCategory?: boolean
 }
 
 export function ObservationFormFields({
@@ -40,6 +44,8 @@ export function ObservationFormFields({
   categories: categoriesProp,
   className,
   hideNotes = false,
+  hideLoggedBy = false,
+  hideCategory = false,
 }: ObservationFormFieldsProps) {
   const categories =
     categoriesProp ?? (variant === "pills" ? HORSE_OBSERVATION_CATEGORIES : ALL_OBSERVATION_CATEGORIES)
@@ -56,38 +62,40 @@ export function ObservationFormFields({
         className
       )}
     >
-      <div className="flex flex-col gap-1.5">
-        <FormLabel variant="default">Category</FormLabel>
-        {categoryAsButtons ? (
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                disabled={disabled || readOnlyText}
-                onClick={() => onCategoryChange(cat)}
-                className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
-                  category === cat
-                    ? "border-action bg-action text-action-foreground"
-                    : "border-border bg-background text-foreground hover:bg-muted/60"
-                )}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <AppMenuSelect
-            value={category}
-            onValueChange={(v) => onCategoryChange(v as Category)}
-            options={categories.map((c) => ({ value: c, label: c }))}
-            placeholder="Select category"
-            disabled={disabled || readOnlyText}
-            aria-label="Observation category"
-          />
-        )}
-      </div>
+      {hideCategory ? null : (
+        <div className="flex flex-col gap-1.5">
+          <FormLabel variant="default">Category</FormLabel>
+          {categoryAsButtons ? (
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  disabled={disabled || readOnlyText}
+                  onClick={() => onCategoryChange(cat)}
+                  className={cn(
+                    "rounded-full border px-4 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
+                    category === cat
+                      ? "border-action bg-action text-action-foreground"
+                      : "border-border bg-background text-foreground hover:bg-muted/60"
+                  )}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <AppMenuSelect
+              value={category}
+              onValueChange={(v) => onCategoryChange(v as Category)}
+              options={categories.map((c) => ({ value: c, label: c }))}
+              placeholder="Select category"
+              disabled={disabled || readOnlyText}
+              aria-label="Observation category"
+            />
+          )}
+        </div>
+      )}
 
       {hideNotes ? null : (
         <label className="flex flex-col gap-1.5">
@@ -106,26 +114,28 @@ export function ObservationFormFields({
             disabled={disabled && !readOnlyText}
             readOnly={readOnlyText}
             className={cn(
-              "resize-none rounded-lg border-border",
+              "resize-none",
               variant === "pills" ? "min-h-24 p-2.5 text-sm" : "min-h-24"
             )}
           />
         </label>
       )}
 
-      <label className="flex flex-col gap-1.5">
-        <FormLabel variant="default">
-          {variant === "pills" ? "Logged by" : "Your name"}
-        </FormLabel>
-        <Input
-          placeholder="Your name"
-          value={loggedBy}
-          onChange={(e) => onLoggedByChange(e.target.value)}
-          disabled={disabled && !readOnlyText}
-          readOnly={readOnlyText}
-          className={cn("rounded-lg", variant === "pills" && "p-2.5 text-sm")}
-        />
-      </label>
+      {hideLoggedBy ? null : (
+        <label className="flex flex-col gap-1.5">
+          <FormLabel variant="default">
+            {variant === "pills" ? "Logged by" : "Your name"}
+          </FormLabel>
+          <Input
+            placeholder="Your name"
+            value={loggedBy}
+            onChange={(e) => onLoggedByChange(e.target.value)}
+            disabled={disabled && !readOnlyText}
+            readOnly={readOnlyText}
+            className={cn(variant === "pills" && "p-2.5 text-sm")}
+          />
+        </label>
+      )}
     </div>
   )
 }

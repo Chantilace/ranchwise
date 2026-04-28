@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ListFilter,
   MoreVertical,
+  NotebookPen,
   X,
 } from "lucide-react"
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
@@ -16,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
   AppOverflowMenu,
@@ -27,7 +29,7 @@ import { AppMenuSelect } from "@/components/ui/app-menu-select"
 import { getStatusBadgeClass } from "@/lib/statusUtils"
 import { cn } from "@/lib/utils"
 import { ObservationCategoryBadge } from "@/components/ObservationCategoryBadge"
-import type { ActivityLogEntry, HorseTableRow, LogCategory } from "@/components/HeguyRanchCoPilot"
+import type { ActivityLogEntry, HorseTableRow, LogCategory } from "@/components/RanchWiseHorseRoster"
 
 type ActivityLogTab = "all" | LogCategory
 
@@ -120,7 +122,7 @@ function MiniSortHeader({ children, className }: { children: ReactNode; classNam
   return (
     <TableHead
       className={cn(
-        "relative min-h-10 border-b border-neutral-200 bg-muted px-3 py-2.5 text-left text-xs font-normal text-foreground",
+        "relative min-h-10 border-b border-neutral-200 bg-muted px-3 py-2.5 text-left text-[13px] font-normal text-foreground",
         className
       )}
     >
@@ -137,16 +139,16 @@ function AiAnalysisPanel({ row }: { row: ActivityLogEntry }) {
     Boolean(row.aiRecommendation?.trim()) || (row.aiNextSteps && row.aiNextSteps.length > 0)
   if (!hasAi) {
     return (
-      <p className="text-xs leading-relaxed whitespace-normal break-words text-neutral-600">
+      <p className="text-[13px] leading-relaxed whitespace-normal break-words text-neutral-600">
         No AI analysis for this entry yet. When analysis is available, it will appear here.
       </p>
     )
   }
   return (
-    <div className="min-w-0 w-full space-y-3 text-left text-xs leading-relaxed text-foreground">
+    <div className="min-w-0 w-full space-y-3 text-left text-[13px] leading-relaxed text-foreground">
       {row.aiRecommendation?.trim() ? (
         <div className="min-w-0">
-          <p className="text-xs font-normal tracking-wide text-neutral-500 uppercase">
+          <p className="text-[13px] font-normal tracking-wide text-neutral-500 uppercase">
             AI recommendation
           </p>
           <p className="mt-1 whitespace-normal break-words">{row.aiRecommendation}</p>
@@ -154,7 +156,7 @@ function AiAnalysisPanel({ row }: { row: ActivityLogEntry }) {
       ) : null}
       {row.aiNextSteps && row.aiNextSteps.length > 0 ? (
         <div className="min-w-0">
-          <p className="text-xs font-normal tracking-wide text-neutral-500 uppercase">
+          <p className="text-[13px] font-normal tracking-wide text-neutral-500 uppercase">
             Next steps
           </p>
           <ul className="mt-1.5 list-disc space-y-1 pl-4 marker:text-neutral-400">
@@ -330,7 +332,7 @@ export function HorseActivityLogModal({ open, onOpenChange, horse, logs, onLogsC
 
               {/* Figma 22:652 / 22:826 — profile row + global “Log new observation” in header */}
               <div className="flex shrink-0 gap-3">
-                <div className="relative size-[81px] shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                <div className="relative size-[81px] shrink-0 overflow-hidden rounded-xl bg-neutral-100">
                   <img
                     src={horse.photoUrl ?? "https://images.unsplash.com/photo-1553284965-83fd3e82fa5e?w=200&h=200&fit=crop&q=80"}
                     alt=""
@@ -350,9 +352,11 @@ export function HorseActivityLogModal({ open, onOpenChange, horse, logs, onLogsC
                         type="button"
                         size="sm"
                         variant={newObservationOpen ? "secondary" : "primary"}
+                        className="gap-1.5"
                         onClick={toggleNewObservation}
                         aria-expanded={newObservationOpen}
                       >
+                        <NotebookPen className="size-3.5 shrink-0" aria-hidden />
                         Log new observation
                       </Button>
                     </div>
@@ -408,20 +412,18 @@ export function HorseActivityLogModal({ open, onOpenChange, horse, logs, onLogsC
                       onChange={(e) => setNewNote(e.target.value)}
                       placeholder={`What did you observe about ${horse.name}?`}
                       rows={3}
-                      className="min-h-[76px] resize-y rounded-lg"
+                      className="min-h-[76px] resize-y"
                     />
-                    <input
+                    <Input
                       id="activity-by"
-                      type="text"
                       value={loggedBy}
                       onChange={(e) => setLoggedBy(e.target.value)}
                       placeholder="Name"
-                      className="h-9 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.05)] outline-none placeholder:text-neutral-500 focus-visible:border-neutral-400 focus-visible:ring-2 focus-visible:ring-neutral-200"
                     />
                     <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                       <Button
                         type="button"
-                        variant="tertiary"
+                        variant="secondary"
                         size="lg"
                         onClick={cancelLoggingForm}
                         disabled={isAnalyzing}
@@ -469,13 +471,13 @@ export function HorseActivityLogModal({ open, onOpenChange, horse, logs, onLogsC
                   <div className="flex h-8 flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      className="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-neutral-200 bg-white px-1.5 py-1 text-xs text-neutral-500 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+                      className="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-neutral-200 bg-white px-1.5 py-1 text-[13px] text-neutral-500 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
                     >
                       <ListFilter className="size-4 text-neutral-500" aria-hidden />
                       Filter
                       <ChevronDown className="size-4 text-neutral-500" aria-hidden />
                     </button>
-                    <span className="ml-auto text-xs tabular-nums text-neutral-500">
+                    <span className="ml-auto text-[13px] tabular-nums text-neutral-500">
                       {logs.length} observation{logs.length === 1 ? "" : "s"} total
                     </span>
                   </div>
@@ -496,7 +498,7 @@ export function HorseActivityLogModal({ open, onOpenChange, horse, logs, onLogsC
                           {tab === "behavior" ? (
                             <TableHead
                               className={cn(
-                                "relative min-h-10 border-b border-neutral-200 bg-muted px-2 py-2.5 text-left text-xs font-normal text-foreground",
+                                "relative min-h-10 border-b border-neutral-200 bg-muted px-2 py-2.5 text-left text-[13px] font-normal text-foreground",
                                 TABLE_COL_WIDTHS.withActions.actions
                               )}
                             >
@@ -524,7 +526,7 @@ export function HorseActivityLogModal({ open, onOpenChange, horse, logs, onLogsC
                                 <TableRow className="border-neutral-200 hover:bg-neutral-50/80">
                                   <TableCell
                                     className={cn(
-                                      "border-b border-neutral-200 align-top py-3 text-xs whitespace-normal break-words text-foreground",
+                                      "border-b border-neutral-200 align-top py-3 text-[13px] whitespace-normal break-words text-foreground",
                                       col.date
                                     )}
                                   >
@@ -540,7 +542,7 @@ export function HorseActivityLogModal({ open, onOpenChange, horse, logs, onLogsC
                                   </TableCell>
                                   <TableCell
                                     className={cn(
-                                      "h-auto max-h-none border-b border-neutral-200 align-top py-3 text-xs leading-relaxed whitespace-normal break-words text-foreground",
+                                      "h-auto max-h-none border-b border-neutral-200 align-top py-3 text-[13px] leading-relaxed whitespace-normal break-words text-foreground",
                                       col.notes
                                     )}
                                   >
@@ -567,7 +569,7 @@ export function HorseActivityLogModal({ open, onOpenChange, horse, logs, onLogsC
                                   </TableCell>
                                   <TableCell
                                     className={cn(
-                                      "h-auto max-h-none border-b border-neutral-200 align-top py-3 text-xs whitespace-normal break-words text-foreground",
+                                      "h-auto max-h-none border-b border-neutral-200 align-top py-3 text-[13px] whitespace-normal break-words text-foreground",
                                       col.loggedBy
                                     )}
                                   >

@@ -8,7 +8,7 @@ export const workspaceFilterPanelClass = cn(
   appDropdownPanelClass
 )
 
-export const filterPanelTitleClass = "text-xs leading-4 text-foreground"
+export const filterPanelTitleClass = "text-[13px] leading-4 text-foreground"
 
 export const filterPanelFooterButtonRowClass = "flex w-full justify-end gap-2"
 
@@ -18,6 +18,6 @@ export const filterPanelApplyButtonClass = cn(
 )
 
 export const filterPanelResetButtonClass = cn(
-  buttonVariants({ variant: "tertiary", size: "sm" }),
+  buttonVariants({ variant: "secondary", size: "sm" }),
   "h-8 min-h-8 min-w-0 px-3 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
 )

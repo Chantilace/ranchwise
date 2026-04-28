@@ -1,13 +1,4 @@
-import {
-  Bell,
-  Fence,
-  Menu,
-  MoreHorizontal,
-  PanelLeft,
-  Settings,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { Bell, Fence, Menu, MoreHorizontal, NotebookPen, PanelLeft, X } from "lucide-react";
 import { FaCow } from "react-icons/fa6";
 import { LiaHorseSolid } from "react-icons/lia";
 import { PiFarm } from "react-icons/pi";
@@ -21,16 +12,16 @@ import {
   type ReactNode,
   type UIEvent,
 } from "react";
+import { LogObservationFAB } from "@/components/LogObservationFAB";
 import { NavItem } from "@/components/NavItem";
 import { RanchWiseMark } from "@/components/RanchWiseMark";
+import { SidebarAccountMenu } from "@/components/workspace/SidebarAccountMenu";
 import { Button } from "@/components/ui/button";
-import { WorkspaceSearchField } from "@/components/WorkspaceSearchField";
+import { SearchField } from "@/components/ui/search-field";
 import { useRanchData } from "@/contexts/RanchDataContext";
 import { useLogObservation } from "@/contexts/LogObservationContext";
+import { CURRENT_USER, RANCH_DISPLAY_NAME } from "@/lib/workspaceIdentity";
 import { cn } from "@/lib/utils";
-
-/** Matches home smart-suggestions list length until wired to real data. */
-const SMART_SUGGESTIONS_SIDEBAR_COUNT = 3;
 
 function RanchWiseWordmark({ className }: { className?: string }) {
   return (
@@ -43,6 +34,16 @@ function RanchWiseWordmark({ className }: { className?: string }) {
       <span>Ranch</span>
       <span>Wise</span>
     </p>
+  );
+}
+
+/** Product wordmark + ranch subtitle (desktop sidebar expanded, mobile drawer). */
+function RanchWiseSidebarBranding() {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col">
+      <RanchWiseWordmark className="truncate text-[14px] font-medium leading-tight tracking-[-0.01em] text-white" />
+      <p className="min-w-0 truncate text-[13px] font-normal leading-tight text-white/60">{RANCH_DISPLAY_NAME}</p>
+    </div>
   );
 }
 
@@ -213,6 +214,7 @@ export function RanchWorkspaceShell({
 }: RanchWorkspaceShellProps) {
   const handleSearchChange = onSearchChange ?? (() => {});
   const { sidebarOpen, setSidebarOpen, cattle, herdRows, pastures } = useRanchData();
+
   const { open: openLogObservation } = useLogObservation();
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -230,6 +232,10 @@ export function RanchWorkspaceShell({
   const openMobileNav = useCallback(() => {
     setMobileNavOpen(true);
   }, []);
+
+  const showLogObservationFab = !["/account", "/settings", "/help"].some(
+    (p) => location.pathname === p || location.pathname.startsWith(`${p}/`),
+  );
 
   /** Close on route change — avoids manual pushState (conflicts with React Router history). */
   useEffect(() => {
@@ -258,7 +264,7 @@ export function RanchWorkspaceShell({
       <div className="hidden min-h-0 shrink-0 self-stretch py-2 px-2 lg:flex">
         <aside
           className={cn(
-            "flex h-full min-h-0 shrink-0 flex-col overflow-x-hidden overflow-y-auto rounded-[10px] bg-sidebar transition-[width] duration-200 ease-out",
+            "flex h-full min-h-0 shrink-0 flex-col overflow-x-hidden overflow-hidden rounded-[10px] bg-sidebar transition-[width] duration-200 ease-out",
             sidebarOpen ? "w-64 p-2" : "w-14 p-1.5",
           )}
         >
@@ -272,23 +278,21 @@ export function RanchWorkspaceShell({
               to="/"
               title="Home"
               className={cn(
-                "flex items-center gap-2 rounded-lg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring/35",
-                sidebarOpen
-                  ? "px-4 py-3"
-                  : "h-9 min-h-9 shrink-0 justify-center px-0 py-0",
+                "flex items-center rounded-lg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring/35",
+                sidebarOpen ? "gap-2.5 px-4 py-3" : "h-9 min-h-9 shrink-0 justify-center gap-2 px-0 py-0",
               )}
               aria-label="RanchWise home"
             >
               <RanchWiseMark
                 size={sidebarOpen ? "md" : "sm"}
-                className="text-white"
+                className="shrink-0 text-white"
                 aria-hidden
               />
-              {sidebarOpen ? <RanchWiseWordmark className="flex-1" /> : null}
+              {sidebarOpen ? <RanchWiseSidebarBranding /> : null}
             </Link>
 
             <nav
-              className="flex min-h-0 flex-1 flex-col gap-0.5"
+              className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto"
               aria-label="Main navigation"
             >
               <DesktopSidebarNavLink
@@ -321,56 +325,11 @@ export function RanchWorkspaceShell({
                 count={pastures.length}
                 sidebarOpen={sidebarOpen}
               />
-
-              <div className="min-h-0 flex-1" aria-hidden />
-
-              {sidebarOpen ? (
-                <div className="mx-1 mb-1 flex items-center gap-2 rounded-md border border-ai-accent bg-[var(--ai-accent-bg)] px-[10px] py-[7px]">
-                  <Sparkles
-                    className="size-[20px] shrink-0 stroke-[var(--ai-accent)] text-[var(--ai-accent)]"
-                    strokeWidth={1.5}
-                    aria-hidden
-                  />
-                  <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--ai-accent)]">
-                    Smart suggestions
-                  </span>
-                  <span className="ml-auto rounded-full bg-[var(--ai-accent)] px-[5px] py-[1px] text-[10px] font-medium text-white">
-                    {SMART_SUGGESTIONS_SIDEBAR_COUNT}
-                  </span>
-                </div>
-              ) : (
-                <div
-                  className="mx-1 mb-1 flex h-9 min-h-9 shrink-0 items-center justify-center rounded-md border border-ai-accent bg-[var(--ai-accent-bg)] px-2 py-1"
-                  title={`Smart suggestions (${SMART_SUGGESTIONS_SIDEBAR_COUNT})`}
-                  role="status"
-                  aria-label={`${SMART_SUGGESTIONS_SIDEBAR_COUNT} smart suggestions`}
-                >
-                  <span className="rounded-full bg-[var(--ai-accent)] px-[5px] py-[1px] text-[10px] font-medium text-white">
-                    {SMART_SUGGESTIONS_SIDEBAR_COUNT}
-                  </span>
-                </div>
-              )}
-
-              <span
-                className={cn(
-                  "flex cursor-not-allowed items-center gap-2 rounded-md text-base text-[var(--sidebar-foreground-disabled)] [&_svg]:text-[var(--sidebar-foreground-disabled)] pointer-events-none",
-                  sidebarOpen
-                    ? "px-3 py-2"
-                    : "h-9 min-h-9 shrink-0 justify-center px-0 py-0",
-                )}
-                title="Settings"
-                aria-disabled
-              >
-                {sidebarOpen ? (
-                  <Settings className="size-4 shrink-0" aria-hidden />
-                ) : (
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-                    <Settings className="size-4 shrink-0" aria-hidden />
-                  </span>
-                )}
-                {sidebarOpen ? <span>Settings</span> : null}
-              </span>
             </nav>
+
+            <div className="shrink-0 pt-3">
+              <SidebarAccountMenu sidebarExpanded={sidebarOpen} variant="sidebar" />
+            </div>
           </div>
         </aside>
       </div>
@@ -379,7 +338,7 @@ export function RanchWorkspaceShell({
         <main className="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col gap-0 overflow-hidden bg-background">
           <header
             className={cn(
-              "relative z-10 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-12 transition-shadow",
+              "relative z-10 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-4 transition-shadow sm:px-6 lg:px-12",
               headerScrolled && "shadow-[0_1px_8px_rgba(0,0,0,0.06)]",
             )}
           >
@@ -430,8 +389,9 @@ export function RanchWorkspaceShell({
             <div className="min-w-0 flex-1" aria-hidden />
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
               {showHeaderSearch ? (
-                <WorkspaceSearchField
+                <SearchField
                   variant="header"
+                  size="md"
                   value={searchValue}
                   onChange={handleSearchChange}
                   placeholder={searchPlaceholder}
@@ -442,9 +402,10 @@ export function RanchWorkspaceShell({
                 type="button"
                 variant="primary"
                 size="sm"
-                className="hidden md:inline-flex"
+                className="hidden gap-1.5 md:inline-flex"
                 onClick={openLogObservation}
               >
+                <NotebookPen className="size-4 shrink-0" aria-hidden />
                 Log observation
               </Button>
               <Button
@@ -459,14 +420,20 @@ export function RanchWorkspaceShell({
                 type="button"
                 variant="icon"
                 size="iconSecondary"
-                className="h-[26px] w-[26px] min-h-[26px] min-w-[26px] shrink-0 overflow-hidden rounded-full border-none p-0"
-                aria-label="Account"
+                className="size-8 min-h-8 min-w-8 shrink-0 overflow-hidden rounded-xl border-none p-0"
+                aria-label={`Account (${CURRENT_USER.name})`}
               >
-                <img
-                  src="https://images.unsplash.com/photo-1555019685-686f4f67aa19?q=80&w=64&auto=format&fit=crop"
-                  alt="Chantale"
-                  className="h-[26px] w-[26px] shrink-0 rounded-full object-cover object-center"
-                />
+                {CURRENT_USER.avatarUrl ? (
+                  <img
+                    src={CURRENT_USER.avatarUrl}
+                    alt={CURRENT_USER.name}
+                    className="size-full object-cover object-center"
+                  />
+                ) : (
+                  <span className="flex size-full items-center justify-center bg-ai-accent text-[13px] font-medium text-white">
+                    {CURRENT_USER.initials}
+                  </span>
+                )}
               </Button>
               <Button
                 type="button"
@@ -483,7 +450,7 @@ export function RanchWorkspaceShell({
             ref={mainScrollRef}
             onScroll={handleMainScroll}
             className={cn(
-              "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-12 pt-0 pb-10",
+              "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pt-3 pb-[var(--scroll-area-bottom-pad)] sm:px-6 sm:pt-5 lg:px-12 lg:pt-6",
               contentClassName,
             )}
           >
@@ -498,20 +465,20 @@ export function RanchWorkspaceShell({
       {mobileNavOpen
         ? createPortal(
             <div
-              className="fixed inset-0 z-[200] flex flex-col bg-sidebar lg:hidden"
+              className="fixed inset-0 z-[200] flex min-h-0 flex-col bg-sidebar lg:hidden"
               role="dialog"
               aria-modal="true"
               aria-label="Main menu"
             >
-              <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex shrink-0 items-center justify-between px-4 py-3">
                 <Link
                   to="/"
                   onClick={dismissMobileNav}
-                  className="flex min-w-0 flex-1 items-center gap-2 rounded-lg pr-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring/35"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg pr-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring/35"
                   aria-label="RanchWise home"
                 >
-                  <RanchWiseMark size="md" className="text-white" aria-hidden />
-                  <RanchWiseWordmark className="flex-1" />
+                  <RanchWiseMark size="md" className="shrink-0 text-white" aria-hidden />
+                  <RanchWiseSidebarBranding />
                 </Link>
                 <button
                   type="button"
@@ -528,7 +495,7 @@ export function RanchWorkspaceShell({
               </div>
 
               <nav
-                className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
+                className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
                 aria-label="Main navigation"
               >
                 <MobileNavItem
@@ -567,21 +534,18 @@ export function RanchWorkspaceShell({
                 />
               </nav>
 
-              <div className="px-3 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                <span
-                  className={cn(
-                    "flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-3 text-base text-[#888888]/60 opacity-60 pointer-events-none",
-                  )}
-                  aria-disabled
-                >
-                  <Settings className="size-5 shrink-0" aria-hidden />
-                  Settings
-                </span>
+              <div className="shrink-0 px-3 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+                <SidebarAccountMenu
+                  sidebarExpanded
+                  variant="drawer"
+                  onAfterNavigate={dismissMobileNav}
+                />
               </div>
             </div>,
             document.body,
           )
         : null}
+      {showLogObservationFab ? <LogObservationFAB /> : null}
     </div>
   );
 }

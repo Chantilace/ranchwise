@@ -10,6 +10,9 @@ export interface AIResult {
   riskLabel: string
   recommendations: string[]
   patternNote: string | null
+  /** AI suggestion before user confirmation (calving flow). Mirrors `riskLevel` until the user finalizes. */
+  suggestedRiskLevel?: RiskLevel
+  suggestedRiskLabel?: string | null
 }
 
 export interface ObservationEntry {
@@ -23,7 +26,7 @@ export interface ObservationEntry {
   aiResult?: AIResult | null
   /**
    * Future (AI): traceability when an individual observation is spawned from a pasture check note
-   * (e.g. tag extraction). Complements `PastureCheck.linkedObservationIds` on the cattle domain model.
+   * (e.g. tag extraction). Complements pasture check log entries on the ranch data model.
    */
   sourcePastureCheckId?: string
 }

@@ -22,28 +22,28 @@ export function PageTitleStrip({
 }: PageTitleStripProps) {
   return (
     <div className={cn("border-b border-border pb-3", className)}>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-4">
-          <div className="min-w-0 shrink-0">
-            <h1
-              className={cn(
-                "text-xl font-medium tracking-tight text-foreground",
-                titleClassName
-              )}
-            >
-              {title}
-            </h1>
-            {description != null ? (
-              <div className="mt-0.5 text-sm text-muted-foreground">{description}</div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-4">
+            <div className="min-w-0 shrink-0">
+              <h1
+                className={cn(
+                  "text-xl font-medium tracking-tight text-foreground",
+                  titleClassName
+                )}
+              >
+                {title}
+              </h1>
+              {description != null ? (
+                <div className="mt-0.5 text-sm text-muted-foreground">{description}</div>
+              ) : null}
+            </div>
+            {inlineAfterTitle ? (
+              <div className="flex min-w-0 flex-wrap items-center gap-x-3.5 gap-y-2">{inlineAfterTitle}</div>
             ) : null}
           </div>
-          {inlineAfterTitle ? (
-            <div className="flex min-w-0 shrink-0 flex-wrap items-center">{inlineAfterTitle}</div>
-          ) : null}
         </div>
-        {actions ? (
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{actions}</div>
-        ) : null}
+        {actions ? <div className="flex shrink-0 items-start justify-end">{actions}</div> : null}
       </div>
     </div>
   )

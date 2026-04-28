@@ -1,18 +1,31 @@
 import { Dialog } from "@base-ui/react/dialog"
-import { X, Sparkles } from "lucide-react"
-import { useState, type ReactNode } from "react"
+import { Sparkle, X } from "lucide-react"
+import { useMemo, useState, type ReactNode } from "react"
+import { useScrollShadow } from "@/hooks/useScrollShadow"
+import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
+import { LogReviewFilledField } from "@/components/LogReviewFilledField"
 import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
 import { ObservationFormFields } from "@/components/ObservationFormFields"
 import { StatusBadge } from "@/components/StatusBadge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { LOG_OBSERVATION_IDENTITY_ROW } from "@/lib/logObservationLayout"
-import { mockAnalyze } from "@/lib/observationAnalyze"
+import { PastureLogFormFields } from "@/components/PastureLogFormFields"
+import { PASTURE_SEED_MEDIA } from "@/lib/pastureSeedMedia"
+import { mockAnalyze, mockAnalyzePastureCheck } from "@/lib/observationAnalyze"
+import {
+  pastureAssessedLabelFromRisk,
+  type PastureCheckCategory,
+} from "@/lib/pastureCheckTypes"
 import type { AIResult, Category, ObservationEntry, RiskLevel } from "@/types/observation"
 import { cn } from "@/lib/utils"
 
+export type LogObservationSavePayload =
+  | { kind: "animal"; category: Category; notes: string; loggedBy: string; aiResult: AIResult }
+  | { kind: "pasture"; category: PastureCheckCategory; notes: string; loggedBy: string; aiResult: AIResult }
+
 export interface LogObservationModalProps {
   open: boolean
-  /** Display name or tag (e.g. horse name or `#4821`). */
+  /** Display name or tag (e.g. horse name or cattle tag). */
   animalName?: string
   animalPhoto?: string
   /** @deprecated Use `animalName` */
@@ -26,12 +39,20 @@ export interface LogObservationModalProps {
   animalSubtitle?: string
   /** Category options in the form (e.g. horse: Health + Behavior only). */
   categories?: Category[]
+  /** Cattle: omit category picker; category on save stays driven by controller (defaults to Health). */
+  hideCategoryField?: boolean
   /** When set, modal opens in edit mode for this observation. */
   editingEntry?: ObservationEntry
+  /** Pasture checks reuse the same flow with different categories and result pills. */
+  logMode?: "animal" | "pasture"
+  /** Header and dialog accessible title (e.g. "Log pasture check"). */
+  modalHeading?: string
+  /** Forces form remount when opening a new subject (e.g. pasture id for new pasture checks). */
+  stableKey?: string
   onClose: () => void
   onSave: (
-    data: { category: Category; notes: string; loggedBy: string; aiResult: AIResult },
-    meta?: { stage: "commit" | "done" }
+    data: LogObservationSavePayload,
+    meta?: { stage: "commit" | "done" | "discard" }
   ) => void | boolean | Promise<void | boolean>
 }
 
@@ -73,40 +94,129 @@ export type LogObservationFormFooterApi = {
   save: () => void | Promise<void>
   /** Same as `save` — persist then run analysis. */
   handleAnalyze: () => void | Promise<void>
-  done: () => void | Promise<void>
+  finalize: () => void | Promise<void>
+  discard: () => void | Promise<void>
   edit: () => void
   /** Close / back without persisting (modal close or sheet → detail). */
   dismiss: () => void
 }
 
-export type LogObservationFormProps = {
+export type UseLogObservationFormControllerArgs = {
+  /** Surface controls chrome; controller renders body content only. */
+  mode?: "modal" | "sheet"
   animalName: string
-  header: ReactNode
-  /** Middle section (fields + analyzing + result block) */
-  contentClassName?: string
   categories?: Category[]
-  footer: (api: LogObservationFormFooterApi) => ReactNode
+  hideCategoryField?: boolean
+  logMode?: "animal" | "pasture"
   onSave: LogObservationModalProps["onSave"]
   onDismiss: () => void
   /** Prefill / edit an existing observation (sheet or modal). */
   initialObservation?: ObservationEntry | null
 }
 
-/** Shared observation flow; use inside modal or mobile sheet. */
-export function LogObservationForm({
+export type LogObservationFormController = {
+  body: ReactNode
+  footerApi: LogObservationFormFooterApi
+}
+
+export function LogObservationFormFooter({
+  variant,
+  api,
+}: {
+  variant: "modal" | "sheet"
+  api: LogObservationFormFooterApi
+}) {
+  return (
+    <div className="shrink-0">
+      <div className="border-t border-border">
+        <div className="px-5 py-4 md:px-7 md:py-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex shrink-0 items-center">
+              {api.phase === "result" ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="lg"
+                  className="shrink-0"
+                  onClick={() => void api.discard()}
+                >
+                  Discard
+                </Button>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {api.phase === "input" || api.phase === "saving" ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className={variant === "sheet" ? "min-h-10 shrink-0 rounded-full px-4" : "h-9 min-h-9 px-4 py-0"}
+                  onClick={api.dismiss}
+                  disabled={api.isSaving}
+                >
+                  Cancel
+                </Button>
+              ) : null}
+
+              {api.phase === "result" ? (
+                <Button type="button" variant="secondary" size="lg" className="shrink-0" onClick={api.edit}>
+                  Edit
+                </Button>
+              ) : null}
+
+              {api.phase === "input" || api.phase === "saving" ? (
+                <Button
+                  type="button"
+                  variant="default"
+                  className={cn(
+                    "min-h-0 shrink-0 gap-2 disabled:opacity-60",
+                    variant === "sheet" && "min-h-10 shrink-0 rounded-full px-4"
+                  )}
+                  disabled={!api.canAnalyze || api.isSaving}
+                  onClick={() => void api.handleAnalyze()}
+                >
+                  <Sparkle className="size-5 text-action-foreground" strokeWidth={1.5} aria-hidden />
+                  {api.isSaving ? "Analyzing…" : "Save & analyze"}
+                </Button>
+              ) : null}
+
+              {api.phase === "result" ? (
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  className="shrink-0 px-6"
+                  onClick={() => void api.finalize()}
+                >
+                  Finalize
+                </Button>
+              ) : null}
+            </div>
+          </div>
+          {api.phase === "input" || api.phase === "saving" ? (
+            <p className="mt-2 text-right text-[13px] text-muted-foreground">
+              AI will analyze and suggest next steps after saving
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Shared observation flow state machine. Dialogs place header/body/footer at the surface level. */
+export function useLogObservationFormController({
+  mode = "modal",
   animalName,
-  header,
-  contentClassName,
   categories,
-  footer,
+  hideCategoryField = false,
+  logMode = "animal",
   onSave,
   onDismiss,
   initialObservation = null,
-}: LogObservationFormProps) {
+}: UseLogObservationFormControllerArgs): LogObservationFormController {
   const [phase, setPhase] = useState<Phase>("input")
-  const [category, setCategory] = useState<Category>(
-    () => initialObservation?.category ?? "Health"
-  )
+  const [category, setCategory] = useState<Category>(() => initialObservation?.category ?? "Health")
+  const [pastureCategory, setPastureCategory] = useState<PastureCheckCategory>("walk_through")
   const [notes, setNotes] = useState(() => initialObservation?.notes ?? "")
   const [loggedBy, setLoggedBy] = useState(() => initialObservation?.loggedBy ?? "")
   const [riskLevel, setRiskLevel] = useState<RiskLevel>(
@@ -115,14 +225,13 @@ export function LogObservationForm({
   const [confirmedRiskLevel, setConfirmedRiskLevel] = useState<RiskLevel>(
     () => initialObservation?.aiResult?.riskLevel ?? "good"
   )
-  const [aiResult, setAiResult] = useState<AIResult | null>(
-    () => initialObservation?.aiResult ?? null
-  )
+  const [aiResult, setAiResult] = useState<AIResult | null>(() => initialObservation?.aiResult ?? null)
   const [committed, setCommitted] = useState(false)
 
   const canSave = notes.trim().length > 0 && loggedBy.trim().length > 0
 
-  function riskLabel(level: RiskLevel) {
+  function aiRiskLabel(level: RiskLevel) {
+    if (logMode === "pasture") return pastureAssessedLabelFromRisk(level)
     if (level === "call-vet") return "Flag"
     if (level === "monitor") return "Monitor"
     return "Good"
@@ -143,15 +252,28 @@ export function LogObservationForm({
         aiResult ??
         ({
           riskLevel,
-          riskLabel: riskLabel(riskLevel),
+          riskLabel: aiRiskLabel(riskLevel),
           recommendations: [],
           patternNote: null,
         } satisfies AIResult)
 
-      await onSave({ category, notes, loggedBy, aiResult: provisional }, { stage: "commit" })
+      if (logMode === "pasture") {
+        await onSave(
+          { kind: "pasture", category: pastureCategory, notes, loggedBy, aiResult: provisional },
+          { stage: "commit" }
+        )
+      } else {
+        await onSave(
+          { kind: "animal", category, notes, loggedBy, aiResult: provisional },
+          { stage: "commit" }
+        )
+      }
       setCommitted(true)
 
-      const result = await mockAnalyze(category, notes, animalName)
+      const result =
+        logMode === "pasture"
+          ? await mockAnalyzePastureCheck(pastureCategory, notes, animalName)
+          : await mockAnalyze(category, notes, animalName)
       const merged: AIResult = {
         ...result,
       }
@@ -165,16 +287,33 @@ export function LogObservationForm({
     }
   }
 
-  async function done() {
+  async function finalize() {
     if (!aiResult) return
     const finalAiResult: AIResult = {
       ...aiResult,
       riskLevel: confirmedRiskLevel,
-      riskLabel: riskLabel(confirmedRiskLevel),
+      riskLabel: aiRiskLabel(confirmedRiskLevel),
     }
-    const skipDismiss =
-      (await onSave({ category, notes, loggedBy, aiResult: finalAiResult }, { stage: "done" })) === true
+    const payload: LogObservationSavePayload =
+      logMode === "pasture"
+        ? { kind: "pasture", category: pastureCategory, notes, loggedBy, aiResult: finalAiResult }
+        : { kind: "animal", category, notes, loggedBy, aiResult: finalAiResult }
+    const skipDismiss = (await onSave(payload, { stage: "done" })) === true
     if (!skipDismiss) onDismiss()
+  }
+
+  async function discard() {
+    if (!aiResult) return
+    const finalAiResult: AIResult = {
+      ...aiResult,
+      riskLevel: confirmedRiskLevel,
+      riskLabel: aiRiskLabel(confirmedRiskLevel),
+    }
+    const payload: LogObservationSavePayload =
+      logMode === "pasture"
+        ? { kind: "pasture", category: pastureCategory, notes, loggedBy, aiResult: finalAiResult }
+        : { kind: "animal", category, notes, loggedBy, aiResult: finalAiResult }
+    await onSave(payload, { stage: "discard" })
   }
 
   const fieldsLocked = phase === "saving" || phase === "result" || committed
@@ -188,40 +327,50 @@ export function LogObservationForm({
     isSaving: phase === "saving",
     save,
     handleAnalyze: save,
-    done,
+    finalize,
+    discard,
     edit,
     dismiss: onDismiss,
   }
 
-  return (
-    <>
-      {header}
-      <div className={cn("flex flex-col gap-4", contentClassName)}>
-        {(() => {
-          const sectionTitle =
-            phase === "result"
-              ? initialObservation
-                ? "Review changes"
-                : "Observation logged"
-              : phase === "saving"
-                ? null
-                : initialObservation
-                  ? "Edit observation"
-                  : null
-          if (!sectionTitle) return null
-          return (
-            <p
-              className={cn(
-                "pt-4 text-sm",
-                phase === "result" ? "text-muted-foreground" : "font-semibold text-foreground"
-              )}
-            >
-              {sectionTitle}
-            </p>
-          )
-        })()}
+  const sectionTitle = useMemo(() => {
+    const isPasture = logMode === "pasture"
+    if (phase === "saving") return null
+    if (phase === "result") {
+      if (initialObservation) return "Review changes"
+      return isPasture ? "Pasture check logged" : "Observation logged"
+    }
+    return initialObservation ? "Edit observation" : null
+  }, [initialObservation, logMode, phase])
 
-        <div className="flex flex-col gap-4">
+  const body = (
+    <div className="flex flex-col gap-4">
+      {sectionTitle ? (
+        <p
+          className={cn(
+            mode === "sheet" ? "pt-3 text-sm" : "pt-4 text-sm",
+            phase === "result" ? "text-muted-foreground" : "font-semibold text-foreground"
+          )}
+        >
+          {sectionTitle}
+        </p>
+      ) : null}
+
+      <div className="flex flex-col gap-4">
+        {logMode === "pasture" ? (
+          <PastureLogFormFields
+            category={pastureCategory}
+            onCategoryChange={setPastureCategory}
+            notes={notes}
+            onNotesChange={setNotes}
+            loggedBy={loggedBy}
+            onLoggedByChange={setLoggedBy}
+            disabled={fieldsLocked}
+            readOnlyText={textLocked}
+            hideNotes={Boolean(showResultBlock)}
+            hideLoggedBy={Boolean(showResultBlock)}
+          />
+        ) : (
           <ObservationFormFields
             variant="select"
             animalName={animalName}
@@ -235,79 +384,99 @@ export function LogObservationForm({
             readOnlyText={textLocked}
             categories={categories}
             hideNotes={Boolean(showResultBlock)}
+            hideLoggedBy={Boolean(showResultBlock)}
+            hideCategory={hideCategoryField}
           />
-        </div>
-
-        {phase === "saving" ? <AnalyzingSkeleton /> : null}
-        {showResultBlock && aiResult ? (
-          <>
-            <SmartSuggestionsPanel
-              mode="modal"
-              suggestions={aiResult.recommendations}
-              contextNote={aiResult.patternNote}
-              className="mt-3"
-            />
-            <div className="flex flex-col gap-2">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground opacity-70">
-                  Confirm status
-                </p>
-                <p className="mt-0.5 text-xs">
-                  <span className="text-ai-accent">✦ AI assessed:</span>{" "}
-                  <span className="text-foreground">{riskLabel(aiResult.riskLevel)}</span>
-                </p>
-              </div>
-              <div className="flex gap-2">
-                {(
-                  [
-                    {
-                      id: "good" as const,
-                      label: "Good",
-                      active: "bg-status-good-bg border-status-good-bg text-status-good-text",
-                    },
-                    {
-                      id: "monitor" as const,
-                      label: "Monitor",
-                      active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
-                    },
-                    {
-                      id: "call-vet" as const,
-                      label: "Flag",
-                      active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
-                    },
-                  ] as const
-                ).map((opt) => {
-                  const isSelected = confirmedRiskLevel === opt.id
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setConfirmedRiskLevel(opt.id)}
-                      className={cn(
-                        "inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
-                        isSelected
-                          ? opt.active
-                          : "border-border bg-background text-foreground hover:bg-muted/60"
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  )
-                })}
-              </div>
-              <div className="mt-5 rounded-lg border border-border p-3">
-                <p className="mb-1 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                  Your observation
-                </p>
-                <p className="text-sm leading-relaxed text-foreground">{notes}</p>
-              </div>
-            </div>
-          </>
-        ) : null}
+        )}
       </div>
-      {footer(footerApi)}
-    </>
+
+      {phase === "saving" ? <AnalyzingSkeleton /> : null}
+      {showResultBlock && aiResult ? (
+        <>
+          <SmartSuggestionsPanel
+            mode="modal"
+            labelGlyphStyle="section"
+            suggestions={aiResult.recommendations}
+            contextNote={aiResult.patternNote}
+            className="mt-3"
+          />
+          <div className="flex flex-col gap-2">
+            <div>
+              <p className="text-[13px] font-medium uppercase tracking-wide text-muted-foreground opacity-70">
+                Confirm status
+              </p>
+              <p className="mt-0.5 text-[13px] text-foreground">
+                <AiAnnotationMark /> AI assessed:{" "}
+                <span className="text-foreground">{aiRiskLabel(aiResult.riskLevel)}</span>
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {(
+                logMode === "pasture"
+                  ? ([
+                      {
+                        id: "good" as const,
+                        label: "Stable",
+                        active: "bg-status-good-bg border-status-good-bg text-status-good-text",
+                      },
+                      {
+                        id: "monitor" as const,
+                        label: "Concern",
+                        active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
+                      },
+                      {
+                        id: "call-vet" as const,
+                        label: "Action needed",
+                        active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
+                      },
+                    ] as const)
+                  : ([
+                      {
+                        id: "good" as const,
+                        label: "Good",
+                        active: "bg-status-good-bg border-status-good-bg text-status-good-text",
+                      },
+                      {
+                        id: "monitor" as const,
+                        label: "Monitor",
+                        active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
+                      },
+                      {
+                        id: "call-vet" as const,
+                        label: "Flag",
+                        active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
+                      },
+                    ] as const)
+              ).map((opt) => {
+                const isSelected = confirmedRiskLevel === opt.id
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setConfirmedRiskLevel(opt.id)}
+                    className={cn(
+                      "inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
+                      isSelected ? opt.active : "border-border bg-background text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="mt-5 flex flex-col gap-2">
+              <LogReviewFilledField label={logMode === "pasture" ? "Your check notes" : "Your observation"}>
+                {notes.trim() || "—"}
+              </LogReviewFilledField>
+              <LogReviewFilledField label="Logged by">{loggedBy.trim() || "—"}</LogReviewFilledField>
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
   )
+
+  return { body, footerApi }
 }
 
 function LogObservationModalInner({
@@ -317,6 +486,9 @@ function LogObservationModalInner({
   statusBadge,
   behaviorStatusBadge,
   categories,
+  hideCategoryField,
+  logMode = "animal",
+  modalHeading = "Log observation",
   editingEntry,
   onClose,
   onSave,
@@ -327,121 +499,94 @@ function LogObservationModalInner({
   statusBadge?: "Flag" | "Monitor" | "Good"
   behaviorStatusBadge?: "Flag" | "Monitor" | "Good"
   categories?: Category[]
+  hideCategoryField?: boolean
+  logMode?: "animal" | "pasture"
+  modalHeading?: string
   editingEntry?: ObservationEntry
   onClose: () => void
   onSave: LogObservationModalProps["onSave"]
 }) {
   const isEdit = !!editingEntry
-  const avatarRadius = categories != null ? "rounded-lg" : "rounded-full"
+  const avatarRadius =
+    logMode === "pasture" ? "rounded-lg" : categories != null ? "rounded-xl" : "rounded-full"
+  const pastureSeedPhoto =
+    logMode === "pasture" ? (PASTURE_SEED_MEDIA[animalName]?.imageUrl ?? null) : null
+  const identityPhoto = animalPhoto ?? pastureSeedPhoto ?? undefined
+
+  const { scrollRef, isScrolled } = useScrollShadow()
+  const { body, footerApi } = useLogObservationFormController({
+    mode: "modal",
+    animalName,
+    categories,
+    hideCategoryField,
+    logMode,
+    initialObservation: editingEntry ?? null,
+    onSave,
+    onDismiss: onClose,
+  })
+
   return (
     <>
       <Dialog.Title className="sr-only">
-        {isEdit ? "Edit observation" : "Log observation"} — {animalName}
+        {isEdit ? "Edit observation" : modalHeading} — {animalName}
       </Dialog.Title>
-      <LogObservationForm
-        animalName={animalName}
-        categories={categories}
-        initialObservation={editingEntry ?? null}
-        onDismiss={onClose}
-        header={
-          <>
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-border px-4 pb-3 pt-4 md:px-6 md:pt-5 md:pb-3">
-              <span className="min-w-0" aria-hidden />
-              <p className="text-center text-base font-medium text-foreground">Log observation</p>
-              <div className="flex justify-end">
-                <Dialog.Close
-                  type="button"
-                  className={cn(buttonVariants({ variant: "icon", size: "iconGhost" }))}
-                  aria-label="Close"
-                >
-                  <X className="size-4" aria-hidden />
-                </Dialog.Close>
-              </div>
-            </div>
-            <div className={LOG_OBSERVATION_IDENTITY_ROW}>
-              <div className="flex min-w-0 flex-1 items-start gap-3">
-                <div
-                  className={cn(
-                    "relative flex size-12 shrink-0 items-center justify-center overflow-hidden bg-muted",
-                    avatarRadius
-                  )}
-                >
-                  {animalPhoto ? (
-                    <img src={animalPhoto} alt="" className="size-full object-cover object-center" />
-                  ) : (
-                    <span className="text-xs font-semibold text-muted-foreground" aria-hidden>
-                      {initials(animalName)}
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-base font-medium text-foreground">{animalName}</span>
-                  </div>
-                  {animalSubtitle ? (
-                    <p className="mt-0.5 text-xs text-muted-foreground">{animalSubtitle}</p>
-                  ) : null}
-                </div>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-end justify-end gap-1.5">
-                {statusBadge ? <StatusBadge status={statusFromModalBadge(statusBadge)} /> : null}
-                {behaviorStatusBadge ? (
-                  <StatusBadge status={statusFromModalBadge(behaviorStatusBadge)} />
-                ) : null}
-              </div>
-            </div>
-          </>
-        }
-        contentClassName="max-h-[min(60dvh,520px)] overflow-y-auto px-4 pb-4 pt-0 md:px-6 md:pb-5 md:pt-0"
-        footer={({ phase, canAnalyze, isSaving, handleAnalyze, done, edit, dismiss }) => (
-          <div className="border-t border-border px-4 py-4 md:px-6">
-            <div className="flex justify-end gap-2">
-              {phase === "input" || phase === "saving" ? (
-                <Button
-                  type="button"
-                  variant="tertiary"
-                  className="h-9 min-h-9 px-4 py-0"
-                  onClick={dismiss}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </Button>
-              ) : null}
-
-              {phase === "result" ? (
-                <Button type="button" variant="secondary" onClick={edit}>
-                  Edit
-                </Button>
-              ) : null}
-
-              {phase === "input" || phase === "saving" ? (
-                <Button
-                  type="button"
-                  variant="default"
-                  className="min-h-0 shrink-0 gap-2 disabled:opacity-60"
-                  disabled={!canAnalyze || isSaving}
-                  onClick={() => void handleAnalyze()}
-                >
-                  <Sparkles className="size-5 text-[var(--ai-mark)]" aria-hidden />
-                  {isSaving ? "Analyzing…" : "Save observation"}
-                </Button>
-              ) : null}
-
-              {phase === "result" ? (
-                <Button type="button" variant="primary" size="lg" className="px-6" onClick={() => void done()}>
-                  Done
-                </Button>
-              ) : null}
-            </div>
-            {phase === "input" || phase === "saving" ? (
-              <p className="mt-2 text-right text-xs text-muted-foreground">
-                AI will analyze and suggest next steps after saving
-              </p>
-            ) : null}
+      <div
+        className="scroll-shadow-header shrink-0 rounded-t-2xl bg-background"
+        data-scrolled={isScrolled ? "true" : undefined}
+      >
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-border px-4 pb-3 pt-4 md:px-6 md:pb-3 md:pt-5">
+          <span className="min-w-0" aria-hidden />
+          <p className="text-center text-base font-medium text-foreground">{modalHeading}</p>
+          <div className="flex justify-end">
+            <Dialog.Close
+              type="button"
+              className={cn(buttonVariants({ variant: "icon", size: "iconGhost" }))}
+              aria-label="Close"
+            >
+              <X className="size-4" aria-hidden />
+            </Dialog.Close>
           </div>
-        )}
-        onSave={onSave}
-      />
+        </div>
+        <div className={LOG_OBSERVATION_IDENTITY_ROW}>
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <div
+              className={cn(
+                "relative flex size-12 shrink-0 items-center justify-center overflow-hidden bg-muted",
+                avatarRadius
+              )}
+            >
+              {identityPhoto ? (
+                <img src={identityPhoto} alt="" className="size-full object-cover object-center" />
+              ) : (
+                <span className="text-[13px] font-semibold text-muted-foreground" aria-hidden>
+                  {initials(animalName)}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-base font-medium text-foreground">{animalName}</span>
+              </div>
+              {animalSubtitle ? (
+                <p className="mt-0.5 text-[13px] text-muted-foreground">{animalSubtitle}</p>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-end justify-end gap-1.5">
+            {statusBadge ? <StatusBadge status={statusFromModalBadge(statusBadge)} /> : null}
+            {behaviorStatusBadge ? <StatusBadge status={statusFromModalBadge(behaviorStatusBadge)} /> : null}
+          </div>
+        </div>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto overflow-x-visible"
+      >
+        <div className="px-5 pt-0 pb-[var(--scroll-area-bottom-pad)] md:px-7 md:pt-0">{body}</div>
+      </div>
+
+      <LogObservationFormFooter variant="modal" api={footerApi} />
     </>
   )
 }
@@ -456,6 +601,10 @@ export function LogObservationModal({
   statusBadge,
   behaviorStatusBadge,
   categories,
+  hideCategoryField,
+  logMode = "animal",
+  modalHeading = "Log observation",
+  stableKey,
   editingEntry,
   onClose,
   onSave,
@@ -473,16 +622,19 @@ export function LogObservationModal({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/55 backdrop-blur-[1px] transition-opacity data-[ending-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <Dialog.Popup className="flex w-full min-w-0 max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl outline-none">
+          <Dialog.Popup className="flex w-full min-w-0 max-w-lg flex-col max-h-[90dvh] overflow-hidden rounded-2xl border border-border bg-background shadow-xl outline-none">
             {open ? (
               <LogObservationModalInner
-                key={editingEntry?.id ?? "new"}
+                key={stableKey ?? editingEntry?.id ?? "new"}
                 animalName={animalName}
                 animalPhoto={animalPhoto}
                 animalSubtitle={animalSubtitle}
                 statusBadge={statusBadge}
                 behaviorStatusBadge={behaviorStatusBadge}
                 categories={categories}
+                hideCategoryField={hideCategoryField}
+                logMode={logMode}
+                modalHeading={modalHeading}
                 editingEntry={editingEntry}
                 onClose={onClose}
                 onSave={onSave}

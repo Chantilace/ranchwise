@@ -1,12 +1,9 @@
 /* eslint-disable react-refresh/only-export-components -- exports constants + helpers used across app */
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
-import { useEffect, useMemo, useState, type ReactNode } from "react"
-import {
-  ObservationTableActionsCell,
-  rosterObservationColumnWidthClass,
-} from "@/components/ObservationTableActionsCell"
+import { ArrowDown, ArrowUp, ArrowUpDown, NotebookPen } from "lucide-react"
+import { useEffect, useState, type ReactNode } from "react"
 import { RosterCareDateCell } from "@/components/RosterCareDateCell"
 import { useRanchData } from "@/contexts/RanchDataContext"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -16,9 +13,12 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { FeedOption } from "@/lib/constants"
-import { parseObservationDate } from "@/lib/initialObservations"
-import { compareNullableIsoDates } from "@/lib/rosterCareDate"
-import { getStatusBadgeClass } from "@/lib/statusUtils"
+import {
+  getHorseEffectiveLastDentalIso,
+  getHorseEffectiveLastFarrierIso,
+} from "@/lib/horseCareObservationSelectors"
+import type { HorseRosterSortColumn, HorseSortKey } from "@/lib/horseRosterSort"
+import { getTableStatusBadgeClass } from "@/lib/statusUtils"
 import { cn } from "@/lib/utils"
 
 export type LogCategory = "health" | "behavior"
@@ -99,10 +99,10 @@ const minnieLogs: ActivityLogEntry[] = [
     id: "3",
     date: "2/16/26",
     category: "health",
-    notes: "Dental performed. NSF",
+    notes: "Routine mouth exam performed. NSF",
     loggedBy: "Joe",
     aiRecommendation:
-      "Post-dental NSF (no significant findings) usually means smooth recovery expected; soft tissue should be monitored short term.",
+      "Post-procedure NSF (no significant findings) usually means smooth recovery expected; soft tissue should be monitored short term.",
     aiNextSteps: [
       "Feed soaked hay or chop for several days if chewing seems hesitant.",
       "Recheck in 1–2 weeks if quidding or weight loss appears.",
@@ -183,7 +183,7 @@ const minnieLogs: ActivityLogEntry[] = [
       "Annual vaccines administered by vet. Good overall health. Vet noted she's in excellent condition for 13.",
     loggedBy: "Chantale",
     aiRecommendation: "Vaccines current. No acute concerns noted at annual exam.",
-    aiNextSteps: ["Schedule dental float for early 2026.", "Continue senior monitoring protocol."],
+    aiNextSteps: ["Schedule mouth maintenance for early 2026.", "Continue senior monitoring protocol."],
   },
 ]
 
@@ -453,9 +453,9 @@ const dustyLogs: ActivityLogEntry[] = [
     date: "1/20/26",
     category: "health",
     notes:
-      "Teeth floated by vet. Minimal points — good dental health for his age. Back on full grain same day.",
+      "Routine occlusal work by vet. Minimal points — good mouth health for his age. Back on full grain same day.",
     loggedBy: "Chantale",
-    aiNextSteps: ["Next float in 12 months."],
+    aiNextSteps: ["Recheck mouth in 12 months."],
   },
   {
     id: "dusty-6",
@@ -464,7 +464,7 @@ const dustyLogs: ActivityLogEntry[] = [
     notes:
       "Annual vaccines done. Vet happy with overall condition. Weight 1,150 lbs, appropriate for frame.",
     loggedBy: "Chantale",
-    aiNextSteps: ["Dental float due January.", "Continue current management protocol."],
+    aiNextSteps: ["Mouth maintenance due January.", "Continue current management protocol."],
   },
   {
     id: "dusty-7",
@@ -798,7 +798,7 @@ const copperetteLogs: ActivityLogEntry[] = [
     notes:
       "Growing well — gaining height and weight on schedule. Good coat, bright eyes. Easy to handle.",
     loggedBy: "Maria",
-    aiNextSteps: ["Continue foal/juvenile feed ration.", "Schedule first dental check at age 3."],
+    aiNextSteps: ["Continue foal/juvenile feed ration.", "Schedule first vet mouth review at age 3."],
   },
   {
     id: "copperette-2",
@@ -836,7 +836,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
     logs: minnieLogs,
     bodyConditionScore: 7,
     lastFarrier: "2026-01-20",
-    lastDentalDate: "2025-05-10",
+    lastDentalDate: "2025-04-22",
   },
   {
     id: "blondie",
@@ -965,7 +965,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
     photoUrl:
       "https://images.unsplash.com/photo-1722176621528-e767e740bd89?q=80&w=1600&auto=format",
     lastFarrier: "2026-01-20",
-    lastDentalDate: "2025-05-10",
+    lastDentalDate: "2025-05-01",
     logs: dustyLogs,
   },
   {
@@ -991,8 +991,8 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
     name: "Pete",
     age: "23 yrs",
     sex: "Gelding",
-    role: "Working",
-    pasture: "Main Corral",
+    role: "Training",
+    pasture: "Training Corral",
     feed: ["Alfafa", "Hay", "Pasture Graze"],
     health: "01/24/26",
     dental: "03/12/26",
@@ -1019,7 +1019,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
     photoUrl:
       "https://images.unsplash.com/photo-1604350479626-e38725bf7889?q=80&w=1600&auto=format",
     lastFarrier: "2026-03-01",
-    lastDentalDate: "2026-02-20",
+    lastDentalDate: "2025-05-03",
     logs: copperetteLogs,
   },
   {
@@ -1136,7 +1136,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
     health: "04/01/26",
     dental: "03/12/26",
     healthStatus: "good",
-    behaviorStatus: "flag",
+    behaviorStatus: "good",
     photoUrl: "https://images.unsplash.com/photo-1774517106087-542cb1418116?q=80&w=1600&auto=format",
     lastFarrier: "2026-02-10",
     lastDentalDate: "2025-10-15",
@@ -1222,7 +1222,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
     behaviorStatus: "good",
     photoUrl: "https://images.unsplash.com/photo-1606107869722-d5cbadabe2f0?q=80&w=1600&auto=format",
     lastFarrier: "2026-02-10",
-    lastDentalDate: "2025-10-15",
+    lastDentalDate: "2025-04-28",
     logs: blueberryLogs,
   },
   {
@@ -1235,7 +1235,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
     feed: ["Alfalfa", "Hay", "Pasture Graze"],
     health: "03/05/26",
     dental: "03/12/26",
-    healthStatus: "monitor",
+    healthStatus: "good",
     behaviorStatus: "good",
     photoUrl: "https://images.unsplash.com/photo-1648991138204-5af092ff044a?q=80&w=1600&auto=format",
     lastFarrier: "2026-02-10",
@@ -1398,7 +1398,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
     behaviorStatus: "good",
     photoUrl: "https://images.unsplash.com/photo-1770405991336-66ae24d7a334?q=80&w=1600&auto=format",
     lastFarrier: "2026-03-01",
-    lastDentalDate: "2026-02-20",
+    lastDentalDate: "2025-05-02",
     logs: [
       {
         id: "ace-1",
@@ -1596,7 +1596,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
     feed: ["Alfalfa", "Hay", "Pasture Graze"],
     health: "04/05/26",
     dental: "03/12/26",
-    healthStatus: "monitor",
+    healthStatus: "good",
     behaviorStatus: "good",
     photoUrl: "https://images.unsplash.com/photo-1546894239-c9865f479ad0?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     lastFarrier: "2026-03-01",
@@ -1726,8 +1726,8 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
     ],
   },
   {
-    id: "chip",
-    name: "Chip",
+    id: "junie",
+    name: "Junie",
     age: "1 yr",
     sex: "Colt",
     role: "Juvenile",
@@ -1804,22 +1804,6 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
       },
     ],
   },
-  {
-    id: "grit",
-    name: "Grit",
-    age: "1 yr",
-    sex: "Colt",
-    role: "Juvenile",
-    pasture: "Juvenile Corral",
-    feed: ["Hay", "Pasture Graze"],
-    health: "03/01/26",
-    dental: "MM/DD/YY",
-    healthStatus: "good",
-    behaviorStatus: "good",
-    photoUrl: "https://images.pexels.com/photos/14024326/pexels-photo-14024326.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    lastFarrier: "2026-03-01",
-    lastDentalDate: "2026-02-20",
-  },
 ]
 
 /** Stable key for merging session logs in the parent */
@@ -1836,7 +1820,7 @@ function horseDisplayInitials(name: string) {
     .toUpperCase()
 }
 
-function HorseRosterAvatar({ name, photoUrl }: { name: string; photoUrl?: string }) {
+function HorseRosterAvatarCircle({ name, photoUrl }: { name: string; photoUrl?: string }) {
   const [imgFailed, setImgFailed] = useState(false)
   const trimmed = photoUrl?.trim()
   const showImg = Boolean(trimmed) && !imgFailed
@@ -1846,194 +1830,125 @@ function HorseRosterAvatar({ name, photoUrl }: { name: string; photoUrl?: string
     setImgFailed(false)
   }, [trimmed])
 
-  return (
-    <div className="flex min-w-0 max-w-[min(280px,40vw)] items-center gap-2.5">
-      {showImg ? (
-        <img
-          src={trimmed}
-          alt=""
-          className="size-9 shrink-0 rounded-lg object-cover object-center"
-          loading="lazy"
-          onError={() => setImgFailed(true)}
-        />
-      ) : (
-        <div
-          className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-neutral-200 text-xs font-semibold text-neutral-700"
-          aria-hidden
-        >
-          {horseDisplayInitials(name)}
-        </div>
-      )}
-      <span className="min-w-0 truncate">{name}</span>
+  return showImg ? (
+    <div className="size-12 shrink-0 overflow-hidden rounded-xl bg-neutral-100">
+      <img
+        src={trimmed}
+        alt=""
+        className="size-full object-cover object-center"
+        loading="lazy"
+        onError={() => setImgFailed(true)}
+      />
+    </div>
+  ) : (
+    <div
+      className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-neutral-200 text-[13px] font-semibold text-neutral-700"
+      aria-hidden
+    >
+      {horseDisplayInitials(name)}
     </div>
   )
 }
 
-export type HorseSortKey =
-  | "name"
-  | "healthStatus"
-  | "behaviorStatus"
-  | "age"
-  | "sex"
-  | "role"
-  | "feed"
-  | "health"
-  | "dental"
-  | "farrier"
-  | "pasture"
+export type { HorseSortKey } from "@/lib/horseRosterSort"
 
-function parseAgeYears(age: string): number {
-  const m = age.trim().match(/^(\d+)/)
-  return m ? Number(m[1]) : 0
-}
+const HORSE_ROSTER_TH_LAYOUT =
+  "h-14 box-border border-b border-[var(--color-border-tertiary)] bg-secondary px-0 py-0 text-left align-middle text-[13px] font-normal leading-tight whitespace-nowrap text-foreground"
+const HORSE_ROSTER_TH_STICKY_BODY = "sticky top-0 z-10 shadow-[var(--shadow-sticky-scroll)]"
+const HORSE_ROSTER_TH_STICKY_IDENTITY =
+  "sticky left-0 top-0 z-30 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.08),var(--shadow-sticky-scroll)]"
 
-const HERD_STATUS_SORT_ORDER: Record<HorseTableRow["healthStatus"], number> = {
-  flag: 0,
-  monitor: 1,
-  good: 2,
-}
+const HORSE_SORT_ICON_SM = "size-3.5 shrink-0 stroke-2"
 
-const HORSE_CARE_DATE_SORT_KEYS = new Set<HorseSortKey>(["farrier", "dental"])
-
-function sortHorseRows(rows: HorseTableRow[], key: HorseSortKey, dir: "asc" | "desc"): HorseTableRow[] {
-  const mult = dir === "asc" ? 1 : -1
-  return [...rows].sort((a, b) => {
-    let cmp = 0
-    switch (key) {
-      case "name":
-        cmp = a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
-        break
-      case "healthStatus":
-        cmp = HERD_STATUS_SORT_ORDER[a.healthStatus] - HERD_STATUS_SORT_ORDER[b.healthStatus]
-        break
-      case "behaviorStatus":
-        cmp = HERD_STATUS_SORT_ORDER[a.behaviorStatus] - HERD_STATUS_SORT_ORDER[b.behaviorStatus]
-        break
-      case "age":
-        cmp = parseAgeYears(a.age) - parseAgeYears(b.age)
-        break
-      case "sex":
-        cmp = a.sex.localeCompare(b.sex, undefined, { sensitivity: "base" })
-        break
-      case "role":
-        cmp = a.role.localeCompare(b.role, undefined, { sensitivity: "base" })
-        break
-      case "feed": {
-        const fa = a.feed.join(" / ")
-        const fb = b.feed.join(" / ")
-        cmp = fa.localeCompare(fb, undefined, { sensitivity: "base" })
-        break
-      }
-      case "health":
-        cmp = parseObservationDate(a.health) - parseObservationDate(b.health)
-        break
-      case "dental":
-        cmp = compareNullableIsoDates(a.lastDentalDate, b.lastDentalDate, dir)
-        break
-      case "farrier":
-        cmp = compareNullableIsoDates(
-          a.lastFarrier ?? a.lastFarrierDate,
-          b.lastFarrier ?? b.lastFarrierDate,
-          dir
-        )
-        break
-      case "pasture":
-        cmp = a.pasture.localeCompare(b.pasture, undefined, { sensitivity: "base" })
-        break
-      default:
-        break
-    }
-    if (cmp !== 0) return HORSE_CARE_DATE_SORT_KEYS.has(key) ? cmp : mult * cmp
-    return a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
-  })
-}
-
-function SortHeader({
+function HorseRosterSortableColumnHeader({
   children,
   className,
-  column,
+  stickyIdentity,
   sortKey,
-  sortDir,
+  sortColumn,
+  sortDirection,
   onSort,
 }: {
   children: ReactNode
   className?: string
-  column: HorseSortKey
-  sortKey: HorseSortKey
-  sortDir: "asc" | "desc"
-  onSort: (column: HorseSortKey) => void
+  stickyIdentity?: boolean
+  sortKey?: HorseSortKey
+  sortColumn: HorseRosterSortColumn
+  sortDirection: "asc" | "desc"
+  onSort?: (key: HorseSortKey) => void
 }) {
-  const active = sortKey === column
+  const interactive = Boolean(sortKey && onSort)
+  const active = sortKey != null && sortColumn === sortKey
+  const showStrongArrow = active
+  const showFaintSortHint = interactive && !active
   return (
     <TableHead
       scope="col"
       className={cn(
-        "h-14 border-b border-neutral-200 bg-[var(--muted)] px-2 text-left text-sm font-medium whitespace-nowrap text-foreground",
+        HORSE_ROSTER_TH_LAYOUT,
+        stickyIdentity
+          ? cn(HORSE_ROSTER_TH_STICKY_IDENTITY, "w-[280px] min-w-[280px] max-w-[280px]")
+          : HORSE_ROSTER_TH_STICKY_BODY,
         className
       )}
+      aria-sort={
+        showStrongArrow
+          ? sortDirection === "asc"
+            ? "ascending"
+            : "descending"
+          : interactive
+            ? "none"
+            : undefined
+      }
     >
-      <button
-        type="button"
-        className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md py-2 pr-1 text-left outline-none hover:bg-neutral-100/80 focus-visible:ring-2 focus-visible:ring-neutral-300"
-        onClick={(e) => {
-          e.stopPropagation()
-          onSort(column)
-        }}
-        aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-      >
-        <span>{children}</span>
-        {active ? (
-          sortDir === "asc" ? (
-            <ArrowUp className="size-4 shrink-0 text-foreground" aria-hidden />
-          ) : (
-            <ArrowDown className="size-4 shrink-0 text-foreground" aria-hidden />
-          )
-        ) : (
-          <ArrowUpDown className="size-4 shrink-0 text-neutral-500 opacity-50" aria-hidden />
-        )}
-      </button>
+      {interactive && sortKey ? (
+        <button
+          type="button"
+          className={cn(
+            "group flex h-14 w-full min-w-0 cursor-pointer items-center gap-1.5 rounded-sm px-3.5 text-left text-[13px] transition-colors",
+            "hover:bg-[var(--table-sticky-hover-bg)]",
+            showStrongArrow
+              ? "font-medium text-action"
+              : "font-normal text-foreground hover:text-action",
+          )}
+          onClick={() => onSort?.(sortKey)}
+        >
+          <span className="min-w-0 shrink">{children}</span>
+          {showStrongArrow ? (
+            sortDirection === "asc" ? (
+              <ArrowUp className={cn(HORSE_SORT_ICON_SM, "text-action")} aria-hidden />
+            ) : (
+              <ArrowDown className={cn(HORSE_SORT_ICON_SM, "text-action")} aria-hidden />
+            )
+          ) : showFaintSortHint ? (
+            <ArrowUpDown
+              className={cn(
+                HORSE_SORT_ICON_SM,
+                "text-muted-foreground transition-colors group-hover:text-action",
+              )}
+              aria-hidden
+            />
+          ) : null}
+        </button>
+      ) : (
+        <span className="flex h-14 items-center px-3.5 text-muted-foreground">{children}</span>
+      )}
     </TableHead>
   )
 }
 
-export function RoleBadge({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-lg border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-xs font-medium text-foreground">
-      {children}
-    </span>
-  )
-}
-
-/** Roster health or behavior status badge — `getStatusBadgeClass`. */
+/** Roster health or behavior status badge — table geometry. */
 function HorseRosterStatusCell({ status }: { status: HorseTableRow["healthStatus"] }) {
   const label = status === "flag" ? "Flag" : status === "monitor" ? "Monitor" : "Good"
   if (status === "good") return null
-  return <span className={getStatusBadgeClass(status)}>{label}</span>
+  return <span className={getTableStatusBadgeClass(status)}>{label}</span>
 }
 
-function HorseRosterObservationCell({
-  row,
-  onAddViaParent,
-}: {
-  row: HorseTableRow
-  /** e.g. mobile sheet for new log; falls back to `openLogModal` */
-  onAddViaParent?: (row: HorseTableRow) => void
-}) {
-  const { openLogModal } = useRanchData()
-
-  return (
-    <ObservationTableActionsCell
-      onAddClick={(e) => {
-        e.stopPropagation()
-        if (onAddViaParent) onAddViaParent(row)
-        else openLogModal(row)
-      }}
-    />
-  )
-}
-
-type HeguyRanchCoPilotProps = {
+type RanchWiseHorseRosterProps = {
   horseRows?: HorseTableRow[]
+  sortColumn?: HorseRosterSortColumn
+  sortDirection?: "asc" | "desc"
+  onColumnSort?: (key: HorseSortKey) => void
   onHorseRowNavigate?: (row: HorseTableRow) => void
   onHorseLog?: (row: HorseTableRow) => void
   filterSlot?: ReactNode
@@ -2044,155 +1959,135 @@ type HeguyRanchCoPilotProps = {
   }
 }
 
-export function HeguyRanchCoPilot({
+export function RanchWiseHorseRoster({
   horseRows = SAMPLE_HORSE_ROWS,
+  sortColumn = "lastObservation",
+  sortDirection = "desc",
+  onColumnSort,
   onHorseRowNavigate,
   onHorseLog,
   filterSlot,
   emptyState,
-}: HeguyRanchCoPilotProps) {
-  const [sortKey, setSortKey] = useState<HorseSortKey>("name")
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
-
-  const sortedHorseRows = useMemo(
-    () => sortHorseRows(horseRows, sortKey, sortDir),
-    [horseRows, sortKey, sortDir]
-  )
-
-  function handleSort(column: HorseSortKey) {
-    if (column === sortKey) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
-    } else {
-      setSortKey(column)
-      setSortDir("asc")
-    }
-  }
+}: RanchWiseHorseRosterProps) {
+  const { openLogModal, observationsByHorse } = useRanchData()
 
   return (
-    <>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-h-0">
       {filterSlot != null ? (
-        <div className="flex w-full flex-wrap items-center gap-4 pt-0 pb-2">
+        <div className="flex w-full shrink-0 flex-wrap items-center gap-4 pt-0 pb-2">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-4">{filterSlot}</div>
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-2 rounded-xl pb-16">
-        <Table className="border-separate border-spacing-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col pb-4 md:pb-0">
+        <Table className="border-separate border-spacing-0" containerClassName="min-w-0">
             <TableHeader>
               <TableRow className="border-neutral-200 hover:bg-transparent">
-                <SortHeader
-                            className="min-w-[160px]"
-                            column="name"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Name
-                          </SortHeader>
-                          <SortHeader
-                            className="w-[100px]"
-                            column="healthStatus"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Health
-                          </SortHeader>
-                          <SortHeader
-                            className="w-[100px]"
-                            column="behaviorStatus"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Behavior
-                          </SortHeader>
-                          <SortHeader
-                            className="w-[66px]"
-                            column="age"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Age
-                          </SortHeader>
-                          <SortHeader
-                            className="w-[66px]"
-                            column="sex"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Sex
-                          </SortHeader>
-                          <SortHeader
-                            className="min-w-[100px]"
-                            column="role"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Role
-                          </SortHeader>
-                          <SortHeader
-                            className="min-w-[140px]"
-                            column="feed"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Feed
-                          </SortHeader>
-                          <SortHeader
-                            className="min-w-[120px]"
-                            column="health"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Last log
-                          </SortHeader>
-                          <SortHeader
-                            className="min-w-[110px]"
-                            column="dental"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Last dental
-                          </SortHeader>
-                          <SortHeader
-                            className="min-w-[110px]"
-                            column="farrier"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Last farrier
-                          </SortHeader>
-                          <SortHeader
-                            className="w-[91px]"
-                            column="pasture"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                          >
-                            Pasture
-                          </SortHeader>
-                          <TableHead
-                            scope="col"
-                            className={cn(
-                              "sticky right-0 z-20 h-14 min-w-[96px] border-b border-l border-neutral-200 bg-[var(--muted)] px-2 text-left text-sm font-medium whitespace-nowrap text-foreground opacity-100 shadow-[-8px_0_16px_-8px_rgba(0,0,0,0.12)]"
-                            )}
-                          >
-                            Observation
-                          </TableHead>
+                <HorseRosterSortableColumnHeader
+                  stickyIdentity
+                  sortKey="name"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Name
+                </HorseRosterSortableColumnHeader>
+                <HorseRosterSortableColumnHeader
+                  className="w-[100px]"
+                  sortKey="healthStatus"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Health
+                </HorseRosterSortableColumnHeader>
+                <HorseRosterSortableColumnHeader
+                  className="w-[100px]"
+                  sortKey="behaviorStatus"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Behavior
+                </HorseRosterSortableColumnHeader>
+                <HorseRosterSortableColumnHeader
+                  className="w-[66px]"
+                  sortKey="age"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Age
+                </HorseRosterSortableColumnHeader>
+                <HorseRosterSortableColumnHeader
+                  className="w-[66px]"
+                  sortKey="sex"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Sex
+                </HorseRosterSortableColumnHeader>
+                <HorseRosterSortableColumnHeader
+                  className="min-w-[100px]"
+                  sortKey="role"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Role
+                </HorseRosterSortableColumnHeader>
+                <HorseRosterSortableColumnHeader
+                  className="min-w-[140px]"
+                  sortKey="feed"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Feed
+                </HorseRosterSortableColumnHeader>
+                <HorseRosterSortableColumnHeader
+                  className="min-w-[120px]"
+                  sortKey="health"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Last log
+                </HorseRosterSortableColumnHeader>
+                <HorseRosterSortableColumnHeader
+                  className="min-w-[110px]"
+                  sortKey="dental"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Last dental
+                </HorseRosterSortableColumnHeader>
+                <HorseRosterSortableColumnHeader
+                  className="min-w-[110px]"
+                  sortKey="farrier"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Last farrier
+                </HorseRosterSortableColumnHeader>
+                <HorseRosterSortableColumnHeader
+                  className="w-[91px]"
+                  sortKey="pasture"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={onColumnSort}
+                >
+                  Pasture
+                </HorseRosterSortableColumnHeader>
                 </TableRow>
             </TableHeader>
             <TableBody className="[&_tr:last-child_td]:border-b-0 [&_tr:last-child]:!border-b-0">
-              {sortedHorseRows.length === 0 && emptyState ? (
+              {horseRows.length === 0 && emptyState ? (
                 <TableRow className="border-neutral-200 hover:bg-transparent">
-                  <TableCell colSpan={12} className="h-32 border-b-0 bg-white text-center align-middle">
+                  <TableCell colSpan={11} className="h-32 border-b-0 bg-white text-center align-middle">
                     <div className="flex flex-col items-center gap-2">
                       <p className="text-sm font-medium text-foreground">{emptyState.title}</p>
                       <p className="text-sm text-muted-foreground">{emptyState.description}</p>
@@ -2201,7 +2096,7 @@ export function HeguyRanchCoPilot({
                   </TableCell>
                 </TableRow>
               ) : null}
-              {sortedHorseRows.map((row) => (
+              {horseRows.map((row) => (
                 <TableRow
                   key={row.id ?? row.name}
                   className={cn(
@@ -2210,54 +2105,69 @@ export function HeguyRanchCoPilot({
                   )}
                   onClick={() => onHorseRowNavigate?.(row)}
                 >
-                  <TableCell className="h-16 border-b border-neutral-200 bg-white p-2 font-normal text-foreground group-hover:bg-neutral-50/80">
-                    <HorseRosterAvatar name={row.name} photoUrl={row.photoUrl} />
+                  <TableCell className="sticky left-0 z-10 min-h-[72px] w-[280px] min-w-[280px] max-w-[280px] border-b border-neutral-200 bg-white py-2.5 pl-4 pr-5 align-middle shadow-[4px_0_8px_-4px_rgba(0,0,0,0.08)] group-hover:bg-[var(--table-sticky-hover-bg)]">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <HorseRosterAvatarCircle name={row.name} photoUrl={row.photoUrl} />
+                      <div className="min-w-0 flex-1 truncate font-medium text-foreground">{row.name}</div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        title="Log observation"
+                        aria-label="Log observation"
+                        className="h-7 shrink-0 gap-1.5 px-3 text-[13px] font-medium hover:border-ai-accent hover:bg-ai-accent hover:text-white hover:[&_svg]:text-white [&_svg]:shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (onHorseLog) onHorseLog(row)
+                          else openLogModal(row)
+                        }}
+                      >
+                        <NotebookPen className="size-3.5 shrink-0" aria-hidden />
+                        Log
+                      </Button>
+                    </div>
                   </TableCell>
-                  <TableCell className="h-16 border-b border-neutral-200 bg-white p-2 group-hover:bg-neutral-50/80">
+                  <TableCell className="min-h-[72px] border-b border-neutral-200 bg-white pl-4 pr-2 py-2 align-middle group-hover:bg-muted/50">
                     <HorseRosterStatusCell status={row.healthStatus} />
                   </TableCell>
-                  <TableCell className="h-16 border-b border-neutral-200 bg-white p-2 group-hover:bg-neutral-50/80">
+                  <TableCell className="min-h-[72px] border-b border-neutral-200 bg-white p-2 align-middle group-hover:bg-muted/50">
                     <HorseRosterStatusCell status={row.behaviorStatus} />
                   </TableCell>
-                  <TableCell className="h-16 border-b border-neutral-200 bg-white p-2 text-foreground group-hover:bg-neutral-50/80">
+                  <TableCell className="min-h-[72px] border-b border-neutral-200 bg-white p-2 align-middle text-foreground group-hover:bg-muted/50">
                     {row.age}
                   </TableCell>
-                  <TableCell className="h-16 border-b border-neutral-200 bg-white p-2 text-foreground group-hover:bg-neutral-50/80">
+                  <TableCell className="min-h-[72px] border-b border-neutral-200 bg-white p-2 align-middle text-foreground group-hover:bg-muted/50">
                     {row.sex}
                   </TableCell>
-                  <TableCell className="h-16 border-b border-neutral-200 bg-white p-2 group-hover:bg-neutral-50/80">
-                    <RoleBadge>{row.role}</RoleBadge>
+                  <TableCell className="min-h-[72px] border-b border-neutral-200 bg-white p-2 align-middle text-sm font-medium text-foreground group-hover:bg-muted/50">
+                    {row.role}
                   </TableCell>
-                  <TableCell className="h-16 max-w-[200px] border-b border-neutral-200 bg-white p-2 text-foreground group-hover:bg-neutral-50/80">
+                  <TableCell className="min-h-[72px] max-w-[200px] border-b border-neutral-200 bg-white p-2 align-middle text-foreground group-hover:bg-muted/50">
                     <span className="line-clamp-2">
                       {row.feed.length > 0 ? row.feed.join(" / ") : "—"}
                     </span>
                   </TableCell>
-                  <TableCell className="h-16 border-b border-neutral-200 bg-white p-2 text-foreground group-hover:bg-neutral-50/80">
+                  <TableCell className="min-h-[72px] border-b border-neutral-200 bg-white p-2 align-middle text-foreground group-hover:bg-muted/50">
                     {row.health}
                   </TableCell>
-                  <TableCell className="h-16 border-b border-neutral-200 bg-white p-2 group-hover:bg-neutral-50/80">
-                    <RosterCareDateCell iso={row.lastDentalDate} />
+                  <TableCell className="min-h-[72px] border-b border-neutral-200 bg-white p-2 align-middle group-hover:bg-muted/50">
+                    <RosterCareDateCell
+                      iso={getHorseEffectiveLastDentalIso(horseRowKey(row), observationsByHorse, row)}
+                    />
                   </TableCell>
-                  <TableCell className="h-16 border-b border-neutral-200 bg-white p-2 group-hover:bg-neutral-50/80">
-                    <RosterCareDateCell iso={row.lastFarrier ?? row.lastFarrierDate} />
+                  <TableCell className="min-h-[72px] border-b border-neutral-200 bg-white p-2 align-middle group-hover:bg-muted/50">
+                    <RosterCareDateCell
+                      iso={getHorseEffectiveLastFarrierIso(horseRowKey(row), observationsByHorse, row)}
+                    />
                   </TableCell>
-                  <TableCell className="h-16 border-b border-neutral-200 bg-white p-2 text-foreground group-hover:bg-neutral-50/80">
+                  <TableCell className="min-h-[72px] border-b border-neutral-200 bg-white p-2 align-middle text-foreground group-hover:bg-muted/50">
                     {row.pasture}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      "sticky right-0 z-10 h-16 border-b border-l border-neutral-200 bg-white p-0 opacity-100 shadow-[-8px_0_16px_-8px_rgba(0,0,0,0.12)] group-hover:bg-[var(--muted)]",
-                      rosterObservationColumnWidthClass
-                    )}
-                  >
-                    <HorseRosterObservationCell row={row} onAddViaParent={onHorseLog} />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
         </Table>
       </div>
-    </>
+    </div>
   )
 }

@@ -7,7 +7,7 @@ import type {
   DeliveryType,
   EffectiveCalvingStatus,
 } from "@/types/cattle"
-import { getStatusBadgeClass } from "@/lib/statusUtils"
+import { getTableStatusBadgeClass } from "@/lib/statusUtils"
 
 export type { EffectiveCalvingStatus } from "@/types/cattle"
 
@@ -51,7 +51,8 @@ export function calvingStatusBadgeClassAndLabel(
   if (effective === "none") return null
   const badgeKey = EFFECTIVE_CALVING_BADGE_KEY[effective]
   return {
-    className: getStatusBadgeClass(badgeKey),
+    /** Tertiary outline: same dark ink as filled secondary badge text on border + text (demoted vs primary pills). */
+    className: getTableStatusBadgeClass(badgeKey, "outlineMuted"),
     label: calvingLabel[effective](cattle),
   }
 }

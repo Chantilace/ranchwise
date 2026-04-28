@@ -246,7 +246,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
             </div>
 
             <div className="flex shrink-0 gap-3 border-t border-border px-5 py-4">
-              <Button type="button" variant="tertiary" size="lg" className="min-w-0 flex-1" onClick={close}>
+              <Button type="button" variant="secondary" size="lg" className="min-w-0 flex-1" onClick={close}>
                 Cancel
               </Button>
               <Button
@@ -386,7 +386,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
             </div>
 
             <div className="flex shrink-0 justify-end gap-2 border-t border-border px-6 py-4">
-              <Button type="button" variant="tertiary" size="lg" onClick={close}>
+              <Button type="button" variant="secondary" size="lg" onClick={close}>
                 Cancel
               </Button>
               <Button type="button" variant="primary" disabled={!requiredOk} size="lg" onClick={handleSubmit}>

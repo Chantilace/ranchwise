@@ -3,12 +3,13 @@ import { useEffect } from "react"
 /**
  * Close a popover/panel when pointerdown happens outside `ref`.
  * Supports ignoring clicks that originate from portalled/nested popovers via selectors.
+ * `[role="menu"]` covers Base UI `Menu.Portal` popups (e.g. filter dropdowns) that render outside the anchor ref.
  */
 export function useCloseOnOutsidePointerDown({
   open,
   setOpen,
   ref,
-  ignoreClosestSelectors = ["[data-ranch-filter-popover]"],
+  ignoreClosestSelectors = ["[data-ranch-filter-popover]", '[role="menu"]'],
 }: {
   open: boolean
   setOpen: (next: boolean) => void

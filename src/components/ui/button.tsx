@@ -16,20 +16,21 @@ const buttonVariants = cva(
         /** Tier 1b — high-emphasis CTAs for page chrome (modals keep `primary`). */
         "primary-dark":
           "rounded-full border-none bg-action-pressed text-white transition-colors duration-150 hover:bg-action-pressed active:bg-action-pressed [&_svg:not([class*='size-'])]:size-4",
-        /** Tier 2 — soft primary (Edit, tint toolbars) */
+        /** Tier 2 — outline primary (Cancel, secondary log CTAs) */
         secondary:
-          "rounded-full border border-border bg-muted text-foreground hover:bg-muted-deeper [&_svg:not([class*='size-'])]:size-4",
-        /** Tier 3 — outline primary (Cancel, secondary log CTAs) */
-        tertiary:
           "rounded-full border border-action bg-transparent text-action hover:bg-action-tint [&_svg:not([class*='size-'])]:size-4",
+        /** Tier 3 — soft primary (Edit, tint toolbars) */
+        tertiary:
+          "rounded-full border border-border bg-muted text-foreground hover:bg-muted-deeper [&_svg:not([class*='size-'])]:size-4",
         /** Category pill selector — used in HorseLogSheet and similar forms */
         pills:
           "rounded-full border border-action/20 bg-action-tint/50 text-action hover:bg-action-tint hover:border-action/40 data-[state=active]:border-action data-[state=active]:bg-action data-[state=active]:text-action-foreground transition-colors duration-150 [&_svg:not([class*='size-'])]:size-4",
-        outline:
-          "rounded-full border border-action bg-transparent text-action hover:bg-action-tint [&_svg:not([class*='size-'])]:size-4",
         /** Tier 4 — muted text */
         ghost:
           "rounded-full border-none bg-transparent text-muted-foreground hover:text-foreground [&_svg:not([class*='size-'])]:size-4",
+        /** Roster log — indigo on soft wash, pill shape */
+        "ghost-tinted":
+          "rounded-full border-none bg-action-bg-soft text-action hover:bg-action-tint hover:text-action [&_svg:not([class*='size-'])]:size-3",
         /** Icon-only: pair with `size` icon-* (no text-tier colors). */
         icon: "",
         surface:
@@ -43,7 +44,7 @@ const buttonVariants = cva(
       size: {
         default: "px-4 py-2",
         lg: "px-5 py-2.5 text-base",
-        sm: "px-3 py-1.5 text-xs",
+        sm: "px-3 py-1.5 text-[13px]",
         /** Tier 2 icon — w-8 h-8 rounded-lg */
         iconSecondary:
           "size-8 min-h-0 min-w-0 rounded-lg border border-border bg-muted p-0 text-foreground hover:bg-muted-deeper gap-0 [&_svg]:size-4",

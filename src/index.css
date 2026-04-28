@@ -3,6 +3,40 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer base {
+  /**
+   * Full-height app shell: height propagates to #root → Routes → RanchWorkspaceShell (100dvh).
+   * Body scroll is disabled; each page owns scroll inside flex-1 overflow-y-auto regions.
+   */
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+    min-height: 100%;
+    overflow: hidden;
+  }
+
+  /* Override browser autofill background (Chrome/Safari). */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--muted) inset !important;
+    -webkit-text-fill-color: var(--foreground) !important;
+    caret-color: var(--foreground);
+    transition: background-color 5000s ease-in-out 0s;
+  }
+}
+
 @layer utilities {
   .shadow-card {
     box-shadow: var(--shadow-card);
@@ -12,8 +46,13 @@
     box-shadow: var(--shadow-card-strong);
   }
 
-  .shadow-ai-smart {
-    box-shadow: var(--shadow-ai-smart);
+  /** Header chrome above an overflow-y scroller: shadow only while scrolled (see useScrollShadow). */
+  .scroll-shadow-header {
+    transition: box-shadow 200ms ease;
+  }
+
+  .scroll-shadow-header[data-scrolled="true"] {
+    box-shadow: var(--shadow-sticky-scroll);
   }
 
   /** Home banner glass: blur breaks inside overflow:hidden on mobile Safari — blur only md+. */
@@ -27,6 +66,14 @@
 
 :root {
   --radius: 0.625rem;
+  /** Card chrome (e.g. home horse observation log rows). */
+  --border-radius-md: 8px;
+
+  /** Bottom inset for scroll areas that end in lists or timelines (e.g. observation cards). */
+  --scroll-area-bottom-pad: 2.25rem; /* 36px */
+
+  /** Sticky / panel header when content has scrolled underneath. */
+  --shadow-sticky-scroll: 0 1px 4px -1px rgba(0, 0, 0, 0.08);
 
   --background: #FDFDFD;
   --card: #FFFFFF;
@@ -48,10 +95,22 @@
   --ai-accent-bg: #EAE5FB;
   --ai-accent-text: #1A1620;
   --ai-accent-wash: #F0EDFA;
+  /** Dark AI insight card surface + muted text on that surface */
+  --ai-accent-deep: #26215C;
+  --ai-accent-soft: #CECBF6;
 
   --muted: #F5F5F4;
+  /** Opaque hover for sticky table cells (replaces bg-muted/50 over --background to avoid scroll bleed-through). */
+  --table-sticky-hover-bg: #f9f9f8;
   --muted-foreground: #888888;
   --muted-cool-foreground: #C095C0;
+
+  /** Neutral category chips (e.g. home horse Recent observations). */
+  --color-background-secondary: var(--muted);
+  --color-text-secondary: var(--muted-foreground);
+  /** Ghost icon buttons (e.g. dashboard refresh). */
+  --color-text-tertiary: var(--muted-foreground);
+  --color-text-primary: var(--foreground);
 
   --secondary: var(--muted);
   --secondary-foreground: #1A1620;
@@ -62,6 +121,7 @@
 
   --border: rgba(26, 22, 32, 0.12);
   --border-strong: rgba(26, 22, 32, 0.32);
+  --color-border-tertiary: rgba(26, 22, 32, 0.08);
   --muted-deeper: #EBEBE9;
   --input: rgba(26, 22, 32, 0.12);
   --ring: rgba(91, 76, 174, 0.35);
@@ -93,6 +153,11 @@
   --badge-blue-bg: #dceefb;
   --badge-blue-text: #1f638d;
 
+  /** Observation / pasture check category pills (warm tan, metadata row). */
+  --badge-category-bg: #f0ebe2;
+  --badge-category-text: #5f5e5a;
+  --badge-category-border: rgba(0, 0, 0, 0.04);
+
   /* Alert surface tints */
   --alert-flag-border: rgba(139, 0, 0, 0.15);
   --alert-pasture-bg: #F0F6FC;
@@ -106,10 +171,6 @@
   --alert-amber-text: #854F0B;
   --alert-neutral-bg: var(--muted);
   --alert-neutral-text: #6b6b68;
-
-  /* Mint-tinted, extra-small shadow for AI feature cards */
-  --shadow-ai-smart:
-    0 1px 2px rgba(26, 154, 138, 0.05), 0 0 1px rgba(26, 154, 138, 0.035), 0 1px 3px rgba(143, 235, 221, 0.09);
 
   --shadow-card: 0 1px 3px rgba(46, 26, 10, 0.05), 0 0 1px rgba(46, 26, 10, 0.04);
   --shadow-card-strong: 0 6px 18px rgba(46, 26, 10, 0.08), 0 2px 6px rgba(46, 26, 10, 0.06), 0 0 1px rgba(46, 26, 10, 0.04);
@@ -135,6 +196,7 @@
   --action-foreground: #FFFFFF;
   --action-tint: #E2DCF5;
   --action-tint-strong: #C9BEF0;
+  --action-bg-soft: #efedfa; /* #EFEDFA — roster log wash */
 
   /* Focus */
   --focus-ring: rgba(91, 76, 174, 0.35);
@@ -142,7 +204,6 @@
   /* AI (periwinkle) extensions */
   --ai-hover: #6558D0;
   --ai-bg-strong: #D4CCF5;
-  --ai-mark: #A69BE9;
 
   /* Success (pine) */
   --good: #0F9D6E;
@@ -172,6 +233,13 @@
   --status-flag-bg: #FADEDE;
   --status-flag-bg-soft: #FBE0E0;
   --status-flag-text: #9E2428;
+
+  /** Soft status mid tones: herd bar + legend swatches (ambient; distinct from saturated `--status-*-primary` and pastel `--status-*-bg`). */
+  --badge-good-mid-bg: #a8d8a8;
+  --badge-monitor-mid-bg: #f9c45a;
+  --badge-flag-bg: #f89898;
+
+  /* Pasture semantic statuses (stable / concern / action_needed) reuse the three ramps above — no separate pasture color tokens. See PastureStatus in src/lib/statusUtils.ts. */
 }
 
 @theme inline {
@@ -192,6 +260,8 @@
   --color-ai-accent-bg: var(--ai-accent-bg);
   --color-ai-accent-text: var(--ai-accent-text);
   --color-ai-accent-wash: var(--ai-accent-wash);
+  --color-ai-accent-deep: var(--ai-accent-deep);
+  --color-ai-accent-soft: var(--ai-accent-soft);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted-cool-foreground: var(--muted-cool-foreground);
@@ -228,14 +298,17 @@
   --color-sidebar-foreground-disabled: var(--sidebar-foreground-disabled);
   --color-badge-blue-bg: var(--badge-blue-bg);
   --color-badge-blue-text: var(--badge-blue-text);
+  --color-badge-category-bg: var(--badge-category-bg);
+  --color-badge-category-text: var(--badge-category-text);
+  --color-badge-category-border: var(--badge-category-border);
   --color-alert-flag-border: var(--alert-flag-border);
   --color-alert-pasture-bg: var(--alert-pasture-bg);
   --color-alert-pasture-border: var(--alert-pasture-border);
   --color-alert-pasture-chip-bg: var(--alert-pasture-chip-bg);
   --color-alert-pasture-chip-text: var(--alert-pasture-chip-text);
-  /* Slightly larger body-scale type: default Tailwind xs/sm read as extra-tiny in product UI */
-  --text-xs: 0.8125rem;
-  --text-xs--line-height: 1.35;
+  /* Minimum product type scale (13px). Components use `text-[13px]`; `text-body-min` maps here. */
+  --text-body-min: 0.8125rem;
+  --text-body-min--line-height: 1.35;
   --text-sm: 0.9375rem;
   --text-sm--line-height: 1.45;
   --shadow-card: 0 1px 3px rgba(46, 26, 10, 0.05), 0 0 1px rgba(46, 26, 10, 0.04);
@@ -262,6 +335,7 @@
   --color-action-foreground: var(--action-foreground);
   --color-action-tint: var(--action-tint);
   --color-action-tint-strong: var(--action-tint-strong);
+  --color-action-bg-soft: var(--action-bg-soft);
 
   /* Focus */
   --color-focus-ring: var(--focus-ring);
@@ -269,7 +343,6 @@
   /* AI (periwinkle) extensions */
   --color-ai-hover: var(--ai-hover);
   --color-ai-bg-strong: var(--ai-bg-strong);
-  --color-ai-mark: var(--ai-mark);
 
   /* Success (pine) */
   --color-good: var(--good);
@@ -297,4 +370,18 @@
   --color-status-flag-bg: var(--status-flag-bg);
   --color-status-flag-bg-soft: var(--status-flag-bg-soft);
   --color-status-flag-text: var(--status-flag-text);
+
+  --color-badge-good-mid-bg: var(--badge-good-mid-bg);
+  --color-badge-monitor-mid-bg: var(--badge-monitor-mid-bg);
+  --color-badge-flag-bg: var(--badge-flag-bg);
+}
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

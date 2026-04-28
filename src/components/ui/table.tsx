@@ -2,16 +2,26 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-/** Outer shell for all app tables — single border, rounded corners, clip; corner radii on corner cells. */
-export const RANCH_TABLE_SHELL_CLASS =
-  "rounded-[12px] border-[0.5px] border-border overflow-hidden " +
-  "[&_thead_tr_th:first-child]:rounded-tl-[12px] [&_thead_tr_th:first-child]:!pl-[20px] " +
-  "[&_thead_tr_th:last-child]:rounded-tr-[12px] " +
-  "[&_tbody_tr:last-child_td:first-child]:rounded-bl-[12px] [&_tbody_tr_td:first-child]:!pl-[20px] " +
-  "[&_tbody_tr:last-child_td:last-child]:rounded-br-[12px] " +
+/**
+ * Outer shell: border, radius, `overflow-hidden` clips paint to rounded bounds.
+ * Scroll lives on the inner `[data-slot=table-container]` (`overflow-auto`); sticky
+ * `thead`/`th` stick to that inner scrollport, not the shell (see MDN: nearest scrollport).
+ */
+const RANCH_TABLE_SHELL_BASE =
+  "flex flex-col overflow-hidden rounded-[12px] border-[0.5px] border-border bg-card " +
+  "[&_thead_tr_th:first-child]:!pl-[20px] " +
+  "[&_tbody_tr_td:first-child]:!pl-[20px] " +
   "[&_tbody_tr:last-child_td]:border-b-0"
 
+/** Default: table fills flex parent and scrolls inside the shell (rosters). */
+export const RANCH_TABLE_SHELL_CLASS = cn(RANCH_TABLE_SHELL_BASE, "min-h-0 flex-1")
+
 type TableProps = React.ComponentProps<"table"> & {
+  /**
+   * `fill` (default): shell and scrollport use `flex-1` / `min-h-0` so the table fills a roster column.
+   * `intrinsic`: height follows table rows; horizontal scroll only (e.g. pastures index).
+   */
+  tableLayout?: "fill" | "intrinsic"
   /** Classes for the scroll wrapper directly around `<table>` (e.g. flex-1 + overflow-y). */
   containerClassName?: string
   /** Optional override on the outer bordered shell (rare). */
@@ -26,12 +36,19 @@ type TableProps = React.ComponentProps<"table"> & {
 
 function Table({
   className,
+  tableLayout = "fill",
   containerClassName,
   shellClassName,
   dimScrollportExceptRightPx,
   ...props
 }: TableProps) {
   const dimRight = dimScrollportExceptRightPx
+  const shellClass =
+    tableLayout === "intrinsic" ? RANCH_TABLE_SHELL_BASE : RANCH_TABLE_SHELL_CLASS
+  const containerBase =
+    tableLayout === "intrinsic"
+      ? "relative w-full overflow-x-auto"
+      : "relative min-h-0 w-full flex-1 overflow-auto"
   const tableEl = (
     <table
       data-slot="table"
@@ -41,11 +58,8 @@ function Table({
   )
 
   return (
-    <div data-slot="table-shell" className={cn(RANCH_TABLE_SHELL_CLASS, shellClassName)}>
-      <div
-        data-slot="table-container"
-        className={cn("relative w-full overflow-x-auto", containerClassName)}
-      >
+    <div data-slot="table-shell" className={cn(shellClass, shellClassName)}>
+      <div data-slot="table-container" className={cn(containerBase, containerClassName)}>
         {dimRight != null ? (
           <div
             data-slot="table-intrinsic-wrap"

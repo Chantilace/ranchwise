@@ -1,24 +1,105 @@
 import { ANALYZE_DELAY_MS } from "@/lib/observationAnalyze"
 import {
+  buildCalvingObservationNotes,
   formatCalfStatusLabel,
   formatComplicationsSummary,
   formatDeliveryTypeLabel,
 } from "@/lib/calvingStatus"
+import { formatCattleTagDisplay } from "@/lib/cattleUi"
 import type { CalvingRecord, Cattle } from "@/types/cattle"
 import type { AIResult, RiskLevel } from "@/types/observation"
 
 const CALVING_SYSTEM_PROMPT =
   "You are a ranch management assistant. A calving event has just been recorded. Based on the calving details provided, give 2-3 brief, actionable follow-up recommendations. Be specific and practical. Focus on immediate next steps for the rancher."
 
+/** Pasture-check style labels used in the calving "Confirm status" UI. */
+export function calvingOutcomeConfirmationLabel(level: RiskLevel): string {
+  if (level === "call-vet") return "Action needed"
+  if (level === "monitor") return "Concern"
+  return "Stable"
+}
+
+const RISK_ORDER: Record<RiskLevel, number> = { "call-vet": 2, monitor: 1, good: 0 }
+
+function maxRisk(a: RiskLevel, b: RiskLevel): RiskLevel {
+  return RISK_ORDER[a] >= RISK_ORDER[b] ? a : b
+}
+
 function riskFromCalving(record: CalvingRecord): { riskLevel: RiskLevel; riskLabel: string } {
   const comps = record.complications ?? []
   if (comps.includes("hemorrhage") || comps.includes("prolapse")) {
-    return { riskLevel: "call-vet", riskLabel: "Call vet" }
+    return { riskLevel: "call-vet", riskLabel: calvingOutcomeConfirmationLabel("call-vet") }
   }
-  if (record.calfStatus === "stillborn" || comps.some((c) => c !== "none")) {
-    return { riskLevel: "monitor", riskLabel: "Monitor" }
+  if (record.calfStatus === "stillborn") {
+    return { riskLevel: "call-vet", riskLabel: calvingOutcomeConfirmationLabel("call-vet") }
   }
-  return { riskLevel: "good", riskLabel: "No action needed" }
+  if (comps.some((c) => c !== "none")) {
+    return { riskLevel: "monitor", riskLabel: calvingOutcomeConfirmationLabel("monitor") }
+  }
+  return { riskLevel: "good", riskLabel: calvingOutcomeConfirmationLabel("good") }
+}
+
+function keywordCalvingRisk(text: string): RiskLevel | null {
+  const t = text.toLowerCase()
+  const actionPhrases = [
+    "dystocia",
+    "retained placenta",
+    "stillborn",
+    "won't stand",
+    "wont stand",
+    "not standing",
+    "milk fever",
+    "hemorrhage",
+    "heavy bleeding",
+    "prolapse",
+  ]
+  const concernPhrases = [
+    "weak",
+    "delayed",
+    "abnormal positioning",
+    "longer than expected",
+    "slow to rise",
+    "lethargic",
+    "took longer",
+  ]
+  const stablePhrases = [
+    "without complications",
+    "no complications",
+    "calf alert",
+    "standing well",
+    "mother cleaning",
+    "nursing well",
+    "nursing strong",
+    "normal delivery",
+    "uncomplicated",
+    "delivered without",
+  ]
+  for (const p of actionPhrases) {
+    if (t.includes(p)) return "call-vet"
+  }
+  for (const p of concernPhrases) {
+    if (t.includes(p)) return "monitor"
+  }
+  for (const p of stablePhrases) {
+    if (t.includes(p)) return "good"
+  }
+  return null
+}
+
+/** Combines structured calving fields + free-text cues for canned AI status (Stable / Concern / Action needed). */
+export function suggestCalvingObservationRisk(record: CalvingRecord): RiskLevel {
+  const structural = riskFromCalving(record).riskLevel
+  const realComps = (record.complications ?? []).filter((c) => c !== "none")
+  const notesBlob = [
+    record.notes ?? "",
+    buildCalvingObservationNotes({
+      ...record,
+      complications: realComps.length > 0 ? realComps : [],
+    }),
+  ].join(" ")
+  const kw = keywordCalvingRisk(notesBlob)
+  if (kw === null) return structural
+  return maxRisk(structural, kw)
 }
 
 /**
@@ -43,7 +124,7 @@ export async function analyzeCalvingRecord(cattle: Cattle, pastureName: string, 
 
   const userPayload = {
     system: CALVING_SYSTEM_PROMPT,
-    cowTag: cattle.tagNumber,
+    cowTag: formatCattleTagDisplay(cattle.tagNumber),
     calving: {
       dateIso: record.date,
       deliveryType: record.deliveryType,
@@ -61,7 +142,8 @@ export async function analyzeCalvingRecord(cattle: Cattle, pastureName: string, 
   // NOTE: In a real integration, send `userPayload` to Anthropic here.
   void userPayload
 
-  const { riskLevel, riskLabel } = riskFromCalving(record)
+  const riskLevel = suggestCalvingObservationRisk(record)
+  const riskLabel = calvingOutcomeConfirmationLabel(riskLevel)
 
   if (riskLevel === "call-vet") {
     return {

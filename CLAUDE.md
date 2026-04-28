@@ -26,21 +26,29 @@ The palette is built around four semantic roles. Each color has one job. Do not 
 - `--muted: #F5F5F4` — muted surfaces (chip backgrounds, stat card backgrounds)
 - `--muted-deeper: #EBEBE9`, `--surface-sunken: #EBEBE9` — deeper neutral surfaces
 
+### Typography rules
+
+Minimum text size in the app is 13px. The `text-xs` (12px) Tailwind scale is no longer used. The `--text-body-min` token (13px / 0.8125rem) replaces what was previously `--text-xs`.
+
+Use `text-[13px]` for small body text, metadata, badges, labels, eyebrow text, captions, footnotes, and other copy that would have been 10-12px in older code.
+
+Larger sizes available: `text-[14px]`, `text-[15px]`, `text-[16px]`, `text-[18px]`, etc., per location-specific design specs.
+
 ### Status system
 
 Three canonical statuses. Everything routes to one of them.
 
 - **Good** (`--status-good-*`) — Emerald. Healthy, completed, no action needed.
 - **Monitor** (`--status-monitor-*`) — Saffron. Attention needed, in-progress watch states, warnings.
-- **Flag** (`--status-flag-*`) — Tomato. Urgent, overdue, complications, call vet.
+- **Flag** (`--status-flag-*`) — Tomato. Urgent, overdue, call vet.
 
 **Single source of truth:** `STATUS_TOKENS` in `src/lib/statusUtils.ts`. Every badge, dot, swatch, and filter indicator reads from here. Do not duplicate this logic.
 
 **Status value routing** (handled automatically by `routeToCanonical` in `statusUtils.ts`):
 
 - `good`, `green`, `calved` → good
-- `monitor`, `amber`, `calving-soon`, `pregnant`, `in-labor` → monitor
-- `flag`, `urgent`, `overdue`, `complications`, `call-vet` → flag
+- `monitor`, `amber`, `calving-soon`, `pregnant`, `in-labor`, `complications` → monitor
+- `flag`, `urgent`, `overdue`, `call-vet` → flag
 
 **Emphasis policy (Policy B):**
 
@@ -53,7 +61,10 @@ Each status has three emphasis variants: `secondary` (default, soft tint), `prim
 Helper API:
 
 ```ts
-getStatusBadgeClass(status, emphasis)  // emphasis defaults to 'secondary'
+getTableStatusBadgeClass(status, emphasis) // roster / data tables — 13px minimum (dense badge geometry); emphasis defaults to 'secondary'
+getStatusBadgeClass(status, emphasis) // cards / modals / list rows — 13px minimum (card geometry)
+getTablePastureStatusBadgeClass(status, emphasis)
+getPastureStatusBadgeClass(status, emphasis)
 getStatusDotClass(status)
 ```
 
@@ -71,7 +82,7 @@ Future-proofing: adding a new canonical status (e.g., "neutral" or "archive") is
 2. Add an entry to `STATUS_TOKENS` in `statusUtils.ts`.
 3. Update `routeToCanonical` with any new input values that should route to it.
 
-Everything downstream (StatusBadge, filter swatches, observation timeline, getStatusBadgeClass) picks it up automatically.
+Everything downstream (`StatusBadge`, filter swatches, observation timeline, and the badge class helpers) picks it up automatically.
 
 ### Semantic rules
 
@@ -79,16 +90,23 @@ Everything downstream (StatusBadge, filter swatches, observation timeline, getSt
 - **Amber** — in v0.1, there is no generic amber. Saffron IS the amber, and it belongs to Monitor.
 - **Red** — all red lives in the flag palette (`--status-flag-*`). No standalone red tokens.
 
+### Counter semantics (dashboard)
+
+- **Monitor amber** (`#F9C45A`, `--badge-monitor-mid-bg`) — used for Monitor-state counters, including **In labor** and **Complications** cattle counts.
+- **Red** (`#e24b4a`) — reserved exclusively for **homepage overdue items** (not complications).
+- **Flag-state badges** — use the lighter coral red `#F89898` (`--badge-flag-bg`) rather than deep red.
+- **Two status systems**: cattle have both **Health observation status** (Good / Monitor / Flag from observations) and **Calving lifecycle status** (Calving soon / In labor / Complications / Calved). **Health Flag supersedes calving status** for urgency. A cow in Complications is **Monitor amber by default**; it only escalates to Flag red when the cow is also **health-flagged**.
+
 ### Badges
 
 - All status badges: `rounded-lg`
-- All status badges render through `getStatusBadgeClass` or the `<StatusBadge>` component
+- All status badges render through `getStatusBadgeClass` / `getTableStatusBadgeClass` (raw spans) or the `<StatusBadge>` component (`size` selects table vs card geometry)
 - Do not define one-off badge colors in components. Add to the status system if a new role is truly needed.
 
 ### Special treatments
 
-- **Diamond-rotated sparkle box** — reserved exclusively for the observation log accordion trigger on white backgrounds.
-- **Smart Suggestions card** — periwinkle (`--ai-accent` family), not teal. Teal is not part of the v0.1 palette.
+- **AI brand marks (three tiers)** — Use the shared primitives in `src/components/ai/`: **`AiAnnotationMark`** (Unicode ✦, inline before AI-assessed copy and at 18px for the dashboard Smart Suggestions section header), **`AiSurfaceMark`** (Lucide `Sparkle` at sm/md/lg for chips, sidebar, and other surfaces), **`AiActionButton`** (icon-only disclosure on timelines and cards). **`AiSurfaceMark` with `filled`** remains available for rare emphasis; the homepage Smart Suggestions header uses the Unicode mark instead for a solid glyph at small sizes. Do not reintroduce Lucide `Sparkles` (plural) or a second AI purple token; action buttons that include a sparkle use **`text-action-foreground`** on the icon over indigo fills.
+- **Smart Suggestions (homepage)** — Three dark cards (`--ai-accent-deep`) driven by `buildHomeSmartSuggestionCardsModel` in `src/lib/homeSmartSuggestionCards.ts`, not teal. Teal is not part of the v0.1 palette.
 
 ## Working preferences
 

@@ -1,14 +1,30 @@
-import { ChevronDown, ChevronUp, Sparkles } from "lucide-react"
+import { ChevronDown, ChevronUp } from "lucide-react"
+import type { ReactNode } from "react"
 import { useId, useState } from "react"
-import { AiSparkleDisclosureButton } from "@/components/ui/ai-sparkle-disclosure-button"
+import { AiActionButton } from "@/components/ai/ai-action-button"
+import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
+import { AiSurfaceMark } from "@/components/ai/ai-surface-mark"
 import { cn } from "@/lib/utils"
 
+/** 18px filled ✦ for Health / Pasture summary headers; label text scale stays independent. */
+const SECTION_HEADER_GLYPH_CLASS =
+  "inline-flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center text-[18px] leading-none text-ai-accent"
+
 export type SmartSuggestionsPanelProps = {
-  suggestions: readonly string[]
-  contextNote?: string | null
-  /** `modal`: always expanded, no chevron. `card`: collapsible, collapsed by default. */
   mode: "modal" | "card"
-  /** `bullets`: multi-suggestion list with label on expand. `single-line`: pasture-style line with chevron only. */
+  /** Badge / hero label (default "Smart suggestions"). */
+  label?: string
+  /**
+   * `bullets`: list from `suggestions`. `prose`: single block from `body` (modal mode only).
+   * When `bodyVariant === "prose"`, `body` wins; `suggestions` are ignored for the body area.
+   */
+  bodyVariant?: "bullets" | "prose"
+  /** Bullet lines when `bodyVariant` is `"bullets"` (default). */
+  suggestions?: readonly string[]
+  /** Prose block when `bodyVariant` is `"prose"` (typically `mode="modal"`). */
+  body?: string | ReactNode
+  contextNote?: string | null
+  /** Card-only: `bullets` vs `single-line` (modal always uses bullets layout for list mode). */
   variant?: "bullets" | "single-line"
   className?: string
   /** Overrides default `rounded-lg bg-muted px-3 py-2.5` surface for `mode="modal"` (e.g. flush inside a tinted card). */
@@ -17,31 +33,58 @@ export type SmartSuggestionsPanelProps = {
   onTint?: boolean
   /** When true, show larger icon + label instead of the badge row. */
   heroHeader?: boolean
+  /** Tighter padding/typography for narrow columns (e.g. horse profile tablet HS + Care row). */
+  profileCompact?: boolean
+  /**
+   * When `mode="modal"` with prose body: fill parent height, push `contextNote` to bottom (`mt-auto`).
+   * Use in horse profile tablet column with `flex-1` siblings.
+   */
+  columnFill?: boolean
+  /**
+   * `section`: 18px `AiAnnotationMark` (periwinkle) in the label pill — profile summaries, log
+   * observation / pasture check / calving result Smart Suggestions, etc.
+   * `default`: standard `AiSurfaceMark` sm in the label pill.
+   */
+  labelGlyphStyle?: "default" | "section"
 }
 
-function SmartSuggestionsLabelRow({ onTint, hero }: { onTint?: boolean; hero?: boolean }) {
+function SmartSuggestionsLabelRow({
+  label,
+  onTint,
+  hero,
+  compact,
+  glyphStyle = "default",
+}: {
+  label: string
+  onTint?: boolean
+  hero?: boolean
+  compact?: boolean
+  glyphStyle?: "default" | "section"
+}) {
   if (hero) {
     return (
       <div className="mb-3 flex items-center gap-2">
-        <Sparkles className="size-5 text-ai-accent" strokeWidth={1.5} aria-hidden />
-        <span className="text-sm font-medium uppercase tracking-[0.08em] text-ai-accent">
-          Smart suggestions
-        </span>
+        <AiSurfaceMark size="lg" />
+        <span className="text-sm font-medium uppercase tracking-[0.08em] text-ai-accent">{label}</span>
       </div>
     )
   }
   return (
-    <div className="mb-3">
+    <div className={cn("mb-3", compact && "mb-2")}>
       <span
         className={cn(
           "inline-flex items-center gap-1.5 rounded-md px-2 py-1",
-          onTint
-            ? "border border-ai-accent/30 bg-white"
-            : "border border-ai-accent bg-ai-accent-bg"
+          onTint ? "border border-ai-accent/30 bg-white" : "border border-ai-accent bg-ai-accent-bg",
         )}
       >
-        <Sparkles className="size-3.5 text-ai-accent" strokeWidth={1.5} aria-hidden />
-        <span className="text-xs font-semibold uppercase tracking-wide text-ai-accent">Smart suggestions</span>
+        {glyphStyle === "section" ? (
+          <AiAnnotationMark className={SECTION_HEADER_GLYPH_CLASS} />
+        ) : (
+          <AiSurfaceMark size="sm" />
+        )}
+        <span className="text-[13px] font-semibold uppercase tracking-wide text-ai-accent">
+          {label}
+        </span>
       </span>
     </div>
   )
@@ -72,7 +115,7 @@ function SingleLineCard({ suggestion }: { suggestion: string }) {
         <div className={cn("min-w-0 flex-1 text-sm text-foreground")}>
           <p className="truncate">{suggestion}</p>
         </div>
-        <AiSparkleDisclosureButton
+        <AiActionButton
           ariaLabel={expanded ? "Hide AI suggestion" : "Show AI suggestion"}
           expanded={expanded}
           onClick={(e) => {
@@ -84,7 +127,7 @@ function SingleLineCard({ suggestion }: { suggestion: string }) {
       <div
         className={cn(
           "overflow-hidden transition-all duration-300 ease-out",
-          expanded ? "mt-3 max-h-[500px] opacity-100" : "mt-0 max-h-0 opacity-0"
+          expanded ? "mt-3 max-h-[500px] opacity-100" : "mt-0 max-h-0 opacity-0",
         )}
       >
         <p className="text-sm leading-relaxed text-foreground">{suggestion}</p>
@@ -95,23 +138,42 @@ function SingleLineCard({ suggestion }: { suggestion: string }) {
 
 /**
  * Smart suggestions block per RanchWise spec.
- * - Modal (post-analyze): expanded, label visible, bullets shown, no chevron.
+ * - Modal (post-analyze): expanded, label visible, bullets or prose, no chevron.
  * - Log card: collapsed by default (first item only, truncated), expandable to show label + bullets.
+ *
+ * Precedence: when `bodyVariant === "prose"`, the prose `body` is shown and `suggestions` are not rendered
+ * as a list (they may still be passed for API symmetry but are ignored).
  */
 export function SmartSuggestionsPanel({
-  suggestions,
-  contextNote,
   mode,
+  label = "Smart suggestions",
+  bodyVariant = "bullets",
+  suggestions = [],
+  body,
+  contextNote,
   variant = "bullets",
   className,
   modalContentClassName,
   onTint,
   heroHeader,
+  profileCompact,
+  columnFill,
+  labelGlyphStyle = "default",
 }: SmartSuggestionsPanelProps) {
   const [expanded, setExpanded] = useState(mode === "modal")
   const contentId = useId()
 
-  if (!suggestions.length) return null
+  const effectiveBodyVariant: "bullets" | "prose" =
+    mode === "modal" ? bodyVariant : "bullets"
+
+  const hasProseBody =
+    effectiveBodyVariant === "prose" &&
+    body != null &&
+    (typeof body !== "string" || body.trim().length > 0)
+
+  const hasBulletContent = effectiveBodyVariant === "bullets" && suggestions.length > 0
+
+  if (!hasProseBody && !hasBulletContent) return null
 
   const firstSuggestion = suggestions[0] ?? ""
   const collapsedSuggestion =
@@ -121,8 +183,31 @@ export function SmartSuggestionsPanel({
 
   const showLabel = effectiveVariant === "bullets" && (mode === "modal" ? true : expanded)
 
+  const proseBodyNode =
+    effectiveBodyVariant === "prose" ? (
+      typeof body === "string" ? (
+        <p
+          className={cn(
+            "text-foreground",
+            profileCompact ? "text-[13px] leading-[1.4]" : "text-sm leading-relaxed",
+          )}
+        >
+          {body}
+        </p>
+      ) : (
+        <div
+          className={cn(
+            "text-foreground",
+            profileCompact ? "text-[13px] leading-[1.4]" : "text-sm leading-relaxed",
+          )}
+        >
+          {body}
+        </div>
+      )
+    ) : null
+
   return (
-    <div className={cn("mt-2 min-w-0", className)}>
+    <div className={cn("min-w-0", columnFill ? "flex h-full min-h-0 flex-col" : "mt-2", className)}>
       {mode === "card" ? (
         effectiveVariant === "single-line" ? (
           <SingleLineCard suggestion={firstSuggestion} />
@@ -137,7 +222,7 @@ export function SmartSuggestionsPanel({
               setExpanded(true)
             }}
           >
-            <div className="w-1.5 h-1.5 flex-shrink-0 rounded-full bg-ai-accent mt-1.5" aria-hidden />
+            <div className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-ai-accent" aria-hidden />
             <p className="flex-1 truncate text-sm text-foreground">{collapsedSuggestion}</p>
             <ChevronDown className="mt-0.5 size-3.5 flex-shrink-0 text-muted-foreground" aria-hidden />
           </button>
@@ -154,21 +239,68 @@ export function SmartSuggestionsPanel({
           >
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
-                <SmartSuggestionsLabelRow onTint={onTint} hero={heroHeader} />
+                <SmartSuggestionsLabelRow
+                  label={label}
+                  onTint={onTint}
+                  hero={heroHeader}
+                  compact={profileCompact}
+                  glyphStyle={labelGlyphStyle}
+                />
               </div>
               <ChevronUp className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
             </div>
             <SuggestionRows suggestions={suggestions} />
           </button>
         )
+      ) : columnFill && effectiveBodyVariant === "prose" && hasProseBody ? (
+        <div
+          id={contentId}
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col rounded-lg bg-muted",
+            profileCompact ? "p-3" : "px-3 py-2.5",
+            modalContentClassName,
+          )}
+        >
+          {showLabel ? (
+            <div className="shrink-0">
+              <SmartSuggestionsLabelRow
+                label={label}
+                onTint={onTint}
+                hero={heroHeader}
+                compact={profileCompact}
+                glyphStyle={labelGlyphStyle}
+              />
+            </div>
+          ) : null}
+          <div className="min-h-0 flex-1">{proseBodyNode}</div>
+          {contextNote ? (
+            <p className="mt-auto shrink-0 pt-2 text-[13px] leading-relaxed text-muted-foreground">
+              {contextNote}
+            </p>
+          ) : null}
+        </div>
       ) : (
         <div
           id={contentId}
-          className={cn("min-w-0 rounded-lg bg-muted px-3 py-2.5", modalContentClassName)}
+          className={cn(
+            "min-w-0 rounded-lg bg-muted",
+            profileCompact ? "p-3" : "px-3 py-2.5",
+            modalContentClassName,
+          )}
         >
-          {showLabel ? <SmartSuggestionsLabelRow onTint={onTint} hero={heroHeader} /> : null}
+          {showLabel ? (
+            <SmartSuggestionsLabelRow
+              label={label}
+              onTint={onTint}
+              hero={heroHeader}
+              compact={profileCompact}
+              glyphStyle={labelGlyphStyle}
+            />
+          ) : null}
 
-          {effectiveVariant === "single-line" ? (
+          {effectiveBodyVariant === "prose" ? (
+            proseBodyNode
+          ) : effectiveVariant === "single-line" ? (
             <div className="flex min-w-0 items-start gap-2.5 py-2">
               <div className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-ai-accent" aria-hidden />
               <p className="min-w-0 break-words text-sm text-foreground">{firstSuggestion}</p>
@@ -178,7 +310,9 @@ export function SmartSuggestionsPanel({
           )}
 
           {contextNote ? (
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{contextNote}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+              {contextNote}
+            </p>
           ) : null}
         </div>
       )}

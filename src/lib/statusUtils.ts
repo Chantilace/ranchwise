@@ -5,13 +5,27 @@ import type { RiskLevel } from "@/types/observation"
  * Prefer this over ad-hoc `bg-badge-*` / `text-badge-*` on spans.
  */
 
-const STATUS_BADGE_BASE = "text-xs font-medium px-2.5 py-0.5 rounded-lg"
+/**
+ * Dense roster / data-table status geometry (13px minimum).
+ * Use `getTableStatusBadgeClass` / `getTablePastureStatusBadgeClass` or `StatusBadge` size `table`.
+ */
+export const STATUS_BADGE_TABLE_BASE =
+  "inline-flex items-center whitespace-nowrap rounded-md px-2 py-0.5 text-[13px] font-medium"
+
+/**
+ * Card / modal / list row status geometry (13px minimum).
+ * Use `getStatusBadgeClass` / `getPastureStatusBadgeClass` or `StatusBadge` size `md` (default).
+ */
+export const STATUS_BADGE_CARD_BASE =
+  "inline-flex items-center whitespace-nowrap rounded-md px-2.5 py-0.5 text-[13px] font-medium"
 
 export const STATUS_TOKENS = {
   good: {
     badge: "bg-status-good-bg text-status-good-text",
     badgePrimary: "bg-status-good-primary text-status-good-primary-fg",
     badgeOutline: "bg-transparent text-status-good-primary border border-status-good-primary",
+    /** Same ink as filled secondary badge text; transparent fill (calving tertiary pills). */
+    badgeOutlineMuted: "bg-transparent text-status-good-text border border-status-good-text",
     dot: "bg-status-good-primary",
     swatch: "bg-status-good-bg",
   },
@@ -19,6 +33,7 @@ export const STATUS_TOKENS = {
     badge: "bg-status-monitor-bg text-status-monitor-text",
     badgePrimary: "bg-status-monitor-primary text-status-monitor-primary-fg",
     badgeOutline: "bg-transparent text-status-monitor-primary border border-status-monitor-primary",
+    badgeOutlineMuted: "bg-transparent text-status-monitor-text border border-status-monitor-text",
     dot: "bg-status-monitor-primary",
     swatch: "bg-status-monitor-bg",
   },
@@ -26,13 +41,38 @@ export const STATUS_TOKENS = {
     badge: "bg-status-flag-bg text-status-flag-text",
     badgePrimary: "bg-status-flag-primary text-status-flag-primary-fg",
     badgeOutline: "bg-transparent text-status-flag-primary border border-status-flag-primary",
+    badgeOutlineMuted: "bg-transparent text-status-flag-text border border-status-flag-text",
     dot: "bg-status-flag-primary",
     swatch: "bg-status-flag-bg",
   },
 } as const
 
 export type StatusCanonical = keyof typeof STATUS_TOKENS
-export type StatusEmphasis = "primary" | "secondary" | "outline"
+export type StatusEmphasis = "primary" | "secondary" | "outline" | "outlineMuted"
+
+/** Pasture roster semantic status — reuses good / monitor / flag color ramps (no new CSS colors). */
+export type PastureStatus = "stable" | "concern" | "action_needed"
+
+export const PASTURE_STATUS_LABELS: Record<PastureStatus, string> = {
+  stable: "Stable",
+  concern: "Concern",
+  action_needed: "Action needed",
+}
+
+const PASTURE_TO_CANONICAL: Record<PastureStatus, StatusCanonical> = {
+  stable: "good",
+  concern: "monitor",
+  action_needed: "flag",
+}
+
+function badgeVariantClass(canonical: StatusCanonical, emphasis: StatusEmphasis): string {
+  const variantKey =
+    emphasis === "primary" ? "badgePrimary" :
+    emphasis === "outline" ? "badgeOutline" :
+    emphasis === "outlineMuted" ? "badgeOutlineMuted" :
+    "badge"
+  return STATUS_TOKENS[canonical][variantKey]
+}
 
 function routeToCanonical(status: string): StatusCanonical | null {
   const normalized = status.trim().toLowerCase().replace(/\s+/g, "-")
@@ -46,11 +86,11 @@ function routeToCanonical(status: string): StatusCanonical | null {
     case "calving-soon":
     case "pregnant":
     case "in-labor":
+    case "complications":
       return "monitor"
     case "flag":
     case "urgent":
     case "overdue":
-    case "complications":
     case "call-vet":
       return "flag"
     default:
@@ -58,24 +98,55 @@ function routeToCanonical(status: string): StatusCanonical | null {
   }
 }
 
-export function getStatusBadgeClass(
+/** Data tables and roster grids — 11px table geometry. */
+export function getTableStatusBadgeClass(
   status: string,
-  emphasis: StatusEmphasis = "secondary"
+  emphasis: StatusEmphasis = "secondary",
 ): string {
   const canonical = routeToCanonical(status)
   if (!canonical) {
-    return `${STATUS_BADGE_BASE} bg-muted text-muted-foreground`
+    return `${STATUS_BADGE_TABLE_BASE} bg-muted text-muted-foreground`
   }
-  const variantKey =
-    emphasis === "primary" ? "badgePrimary" :
-    emphasis === "outline" ? "badgeOutline" :
-    "badge"
-  return `${STATUS_BADGE_BASE} ${STATUS_TOKENS[canonical][variantKey]}`
+  return `${STATUS_BADGE_TABLE_BASE} ${badgeVariantClass(canonical, emphasis)}`
+}
+
+/** Cards, modals, and list rows — ~12px card geometry. */
+export function getStatusBadgeClass(
+  status: string,
+  emphasis: StatusEmphasis = "secondary",
+): string {
+  const canonical = routeToCanonical(status)
+  if (!canonical) {
+    return `${STATUS_BADGE_CARD_BASE} bg-muted text-muted-foreground`
+  }
+  return `${STATUS_BADGE_CARD_BASE} ${badgeVariantClass(canonical, emphasis)}`
+}
+
+/** Pasture semantic status — table / roster density. */
+export function getTablePastureStatusBadgeClass(
+  status: PastureStatus,
+  emphasis: StatusEmphasis = "secondary",
+): string {
+  const canonical = PASTURE_TO_CANONICAL[status]
+  return `${STATUS_BADGE_TABLE_BASE} ${badgeVariantClass(canonical, emphasis)}`
+}
+
+/** Pasture semantic status — card / modal density. */
+export function getPastureStatusBadgeClass(
+  status: PastureStatus,
+  emphasis: StatusEmphasis = "secondary",
+): string {
+  const canonical = PASTURE_TO_CANONICAL[status]
+  return `${STATUS_BADGE_CARD_BASE} ${badgeVariantClass(canonical, emphasis)}`
 }
 
 export function getStatusDotClass(status: string): string {
   const canonical = routeToCanonical(status)
   return canonical ? STATUS_TOKENS[canonical].dot : "bg-muted"
+}
+
+export function getPastureStatusDotClass(status: PastureStatus): string {
+  return STATUS_TOKENS[PASTURE_TO_CANONICAL[status]].dot
 }
 
 /** Tint-fill dot for an observation row from AI `riskLevel` (secondary badge ramp, same as pills). */

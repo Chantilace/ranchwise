@@ -4,13 +4,13 @@ import {
   Fence,
   Flag,
   RefreshCw,
-  Sparkles,
+  Sparkle,
   TrendingDown,
   type LucideIcon,
 } from "lucide-react"
 
-import type { HorseTableRow } from "@/components/HeguyRanchCoPilot"
-import { horseRowKey } from "@/components/HeguyRanchCoPilot"
+import type { HorseTableRow } from "@/components/RanchWiseHorseRoster"
+import { horseRowKey } from "@/components/RanchWiseHorseRoster"
 import { getObservationDomain } from "@/lib/observationDomain"
 import { parseObservationDate } from "@/lib/initialObservations"
 import type { Cattle, Pasture } from "@/types/cattle"
@@ -240,7 +240,7 @@ export function deriveActiveTodos(input: {
       title: "First behavior check",
       count: firstBehavior.length,
       destination: "/horses?role=Juvenile&needsBehaviorObservation=true",
-      icon: Sparkles,
+      icon: Sparkle,
       chipVariant: "neutral",
     })
   }

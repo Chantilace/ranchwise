@@ -19,7 +19,7 @@ export function SheetBackCenterTitleHeader({
       <button
         type="button"
         onClick={onBack}
-        className="absolute top-1/2 left-4 flex -translate-y-1/2 items-center gap-1 text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        className="absolute top-1/2 left-4 flex -translate-y-1/2 items-center gap-1 text-[13px] text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       >
         <ChevronLeft className="size-3 shrink-0" aria-hidden />
         Back

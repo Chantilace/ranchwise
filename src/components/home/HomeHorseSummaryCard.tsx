@@ -1,22 +1,19 @@
-import { ArrowUpRight, Check } from "lucide-react"
-import { compareDesc, format, parse, subDays } from "date-fns"
 import { useMemo } from "react"
 import { Link } from "react-router-dom"
-import { horseRowKey, type HorseTableRow } from "@/components/HeguyRanchCoPilot"
+import type { HorseTableRow } from "@/components/RanchWiseHorseRoster"
+import { horseRowKey } from "@/components/RanchWiseHorseRoster"
+import { CardHeaderArrowLink } from "@/components/ui/card-header-arrow-link"
 import { HorseshoeMark } from "@/components/icons/HorseshoeMark"
 import { useRanchData } from "@/contexts/RanchDataContext"
 import {
   DENTAL_INTERVAL_DAYS,
   FARRIER_INTERVAL_DAYS,
   getCareDueSummary,
-  getDentalStatus,
-  getFarrierStatus,
+  getDentalStatusForHorse,
+  getFarrierStatusForHorse,
 } from "@/lib/horseCareUtils"
-import { getStatusBadgeClass } from "@/lib/statusUtils"
+import { HORSE_ROSTER_FIT_FOR_WORK_FILTER_PARAM, isHorseFitForWorkRow } from "@/lib/horseListFilter"
 import { cn } from "@/lib/utils"
-import type { ObservationEntry, RiskLevel } from "@/types/observation"
-
-type WeeklyObs = { horse: HorseTableRow; entry: ObservationEntry; parsedDate: Date }
 
 type CareUrgency = "overdue" | "due-soon"
 
@@ -39,9 +36,9 @@ function compareCareHorse(a: CareHorseEntry, b: CareHorseEntry): number {
   return aLeft - bLeft
 }
 
-function careContextLine(entries: CareHorseEntry[], interval: number): string {
+function careNamesLine(entries: CareHorseEntry[], interval: number): string {
   const sorted = [...entries].sort(compareCareHorse)
-  if (sorted.length === 0) return ""
+  if (sorted.length === 0) return "—"
   if (sorted.length > 2) {
     return `${sorted[0].horse.name}, ${sorted[1].horse.name} +${sorted.length - 2} more`
   }
@@ -53,6 +50,73 @@ function careContextLine(entries: CareHorseEntry[], interval: number): string {
       return `${e.horse.name} due in ${interval - e.daysSince}d`
     })
     .join(", ")
+}
+
+function horseAvatarInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return "?"
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
+  return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase() || "?"
+}
+
+function FitForWorkAvatarStack({
+  horses,
+  maxVisible = 6,
+}: {
+  horses: HorseTableRow[]
+  maxVisible?: number
+}) {
+  if (horses.length === 0) return null
+
+  const visible = horses.slice(0, maxVisible)
+  const remainder = horses.length - visible.length
+  const totalFit = horses.length
+
+  return (
+    <div className="flex shrink-0 items-center">
+      {visible.map((horse, index) => {
+        const key = horseRowKey(horse)
+        const photo = horse.photoUrl?.trim()
+        return (
+          <Link
+            key={key}
+            to={`/horses/${encodeURIComponent(key)}`}
+            className={cn(
+              "relative inline-flex size-9 shrink-0 overflow-hidden rounded-xl border-2 border-white bg-muted outline-none ring-0 transition-opacity hover:opacity-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            )}
+            style={{ zIndex: index + 1, marginLeft: index === 0 ? 0 : -10 }}
+            aria-label={`Open ${horse.name} profile`}
+          >
+            {photo ? (
+              <img
+                src={photo}
+                alt={horse.name}
+                className="size-full object-cover object-center"
+                loading="lazy"
+              />
+            ) : (
+              <span className="flex size-full items-center justify-center text-[13px] font-semibold text-muted-foreground">
+                {horseAvatarInitials(horse.name)}
+              </span>
+            )}
+          </Link>
+        )
+      })}
+      {remainder > 0 ? (
+        <Link
+          to={`/horses?filter=${HORSE_ROSTER_FIT_FOR_WORK_FILTER_PARAM}`}
+          className={cn(
+            "relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border-2 border-white bg-secondary text-[13px] font-medium text-secondary-foreground outline-none transition-colors",
+            "hover:bg-ai-accent-wash focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          )}
+          style={{ zIndex: visible.length + 1, marginLeft: -10 }}
+          aria-label={`See all ${totalFit} horses fit for work`}
+        >
+          +{remainder}
+        </Link>
+      ) : null}
+    </div>
+  )
 }
 
 function ToothCareIcon({ className }: { className?: string }) {
@@ -74,56 +138,21 @@ function ToothCareIcon({ className }: { className?: string }) {
   )
 }
 
-function parseObsDate(s: string): Date | null {
-  const d = parse(s, "M/d/yy", new Date())
-  return isNaN(d.getTime()) ? null : d
-}
-
-function initialsOf(name: string): string {
-  return name.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase()
-}
-
-function isActionable(risk: RiskLevel | null | undefined): boolean {
-  return risk === "call-vet" || risk === "monitor"
-}
-
 export function HomeHorseSummaryCard() {
   const { herdRows, observationsByHorse } = useRanchData()
 
-  const workingHorses = herdRows.filter((h) => h.role === "Working")
-  const fitForWork = workingHorses.filter((h) => h.healthStatus === "good").length
+  const workingHorses = useMemo(() => herdRows.filter((h) => h.role.trim() === "Working"), [herdRows])
+  const fitForWorkHorses = useMemo(() => herdRows.filter(isHorseFitForWorkRow), [herdRows])
+  const fitForWork = fitForWorkHorses.length
   const totalWorking = workingHorses.length
   const progressPct = totalWorking > 0 ? Math.round((fitForWork / totalWorking) * 100) : 0
 
-  const weeklyObs = useMemo<WeeklyObs[]>(() => {
-    const sevenDaysAgo = subDays(new Date(), 7)
-    const result: WeeklyObs[] = []
-    for (const horse of herdRows) {
-      const key = horseRowKey(horse)
-      const entries = observationsByHorse[key] ?? []
-      for (const entry of entries) {
-        if (!isActionable(entry.aiResult?.riskLevel)) continue
-        const parsedDate = parseObsDate(entry.date)
-        if (!parsedDate) continue
-        if (parsedDate < sevenDaysAgo) continue
-        result.push({ horse, entry, parsedDate })
-      }
-    }
-    result.sort((a, b) => {
-      const aTier = a.entry.aiResult?.riskLevel === "call-vet" ? 0 : 1
-      const bTier = b.entry.aiResult?.riskLevel === "call-vet" ? 0 : 1
-      if (aTier !== bTier) return aTier - bTier
-      return compareDesc(a.parsedDate, b.parsedDate)
-    })
-    return result.slice(0, 5)
-  }, [herdRows, observationsByHorse])
-
   const careDue = useMemo(() => {
     const today = new Date()
-    const { farrierHorses, dentalHorses, totalUnique } = getCareDueSummary(herdRows, today)
+    const { farrierHorses, dentalHorses, totalUnique } = getCareDueSummary(herdRows, today, observationsByHorse)
 
     const farrierEntries: CareHorseEntry[] = farrierHorses.map((horse) => {
-      const r = getFarrierStatus(horse.lastFarrier ?? horse.lastFarrierDate, today)
+      const r = getFarrierStatusForHorse(horse, today, observationsByHorse)
       return {
         horse,
         urgency: r.status === "overdue" ? "overdue" : "due-soon",
@@ -132,7 +161,7 @@ export function HomeHorseSummaryCard() {
       }
     })
     const dentalEntries: CareHorseEntry[] = dentalHorses.map((horse) => {
-      const r = getDentalStatus(horse.lastDentalDate, today)
+      const r = getDentalStatusForHorse(horse, today, observationsByHorse)
       return {
         horse,
         urgency: r.status === "overdue" ? "overdue" : "due-soon",
@@ -145,172 +174,113 @@ export function HomeHorseSummaryCard() {
       farrierEntries,
       dentalEntries,
       anyCareCount: totalUnique,
-      showEmpty: farrierHorses.length === 0 && dentalHorses.length === 0,
     }
-  }, [herdRows])
+  }, [herdRows, observationsByHorse])
 
   return (
-    <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-lg font-medium leading-none text-foreground">Horses</h3>
-        <Link
-          to="/horses"
-          aria-label="Open horses overview"
-          className="group inline-flex size-7 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-muted"
-        >
-          <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-all duration-200 group-hover:text-action group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </Link>
+    <section className="flex h-full min-h-0 flex-col rounded-[var(--radius)] border-[0.5px] border-border bg-card p-[18px]">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-base font-medium leading-none text-foreground">Horses</h3>
+        <CardHeaderArrowLink to="/horses" aria-label="View horses roster" />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <p className="flex items-baseline gap-1">
-          <span className="text-2xl font-medium leading-none tabular-nums text-foreground">
-            {fitForWork}
-          </span>
-          <span className="text-[13px] text-muted-foreground"> / {totalWorking} fit for work</span>
+      <div className="flex min-w-0 items-center justify-between gap-4">
+        <p className="flex min-w-0 flex-wrap items-baseline gap-x-1 gap-y-0.5">
+          <span className="text-[36px] font-medium leading-none tabular-nums text-foreground">{fitForWork}</span>
+          <span className="text-sm text-muted-foreground"> / {totalWorking} fit for work</span>
         </p>
-        <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-status-good-primary transition-[width] duration-300"
-            style={{ width: `${progressPct}%` }}
-            aria-hidden
-          />
-        </div>
+        <FitForWorkAvatarStack horses={fitForWorkHorses} maxVisible={6} />
       </div>
 
-      <div className="border-t border-border pt-2.5">
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.05em] text-muted-foreground">
-          Observations this week
-        </p>
-
-        {weeklyObs.length === 0 ? (
-          <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-status-good-bg">
-              <Check className="size-4 text-status-good-text" aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-foreground">All horses steady this week</p>
-              <p className="text-[11px] text-muted-foreground">
-                No monitor or flag observations logged in the past 7 days.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            {weeklyObs.map((item, idx) => (
-              <Link
-                key={`${horseRowKey(item.horse)}-${item.entry.id}`}
-                to={`/horses/${horseRowKey(item.horse)}`}
-                className={cn(
-                  "-mx-3 flex items-start gap-3 rounded-md px-3 py-3 transition-colors hover:bg-muted",
-                  idx > 0 && "border-t-[0.5px] border-border"
-                )}
-              >
-                <div className="size-8 shrink-0 overflow-hidden rounded-lg bg-muted">
-                  {item.horse.photoUrl ? (
-                    <img src={item.horse.photoUrl} alt="" className="size-full object-cover" />
-                  ) : (
-                    <div className="flex size-full items-center justify-center text-[12px] font-medium text-muted-foreground">
-                      {initialsOf(item.horse.name)}
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-foreground">{item.horse.name}</p>
-                    {item.entry.aiResult?.riskLevel && (
-                      <span className={getStatusBadgeClass(item.entry.aiResult.riskLevel)}>
-                        {item.entry.aiResult.riskLevel === "call-vet" ? "Flag" : "Monitor"}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[13px] leading-[1.5] text-muted-foreground">
-                    {item.entry.notes}
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    {format(item.parsedDate, "MMM d")} · {item.entry.loggedBy}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+      <div className="mt-5 mb-5 h-1 w-full shrink-0 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-status-good-primary transition-[width] duration-300"
+          style={{ width: `${progressPct}%` }}
+          aria-hidden
+        />
       </div>
 
-      <div className="border-t border-border pt-2.5">
-        <div className="mb-2 flex items-baseline justify-between gap-2">
-          <p className="text-[10px] font-medium uppercase tracking-[0.05em] text-muted-foreground">
+      <div className="mt-auto pt-4">
+        <div className="mb-3 flex items-baseline justify-between gap-2">
+          <p className="text-[13px] font-medium uppercase tracking-[0.05em] text-[var(--color-text-tertiary)]">
             Care due this week
           </p>
-          {!careDue.showEmpty && (
-            <span className="shrink-0 text-[11px] text-muted-foreground">
+          {careDue.anyCareCount > 0 && (
+            <span className="text-[13px] text-[var(--color-text-tertiary)]">
               {careDue.anyCareCount} {careDue.anyCareCount === 1 ? "horse" : "horses"}
             </span>
           )}
         </div>
 
-        {careDue.showEmpty ? (
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-status-good-bg">
-              <Check className="size-4 text-status-good-text" aria-hidden />
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <Link
+            to="/horses?farrierDue=true"
+            className={cn(
+              "flex min-w-0 items-center gap-3 rounded-[var(--border-radius-md)] border-[0.5px] p-3 transition-colors duration-150 ease-out",
+              "hover:bg-[var(--color-background-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            )}
+            style={{ borderColor: "var(--color-border-tertiary)" }}
+            aria-label="View horses due for farrier"
+          >
+            <div
+              className="flex size-8 shrink-0 items-center justify-center rounded-[6px]"
+              style={{ background: "#FAEEDA", color: "#854F0B" }}
+              aria-hidden
+            >
+              <HorseshoeMark className="size-[14px]" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-foreground">All horses up to date</p>
-              <p className="text-[11px] leading-tight text-muted-foreground">
-                No farrier or dental due this week
+              <p className="text-sm font-medium leading-none text-foreground">Farrier</p>
+              <p className="mt-1 truncate text-[13px] text-muted-foreground">
+                {careDue.farrierEntries.length > 0
+                  ? careNamesLine(careDue.farrierEntries, FARRIER_INTERVAL_DAYS)
+                  : "None due"}
               </p>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {careDue.farrierEntries.length > 0 && (
-              <Link
-                to="/horses?farrierDue=true"
-                className="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted"
-              >
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-status-monitor-bg">
-                  <HorseshoeMark className="size-4 text-status-monitor-text" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium leading-tight text-foreground">Farrier</p>
-                  <p className="text-[11px] leading-tight text-muted-foreground">
-                    {careContextLine(careDue.farrierEntries, FARRIER_INTERVAL_DAYS)}
-                  </p>
-                </div>
-                <span className="shrink-0 text-[18px] font-medium tabular-nums text-foreground">
-                  {careDue.farrierEntries.length}
-                </span>
-                <ArrowUpRight
-                  className="size-3 shrink-0 text-muted-foreground transition-all duration-200 group-hover:text-action group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  aria-hidden
-                />
-              </Link>
+            <span
+              className={cn(
+                "shrink-0 text-base font-medium leading-none tabular-nums",
+                careDue.farrierEntries.length > 0 ? "text-foreground" : "text-[var(--color-text-tertiary)]"
+              )}
+            >
+              {careDue.farrierEntries.length}
+            </span>
+          </Link>
+
+          <Link
+            to="/horses?dentalDue=true"
+            className={cn(
+              "flex min-w-0 items-center gap-3 rounded-[var(--border-radius-md)] border-[0.5px] p-3 transition-colors duration-150 ease-out",
+              "hover:bg-[var(--color-background-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             )}
-            {careDue.dentalEntries.length > 0 && (
-              <Link
-                to="/horses?dentalDue=true"
-                className="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted"
-              >
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-status-monitor-bg">
-                  <ToothCareIcon className="size-4 text-status-monitor-text" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium leading-tight text-foreground">Dental</p>
-                  <p className="text-[11px] leading-tight text-muted-foreground">
-                    {careContextLine(careDue.dentalEntries, DENTAL_INTERVAL_DAYS)}
-                  </p>
-                </div>
-                <span className="shrink-0 text-[18px] font-medium tabular-nums text-foreground">
-                  {careDue.dentalEntries.length}
-                </span>
-                <ArrowUpRight
-                  className="size-3 shrink-0 text-muted-foreground transition-all duration-200 group-hover:text-action group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  aria-hidden
-                />
-              </Link>
-            )}
-          </div>
-        )}
+            style={{ borderColor: "var(--color-border-tertiary)" }}
+            aria-label="View horses due for dental"
+          >
+            <div
+              className="flex size-8 shrink-0 items-center justify-center rounded-[6px]"
+              style={{ background: "#E1F5EE", color: "#0F6E56" }}
+              aria-hidden
+            >
+              <ToothCareIcon className="size-[14px]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium leading-none text-foreground">Dental</p>
+              <p className="mt-1 truncate text-[13px] text-muted-foreground">
+                {careDue.dentalEntries.length > 0
+                  ? careNamesLine(careDue.dentalEntries, DENTAL_INTERVAL_DAYS)
+                  : "None due"}
+              </p>
+            </div>
+            <span
+              className={cn(
+                "shrink-0 text-base font-medium leading-none tabular-nums",
+                careDue.dentalEntries.length > 0 ? "text-foreground" : "text-[var(--color-text-tertiary)]"
+              )}
+            >
+              {careDue.dentalEntries.length}
+            </span>
+          </Link>
+        </div>
       </div>
     </section>
   )

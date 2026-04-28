@@ -1,11 +1,9 @@
 /* eslint-disable react-refresh/only-export-components -- shared cells + helpers live with table */
-import { ArrowDown, ArrowUp, ArrowUpDown, Check, Info } from "lucide-react"
+import { ArrowDown, ArrowUp, ArrowUpDown, Check, Info, NotebookPen } from "lucide-react"
 import type { ReactNode } from "react"
-import { CattleRosterObservationCell } from "@/components/CattleRosterObservationCell"
-import {
-  rosterObservationColumnWidthClass,
-  ROSTER_OBSERVATION_COLUMN_PX,
-} from "@/components/ObservationTableActionsCell"
+import { RichText } from "@/components/RichText"
+import { RosterCareDateCell } from "@/components/RosterCareDateCell"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -14,17 +12,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { RichText } from "@/components/RichText"
+import { useRanchData } from "@/contexts/RanchDataContext"
 import { calvingStatusBadgeClassAndLabel, getCalvingStatus } from "@/lib/calvingStatus"
 import { getDueDateVariant } from "@/lib/calvingRichTextVariants"
 import { isCattlePregnancyCheckNA } from "@/lib/cattlePregnancyCheck"
-import { formatDueDateLabel } from "@/lib/cattleUi"
-import type { CattleSortKey } from "@/lib/cattleRosterQuery"
+import { getCattleEffectiveHealthRisk, getCattleLastObservationLabel } from "@/lib/cattleSelectors"
+import { formatCattleTagDisplay, formatDueDateLabel } from "@/lib/cattleUi"
+import { StatusBadge } from "@/components/StatusBadge"
+import type { CattleRosterSortColumn } from "@/lib/cattleRosterQuery"
+import { cn } from "@/lib/utils"
 import type { Cattle } from "@/types/cattle"
 import type { ObservationEntry } from "@/types/observation"
-import { RosterCareDateCell } from "@/components/RosterCareDateCell"
-import { getStatusBadgeClass } from "@/lib/statusUtils"
-import { cn } from "@/lib/utils"
 
 /** Due date cell — shared by pasture roster and herd “All” table (Figma 45:1797). */
 export function CattleDueDateCell({ row }: { row: Cattle }) {
@@ -56,166 +54,256 @@ export function calvingStatusPill(c: Cattle) {
   return <span className={result.className}>{result.label}</span>
 }
 
-function CattleSortHeader({
+/** Opaque hover so scrolled columns do not show through sticky cells. */
+const CATTLE_ROSTER_STICKY_HOVER = "group-hover:bg-[var(--table-sticky-hover-bg)]"
+
+/** Opaque fill aligned with `bg-action/10` over white so scrolled row content does not show through the sticky identity column. */
+const CATTLE_ROSTER_STICKY_SELECTED_BG =
+  "bg-[color-mix(in_srgb,var(--action)_10%,#ffffff)] group-hover:bg-[color-mix(in_srgb,var(--action)_10%,#ffffff)]"
+
+const CATTLE_ROSTER_STICKY_W = "w-[200px] min-w-[200px] max-w-[200px]"
+
+const CATTLE_ROSTER_STICKY_TD =
+  `sticky left-0 z-10 h-16 ${CATTLE_ROSTER_STICKY_W} border-b border-neutral-200 py-2 pl-4 pr-3 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.08)]`
+
+/** Shared `<th>` shell (overrides `TableHead` defaults). Identity adds only `left` stick + width. */
+const CATTLE_ROSTER_TH_LAYOUT =
+  "h-14 box-border border-b border-[var(--color-border-tertiary)] bg-secondary px-0 py-0 text-left align-middle text-[13px] font-normal leading-tight whitespace-nowrap text-foreground"
+const CATTLE_ROSTER_TH_STICKY_BODY = "sticky top-0 z-10 shadow-[var(--shadow-sticky-scroll)]"
+const CATTLE_ROSTER_TH_STICKY_IDENTITY =
+  "sticky left-0 top-0 z-30 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.08),var(--shadow-sticky-scroll)]"
+
+const ROSTER_SORT_ICON_SM = "size-3.5 shrink-0 stroke-2"
+
+function CattleRosterSortableColumnHeader({
   children,
   className,
-  column,
-  sortKey,
-  sortDir,
-  onSort,
   hidden,
+  stickyIdentity,
+  rosterSortKey,
+  sortColumn,
+  sortDirection,
+  onColumnSort,
 }: {
   children: ReactNode
   className?: string
-  column: CattleSortKey
-  sortKey: CattleSortKey
-  sortDir: "asc" | "desc"
-  onSort: (column: CattleSortKey) => void
   hidden?: boolean
+  stickyIdentity?: boolean
+  rosterSortKey: CattleRosterSortColumn
+  sortColumn: CattleRosterSortColumn
+  sortDirection: "asc" | "desc"
+  onColumnSort?: (column: CattleRosterSortColumn) => void
 }) {
+  const interactive = Boolean(onColumnSort)
+  const active = sortColumn === rosterSortKey
+  const showStrongArrow = active
+  const showFaintSortHint = interactive && !active
+
   if (hidden) {
     return (
       <TableHead
         scope="col"
-        className={cn(
-          "h-14 border-b border-neutral-200 bg-[var(--muted)] font-medium whitespace-nowrap text-foreground",
-          className
-        )}
+        className={cn(CATTLE_ROSTER_TH_LAYOUT, CATTLE_ROSTER_TH_STICKY_BODY, className)}
       >
-        {children}
+        <span className="flex h-14 items-center px-3.5 text-muted-foreground">{children}</span>
       </TableHead>
     )
   }
-  const active = sortKey === column
   return (
     <TableHead
       scope="col"
       className={cn(
-        "h-14 border-b border-neutral-200 bg-[var(--muted)] font-medium whitespace-nowrap text-foreground",
+        CATTLE_ROSTER_TH_LAYOUT,
+        stickyIdentity ? cn(CATTLE_ROSTER_TH_STICKY_IDENTITY, CATTLE_ROSTER_STICKY_W) : CATTLE_ROSTER_TH_STICKY_BODY,
         className
       )}
+      aria-sort={
+        showStrongArrow
+          ? sortDirection === "asc"
+            ? "ascending"
+            : "descending"
+          : interactive
+            ? "none"
+            : undefined
+      }
     >
-      <button
-        type="button"
-        className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md py-1 pr-1 text-left outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/40"
-        onClick={(e) => {
-          e.stopPropagation()
-          onSort(column)
-        }}
-        aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-      >
-        <span>{children}</span>
-        {active ? (
-          sortDir === "asc" ? (
-            <ArrowUp className="size-4 shrink-0 text-foreground" aria-hidden />
-          ) : (
-            <ArrowDown className="size-4 shrink-0 text-foreground" aria-hidden />
-          )
-        ) : (
-          <ArrowUpDown className="size-4 shrink-0 opacity-50" aria-hidden />
-        )}
-      </button>
+      {interactive ? (
+        <button
+          type="button"
+          className={cn(
+            "group flex h-14 w-full min-w-0 cursor-pointer items-center gap-1.5 rounded-sm px-3.5 text-left text-[13px] transition-colors",
+            "hover:bg-[var(--table-sticky-hover-bg)]",
+            showStrongArrow
+              ? "font-medium text-action"
+              : "font-normal text-foreground hover:text-action",
+          )}
+          onClick={() => onColumnSort?.(rosterSortKey)}
+        >
+          <span className="min-w-0 shrink">{children}</span>
+          {showStrongArrow ? (
+            sortDirection === "asc" ? (
+              <ArrowUp className={cn(ROSTER_SORT_ICON_SM, "text-action")} aria-hidden />
+            ) : (
+              <ArrowDown className={cn(ROSTER_SORT_ICON_SM, "text-action")} aria-hidden />
+            )
+          ) : showFaintSortHint ? (
+            <ArrowUpDown
+              className={cn(
+                ROSTER_SORT_ICON_SM,
+                "text-muted-foreground transition-colors group-hover:text-action",
+              )}
+              aria-hidden
+            />
+          ) : null}
+        </button>
+      ) : (
+        <span className="flex h-14 items-center px-3.5 text-muted-foreground">{children}</span>
+      )}
     </TableHead>
   )
 }
 
 export type CattleRosterTableProps = {
   rows: Cattle[]
-  /** When true, adds a sortable Pasture column after Age. */
+  /** When true, adds a Pasture column after Age. */
   showPastureColumn: boolean
   pastureNames: Record<string, string>
-  sortKey: CattleSortKey
-  sortDir: "asc" | "desc"
-  onSort: (column: CattleSortKey) => void
+  observationsByCattleId: Record<string, ObservationEntry[]>
   onRowClick: (row: Cattle) => void
   /** Highlights the active row when a slide-over is open. */
   selectedCattleId?: string | null
   /** When set, + opens cattle panel on detail; ⋯ edit opens embedded log (global modal if unset). */
   onOpenObservationLog?: (row: Cattle, initialObservation: ObservationEntry | null) => void
-  /** Desktop: light tint on scrollable columns so the sticky Observation column reads as the focus (e.g. panel open). */
-  emphasizeObservationColumn?: boolean
   emptyState?: {
     title: string
     description: string
     action?: ReactNode
   }
+  sortColumn?: CattleRosterSortColumn
+  sortDirection?: "asc" | "desc"
+  onColumnSort?: (column: CattleRosterSortColumn) => void
 }
 
 export function CattleRosterTable({
   rows,
   showPastureColumn,
   pastureNames,
-  sortKey,
-  sortDir,
-  onSort,
+  observationsByCattleId,
   onRowClick,
   selectedCattleId = null,
   onOpenObservationLog,
-  emphasizeObservationColumn = false,
   emptyState,
+  sortColumn = "lastObservation",
+  sortDirection = "desc",
+  onColumnSort,
 }: CattleRosterTableProps) {
-  const colSpan = showPastureColumn ? 13 : 12
+  const { openCattleLogModal } = useRanchData()
+  const colSpan = showPastureColumn ? 12 : 11
   return (
-    <Table
-      className="border-separate border-spacing-0"
-      dimScrollportExceptRightPx={
-        emphasizeObservationColumn ? ROSTER_OBSERVATION_COLUMN_PX : undefined
-      }
-    >
+    <Table className="border-separate border-spacing-0" containerClassName="min-w-0">
       <TableHeader>
         <TableRow className="border-neutral-200 hover:bg-transparent">
-            <CattleSortHeader column="tag" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-              Tag #
-            </CattleSortHeader>
-            <CattleSortHeader column="healthStatus" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-              Status
-            </CattleSortHeader>
-            <CattleSortHeader
-              column="calvingStatus"
-              sortKey={sortKey}
-              sortDir={sortDir}
-              onSort={onSort}
-            >
-              Calving status
-            </CattleSortHeader>
-            <CattleSortHeader column="dueDate" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-              Due date
-            </CattleSortHeader>
-            <CattleSortHeader column="breed" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-              Breed
-            </CattleSortHeader>
-            <CattleSortHeader column="age" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-              Age
-            </CattleSortHeader>
-            {showPastureColumn ? (
-              <CattleSortHeader column="pasture" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-                Pasture
-              </CattleSortHeader>
-            ) : null}
-            <CattleSortHeader column="lastObs" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-              Last obs
-            </CattleSortHeader>
-            <CattleSortHeader column="lastVax" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-              Last vax
-            </CattleSortHeader>
-            <CattleSortHeader column="lastDeworm" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-              Last deworm
-            </CattleSortHeader>
-            <CattleSortHeader column="lastPregCheck" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-              Last preg check
-            </CattleSortHeader>
-            <CattleSortHeader column="lastBranding" sortKey={sortKey} sortDir={sortDir} onSort={onSort}>
-              Last branding
-            </CattleSortHeader>
-          <TableHead
-            scope="col"
-            className={cn(
-              "sticky right-0 z-20 h-14 border-b border-l border-neutral-200 bg-background px-2 text-left text-sm font-medium whitespace-nowrap text-foreground shadow-[-8px_0_16px_-8px_rgba(0,0,0,0.12)]",
-              rosterObservationColumnWidthClass
-            )}
+          <CattleRosterSortableColumnHeader
+            stickyIdentity
+            rosterSortKey="tag"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
           >
-            Observation
-          </TableHead>
+            Tag #
+          </CattleRosterSortableColumnHeader>
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="healthStatus"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+            className="min-w-[96px]"
+          >
+            Status
+          </CattleRosterSortableColumnHeader>
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="calvingStatus"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+            className="min-w-[124px]"
+          >
+            Calving status
+          </CattleRosterSortableColumnHeader>
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="dueDate"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+          >
+            Due date
+          </CattleRosterSortableColumnHeader>
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="breed"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+          >
+            Breed
+          </CattleRosterSortableColumnHeader>
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="age"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+          >
+            Age
+          </CattleRosterSortableColumnHeader>
+          {showPastureColumn ? (
+            <CattleRosterSortableColumnHeader
+              rosterSortKey="pasture"
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onColumnSort={onColumnSort}
+            >
+              Pasture
+            </CattleRosterSortableColumnHeader>
+          ) : null}
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="lastObservation"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+          >
+            Last obs
+          </CattleRosterSortableColumnHeader>
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="lastVax"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+          >
+            Last vax
+          </CattleRosterSortableColumnHeader>
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="lastDeworm"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+          >
+            Last deworm
+          </CattleRosterSortableColumnHeader>
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="lastPregCheck"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+          >
+            Last preg check
+          </CattleRosterSortableColumnHeader>
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="lastBranding"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+          >
+            Last branding
+          </CattleRosterSortableColumnHeader>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -231,10 +319,16 @@ export function CattleRosterTable({
           </TableRow>
         ) : null}
         {rows.map((row) => {
+          const healthRisk = getCattleEffectiveHealthRisk(row, observationsByCattleId)
+          const lastObsLabel = getCattleLastObservationLabel(row.id, observationsByCattleId)
           const selected = selectedCattleId === row.id
           const cellBg = cn(
             "h-16 border-b border-neutral-200 group-hover:bg-muted/50",
             selected ? "bg-action/10 group-hover:bg-action/10" : "bg-white"
+          )
+          const stickyCellBg = cn(
+            "h-16",
+            selected ? CATTLE_ROSTER_STICKY_SELECTED_BG : cn("bg-white", CATTLE_ROSTER_STICKY_HOVER)
           )
           return (
             <TableRow
@@ -242,21 +336,52 @@ export function CattleRosterTable({
               className="group cursor-pointer border-neutral-200"
               onClick={() => onRowClick(row)}
             >
-              <TableCell className={cn(cellBg, "font-medium tabular-nums text-foreground")}>
-                {row.tagNumber}
+              <TableCell
+                className={cn(
+                  CATTLE_ROSTER_STICKY_TD,
+                  "align-middle",
+                  stickyCellBg
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="shrink-0 whitespace-nowrap text-sm font-medium tabular-nums text-foreground">
+                    {formatCattleTagDisplay(row.tagNumber)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    title="Log observation"
+                    aria-label="Log observation"
+                    className={cn(
+                      "h-7 shrink-0 gap-1.5 px-3 text-[13px] font-medium hover:border-ai-accent hover:bg-ai-accent hover:text-white hover:[&_svg]:text-white [&_svg]:shrink-0",
+                      selected ? "bg-transparent" : "",
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (onOpenObservationLog) onOpenObservationLog(row, null)
+                      else openCattleLogModal(row)
+                    }}
+                  >
+                    <NotebookPen className="size-3.5 shrink-0" aria-hidden />
+                    Log
+                  </Button>
+                </div>
               </TableCell>
-              <TableCell className={cellBg}>
-                {row.healthStatus === "Flag" ? (
-                  <span className={getStatusBadgeClass("flag")}>Flag</span>
-                ) : row.healthStatus === "Monitor" ? (
-                  <span className={getStatusBadgeClass("monitor")}>Monitor</span>
+              <TableCell className={cn(cellBg, "min-w-[96px] whitespace-nowrap pl-4")}>
+                {healthRisk === "call-vet" ? (
+                  <StatusBadge status="call-vet" size="table" emphasis="secondary" />
+                ) : healthRisk === "monitor" ? (
+                  <StatusBadge status="monitor" size="table" emphasis="secondary" />
                 ) : null}
               </TableCell>
-              <TableCell className={cellBg}>{calvingStatusPill(row)}</TableCell>
+              <TableCell className={cn(cellBg, "min-w-[124px] whitespace-nowrap")}>
+                {calvingStatusPill(row)}
+              </TableCell>
               <TableCell className={cellBg}>
                 <CattleDueDateCell row={row} />
               </TableCell>
-              <TableCell className={cn(cellBg, "text-sm text-muted-foreground")}>
+              <TableCell className={cn(cellBg, "text-sm text-foreground")}>
                 {row.breed}
               </TableCell>
               <TableCell className={cn(cellBg, "text-foreground")}>
@@ -267,8 +392,8 @@ export function CattleRosterTable({
                   {pastureNames[row.pastureId] ?? row.pastureId}
                 </TableCell>
               ) : null}
-              <TableCell className={cn(cellBg, "text-sm text-muted-foreground")}>
-                {row.lastObservation ?? "—"}
+              <TableCell className={cn(cellBg, "text-sm text-foreground")}>
+                {lastObsLabel}
               </TableCell>
               <TableCell className={cellBg}>
                 <RosterCareDateCell iso={row.lastVaccinationAt} />
@@ -283,14 +408,6 @@ export function CattleRosterTable({
               </TableCell>
               <TableCell className={cellBg}>
                 <RosterCareDateCell iso={row.lastBrandingAt} />
-              </TableCell>
-              <TableCell
-                className={cn(
-                  "sticky right-0 z-10 h-16 border-b border-l border-neutral-200 bg-background p-0 shadow-[-8px_0_16px_-8px_rgba(0,0,0,0.12)]",
-                  rosterObservationColumnWidthClass
-                )}
-              >
-                <CattleRosterObservationCell row={row} onOpenObservationLog={onOpenObservationLog} />
               </TableCell>
             </TableRow>
           )

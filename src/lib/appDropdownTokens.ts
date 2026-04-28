@@ -28,9 +28,17 @@ export const appListboxPanelClass = cn(appDropdownPanelClass, "py-1 outline-none
 export const appListboxOptionClass =
   "flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-[var(--foreground)] outline-none hover:bg-neutral-100 focus-visible:bg-neutral-100"
 
-/** Border / shadow / focus ring shared by native selects and composite triggers (e.g. feed picker). */
+/**
+ * Select triggers are deliberately taller than Inputs:
+ * - Inputs: `h-9` (text entry)
+ * - Select triggers: `h-10` default / `h-8` compact (button-like menu disclosure)
+ *
+ * Height differs by role, but all other chrome (radius, border, bg, focus) matches the unified
+ * Input/Textarea vocabulary (Option C): `rounded-lg border-border bg-muted` and
+ * `focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-action/25`.
+ */
 export const appNativeSelectSurfaceClass =
-  "rounded-xl border border-neutral-200/90 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] outline-none focus-visible:border-action focus-visible:ring-2 focus-visible:ring-action/25"
+  "rounded-lg border border-border bg-muted outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-action/25"
 
 /** Full-width Menu trigger — matches former native `<select>` fields (Log / Add animal / Edit profile). */
 export const appMenuSelectTriggerClass = cn(
@@ -39,7 +47,7 @@ export const appMenuSelectTriggerClass = cn(
 )
 
 export const appMenuSelectTriggerCompactClass = cn(
-  "flex h-8 min-h-8 w-full min-w-0 cursor-pointer items-center justify-between gap-2 px-2 py-1 text-left text-xs font-normal text-[var(--foreground)] disabled:opacity-50",
+  "flex h-8 min-h-8 w-full min-w-0 cursor-pointer items-center justify-between gap-2 px-2 py-1 text-left text-[13px] font-normal text-[var(--foreground)] disabled:opacity-50",
   appNativeSelectSurfaceClass
 )
 
@@ -49,10 +57,10 @@ export const appNativeSelectFieldClass = cn(
 )
 
 export const appNativeSelectFieldCompactClass = cn(
-  "h-8 w-[128px] cursor-pointer appearance-none py-1 pr-8 pl-2 text-xs text-[var(--foreground)]",
+  "h-8 w-[128px] cursor-pointer appearance-none py-1 pr-8 pl-2 text-[13px] text-[var(--foreground)]",
   appNativeSelectSurfaceClass
 )
 
 /** Compact pill selects (e.g. observation filters on profile). */
 export const appNativeSelectPillClass =
-  "cursor-pointer rounded-full border border-neutral-200/90 bg-white px-3 py-1.5 text-xs text-[var(--foreground)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] outline-none focus-visible:border-action focus-visible:ring-2 focus-visible:ring-action/25"
+  "cursor-pointer rounded-full border border-neutral-200/90 bg-white px-3 py-1.5 text-[13px] text-[var(--foreground)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] outline-none focus-visible:border-action focus-visible:ring-2 focus-visible:ring-action/25"

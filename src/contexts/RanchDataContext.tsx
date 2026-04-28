@@ -10,23 +10,32 @@ import {
   useState,
   type ReactNode,
 } from "react"
-import { LogObservationModal } from "@/components/LogObservationModal"
-import { LogPastureCheckModal, type PastureCheckData } from "@/components/LogPastureCheckModal"
+import { LogObservationModal, type LogObservationSavePayload } from "@/components/LogObservationModal"
 import { LogPastureCheckSheet } from "@/components/LogPastureCheckSheet"
-import { RecordCalvingModal, type PersistCalvingAiPayload } from "@/components/RecordCalvingModal"
-import type { HorseTableRow } from "@/components/HeguyRanchCoPilot"
-import { SAMPLE_HORSE_ROWS, horseRowKey } from "@/components/HeguyRanchCoPilot"
+import {
+  RecordCalvingModal,
+  type FinalizeCalvingObservationPayload,
+  type PersistCalvingAiPayload,
+} from "@/components/RecordCalvingModal"
+import type { HorseTableRow } from "@/components/RanchWiseHorseRoster"
+import { SAMPLE_HORSE_ROWS, horseRowKey } from "@/components/RanchWiseHorseRoster"
+import { getCattleEffectiveHealthRisk } from "@/lib/cattleSelectors"
+import { formatCattleTagDisplay } from "@/lib/cattleUi"
 import { PASTURES_SEED, SAMPLE_CATTLE } from "@/lib/cattleSeed"
 import { buildInitialCattleObservationsMap } from "@/lib/cattleObservationsSeed"
 import { getAiRiskLevelFromObservations, getLatestObservationWithAi } from "@/lib/animalUtils"
 import { riskLevelToModalStatusBadge } from "@/lib/horseUtils"
 import { getObservationDomain, observationDomainFromCategory } from "@/lib/observationDomain"
+import { buildInitialPastureChecksByPastureId } from "@/lib/pastureCheckSeed"
+import { riskLevelToPastureStatus, type PastureCheckEntry } from "@/lib/pastureCheckTypes"
 import { buildInitialObservationsMap, formatObservationDate } from "@/lib/initialObservations"
 import { HORSE_OBSERVATION_CATEGORIES } from "@/lib/observationCategories"
+import { calvingOutcomeConfirmationLabel } from "@/lib/calvingAnalyze"
 import { buildCalvingObservationNotes } from "@/lib/calvingStatus"
-import type { CalvingRecord, Cattle, Pasture, PastureCheck } from "@/types/cattle"
-import type { AIResult, Category, ObservationEntry, RiskLevel } from "@/types/observation"
+import { showObservationDiscardedToast } from "@/lib/observationDiscardToast"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
+import type { CalvingRecord, Cattle, Pasture, StoredCalvingStatus } from "@/types/cattle"
+import type { AIResult, Category, ObservationEntry, RiskLevel } from "@/types/observation"
 
 function horseStatusFromAiRiskLevel(level: RiskLevel | null): HorseTableRow["healthStatus"] {
   if (level === "call-vet") return "flag"
@@ -38,6 +47,29 @@ function cattleHealthStatusFromRiskLevel(level: RiskLevel): "Flag" | "Monitor" |
   if (level === "call-vet") return "Flag"
   if (level === "monitor") return "Monitor"
   return "Good"
+}
+
+function buildFinalCalvingObservationAi(base: AIResult | null | undefined, confirmed: RiskLevel): AIResult {
+  const suggestedRiskLevel = base?.suggestedRiskLevel ?? base?.riskLevel ?? "good"
+  const suggestedRiskLabel =
+    base?.suggestedRiskLabel ??
+    base?.riskLabel ??
+    calvingOutcomeConfirmationLabel(suggestedRiskLevel)
+  const mergedBase: AIResult =
+    base ??
+    ({
+      riskLevel: "good",
+      riskLabel: "Stable",
+      recommendations: [],
+      patternNote: null,
+    } satisfies AIResult)
+  return {
+    ...mergedBase,
+    suggestedRiskLevel,
+    suggestedRiskLabel,
+    riskLevel: confirmed,
+    riskLabel: calvingOutcomeConfirmationLabel(confirmed),
+  }
 }
 
 /** Map roster `healthStatus` / `behaviorStatus` to modal `StatusBadge` props (matches home log sheet). */
@@ -78,13 +110,9 @@ function syncHorseProfileFromObservations(
 export type LogObservationTarget =
   | { kind: "horse"; row: HorseTableRow; editingEntry?: ObservationEntry }
   | { kind: "cattle"; cattle: Cattle; editingEntry?: ObservationEntry }
+  | { kind: "pasture"; pastureId: string; pastureName: string }
 
 export type PastureCheckModalTarget = { pastureId: string; pastureName: string }
-
-type PastureCheckUiState = {
-  target: PastureCheckModalTarget
-  variant: "modal" | "sheet"
-}
 
 export type RecordCalvingModalTarget = {
   cattle: Cattle
@@ -111,15 +139,20 @@ type RanchDataContextValue = {
   logObservationTarget: LogObservationTarget | null
 
   pastures: Pasture[]
+  /** Merge demo edits from the profile Edit modal (in-memory). */
+  updatePasture: (pastureId: string, patch: Partial<Pasture>) => void
   cattle: Cattle[]
-  pastureChecks: PastureCheck[]
-  appendPastureCheck: (check: PastureCheck) => void
+  pastureChecks: PastureCheckEntry[]
+  pastureChecksByPastureId: Record<string, PastureCheckEntry[]>
+  appendPastureCheck: (pastureId: string, entry: PastureCheckEntry) => void
+  setPastureChecksForPasture: (pastureId: string, entries: PastureCheckEntry[]) => void
   observationsByCattleId: Record<string, ObservationEntry[]>
   appendCattleObservation: (cattleId: string, entry: ObservationEntry) => void
   removeCattleObservation: (cattleId: string, observationId: string) => void
 
   pastureCheckModal: PastureCheckModalTarget | null
   openPastureCheckModal: (target: PastureCheckModalTarget) => void
+  /** Alias for closing the unified log modal when the active target is a pasture (same as `closeLogModal`). */
   closePastureCheckModal: () => void
 
   recordCalvingModal: RecordCalvingModalTarget | null
@@ -129,12 +162,27 @@ type RanchDataContextValue = {
   commitCattleCalvingRecord: (record: CalvingRecord) => string
   /** Attach AI analysis to the calving observation row and the cattle record (after analyze completes). */
   persistCalvingObservationAi: (payload: PersistCalvingAiPayload) => void
+  /** Apply user-confirmed Stable / Concern / Action needed after the calving result step. */
+  finalizeCalvingObservation: (payload: FinalizeCalvingObservationPayload) => void
   /** Persist cattle observation from sheet/panel (or modal via handleLogSave). Optional `editingEntry` updates in place. */
   saveCattleObservationLog: (
     cattleId: string,
     data: { category: Category; notes: string; loggedBy: string; aiResult: AIResult },
     editingEntry?: ObservationEntry
   ) => string | void
+  /** Re-run calving commit fields + observation row when user saves again from the calving editor. */
+  updateCattleCalvingRecord: (record: CalvingRecord, observationId: string) => void
+  /**
+   * Removes calving observation, reverts cattle fields, shows undo toast.
+   * `cattleRestore` is the post-commit cattle patch (including calving AI) used when undo runs.
+   */
+  discardCalvingObservation: (payload: {
+    cattleId: string
+    observationId: string
+    observation: ObservationEntry
+    cattleRevert: Partial<Cattle>
+    cattleRestore: Partial<Cattle>
+  }) => void
   updateCattle: (cattleId: string, patch: Partial<Cattle>) => void
   markCattleInLabor: (cattleId: string) => void
   appendCattle: (row: Cattle) => void
@@ -149,7 +197,7 @@ export function useRanchData() {
 }
 
 export function RanchDataProvider({ children }: { children: ReactNode }) {
-  const isPastureCheckMobile = useMediaQuery("(max-width: 767px)")
+  const isMdUp = useMediaQuery("(min-width: 768px)")
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [addedHorses, setAddedHorses] = useState<HorseTableRow[]>([])
   const [horseOverrides, setHorseOverrides] = useState<Record<string, Partial<HorseTableRow>>>({})
@@ -160,14 +208,25 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
   const [logObservationTarget, setLogObservationTarget] = useState<LogObservationTarget | null>(null)
   const lastHorseObservationCommitIdRef = useRef<string | null>(null)
   const lastCattleObservationCommitIdRef = useRef<string | null>(null)
+  const lastPastureCheckCommitIdRef = useRef<string | null>(null)
 
   const [cattle, setCattle] = useState<Cattle[]>(SAMPLE_CATTLE)
-  const [pastureChecks, setPastureChecks] = useState<PastureCheck[]>([])
+  const [pastureFieldOverrides, setPastureFieldOverrides] = useState<Record<string, Partial<Pasture>>>({})
+  const [pastureChecksByPastureId, setPastureChecksByPastureId] = useState<
+    Record<string, PastureCheckEntry[]>
+  >(() => buildInitialPastureChecksByPastureId())
   const [observationsByCattleId, setObservationsByCattleId] = useState<
     Record<string, ObservationEntry[]>
   >(buildInitialCattleObservationsMap)
-  const [pastureCheckUi, setPastureCheckUi] = useState<PastureCheckUiState | null>(null)
   const [recordCalvingModal, setRecordCalvingModal] = useState<RecordCalvingModalTarget | null>(null)
+
+  const pastureChecks = useMemo(
+    () =>
+      Object.values(pastureChecksByPastureId)
+        .flat()
+        .sort((a, b) => b.date - a.date),
+    [pastureChecksByPastureId]
+  )
 
   const herdRows = useMemo(
     () =>
@@ -208,25 +267,32 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
     [herdRows]
   )
 
+  const updatePasture = useCallback((pastureId: string, patch: Partial<Pasture>) => {
+    setPastureFieldOverrides((prev) => ({
+      ...prev,
+      [pastureId]: { ...prev[pastureId], ...patch },
+    }))
+  }, [])
+
   const pastures = useMemo((): Pasture[] => {
     return PASTURES_SEED.map((p) => {
-      const count = cattle.filter((c) => c.pastureId === p.id).length
-      const checks = pastureChecks
-        .filter((c) => c.pastureId === p.id)
+      const merged = { ...p, ...(pastureFieldOverrides[p.id] ?? {}) }
+      const count = cattle.filter((c) => c.pastureId === merged.id).length
+      const checks = (pastureChecksByPastureId[merged.id] ?? [])
         .slice()
-        .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime())
+        .sort((a, b) => b.date - a.date)
       const last = checks[0]
       const lastObservation = last
-        ? formatDistanceToNow(parseISO(last.date), { addSuffix: true })
-        : p.lastObservation
+        ? formatDistanceToNow(last.date, { addSuffix: true })
+        : merged.lastObservation
       return {
-        ...p,
+        ...merged,
         animalCount: count,
         lastObservation,
-        lastCheckDate: last?.date,
+        lastCheckDate: last ? formatISO(last.date) : undefined,
       }
     })
-  }, [cattle, pastureChecks])
+  }, [cattle, pastureChecksByPastureId, pastureFieldOverrides])
 
   const appendHerdHorse = useCallback((row: HorseTableRow) => {
     setAddedHorses((prev) => [...prev, row])
@@ -284,8 +350,15 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
     }))
   }, [])
 
-  const appendPastureCheck = useCallback((check: PastureCheck) => {
-    setPastureChecks((prev) => [check, ...prev])
+  const appendPastureCheck = useCallback((pastureId: string, entry: PastureCheckEntry) => {
+    setPastureChecksByPastureId((prev) => ({
+      ...prev,
+      [pastureId]: [entry, ...(prev[pastureId] ?? [])],
+    }))
+  }, [])
+
+  const setPastureChecksForPasture = useCallback((pastureId: string, entries: PastureCheckEntry[]) => {
+    setPastureChecksByPastureId((prev) => ({ ...prev, [pastureId]: entries }))
   }, [])
 
   const appendCattle = useCallback((row: Cattle) => {
@@ -309,33 +382,38 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
   const openLogModal = useCallback((row: HorseTableRow, editingEntry?: ObservationEntry) => {
     lastHorseObservationCommitIdRef.current = null
     lastCattleObservationCommitIdRef.current = null
+    lastPastureCheckCommitIdRef.current = null
     setLogObservationTarget({ kind: "horse", row, editingEntry })
   }, [])
 
   const openCattleLogModal = useCallback((c: Cattle, editingEntry?: ObservationEntry) => {
     lastHorseObservationCommitIdRef.current = null
     lastCattleObservationCommitIdRef.current = null
+    lastPastureCheckCommitIdRef.current = null
     setLogObservationTarget({ kind: "cattle", cattle: c, editingEntry })
   }, [])
 
   const closeLogModal = useCallback(() => {
     lastHorseObservationCommitIdRef.current = null
     lastCattleObservationCommitIdRef.current = null
+    lastPastureCheckCommitIdRef.current = null
     setLogObservationTarget(null)
   }, [])
 
-  /** Uses `(max-width: 767px)` — same breakpoint as horse/cattle sheets; opens vaul sheet on small viewports. */
-  const openPastureCheckModal = useCallback(
-    (target: PastureCheckModalTarget) => {
-      setPastureCheckUi({
-        target,
-        variant: isPastureCheckMobile ? "sheet" : "modal",
-      })
-    },
-    [isPastureCheckMobile]
-  )
+  const openPastureCheckModal = useCallback((target: PastureCheckModalTarget) => {
+    lastHorseObservationCommitIdRef.current = null
+    lastCattleObservationCommitIdRef.current = null
+    lastPastureCheckCommitIdRef.current = null
+    setLogObservationTarget({
+      kind: "pasture",
+      pastureId: target.pastureId,
+      pastureName: target.pastureName,
+    })
+  }, [])
 
-  const closePastureCheckModal = useCallback(() => setPastureCheckUi(null), [])
+  const closePastureCheckModal = useCallback(() => {
+    closeLogModal()
+  }, [closeLogModal])
 
   const openRecordCalvingModal = useCallback((target: RecordCalvingModalTarget) => {
     setRecordCalvingModal(target)
@@ -371,22 +449,109 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
         notes: obsNotes,
         loggedBy: record.loggedBy,
         aiResult: null,
+        observationDomain: "health",
       })
       return observationId
     },
     [appendCattleObservation, updateCattle]
   )
 
+  const updateCattleCalvingRecord = useCallback(
+    (record: CalvingRecord, observationId: string) => {
+      const realComps = record.complications.filter((c) => c !== "none")
+      const nextStatus =
+        record.forceComplicationsOutcome || realComps.length > 0 ? "complications" : "calved"
+      const dateOnly = formatISO(parseISO(record.date), { representation: "date" })
+      updateCattle(record.cattleId, {
+        calvingStatus: nextStatus,
+        calvingDate: dateOnly,
+        dueDate: null,
+        deliveryType: record.deliveryType,
+        calfStatus: record.calfStatus,
+        calvingComplications: realComps.length > 0 ? realComps : [],
+        inLaborTimestamp: null,
+      })
+      const obsNotes = buildCalvingObservationNotes({
+        ...record,
+        complications: realComps.length > 0 ? realComps : [],
+      })
+      setObservationsByCattleId((prev) => ({
+        ...prev,
+        [record.cattleId]: (prev[record.cattleId] ?? []).map((o) =>
+          o.id === observationId
+            ? {
+                ...o,
+                date: formatObservationDate(new Date(record.date)),
+                notes: obsNotes,
+                loggedBy: record.loggedBy,
+              }
+            : o
+        ),
+      }))
+    },
+    [updateCattle]
+  )
+
+  const discardCalvingObservation = useCallback(
+    (payload: {
+      cattleId: string
+      observationId: string
+      observation: ObservationEntry
+      cattleRevert: Partial<Cattle>
+      cattleRestore: Partial<Cattle>
+    }) => {
+      const { cattleId, observationId, observation, cattleRevert, cattleRestore } = payload
+      removeCattleObservation(cattleId, observationId)
+      updateCattle(cattleId, cattleRevert)
+      showObservationDiscardedToast(() => {
+        appendCattleObservation(cattleId, observation)
+        updateCattle(cattleId, cattleRestore)
+      })
+    },
+    [appendCattleObservation, removeCattleObservation, updateCattle]
+  )
+
   const persistCalvingObservationAi = useCallback((payload: PersistCalvingAiPayload) => {
     const { cattleId, observationId, aiResult } = payload
+    const enriched: AIResult = {
+      ...aiResult,
+      suggestedRiskLevel: aiResult.suggestedRiskLevel ?? aiResult.riskLevel,
+      suggestedRiskLabel: aiResult.suggestedRiskLabel ?? aiResult.riskLabel,
+    }
     setObservationsByCattleId((prev) => ({
       ...prev,
       [cattleId]: (prev[cattleId] ?? []).map((o) =>
-        o.id === observationId ? { ...o, aiResult } : o
+        o.id === observationId ? { ...o, aiResult: enriched } : o
       ),
     }))
-    updateCattle(cattleId, { calvingAiResult: aiResult })
+    updateCattle(cattleId, { calvingAiResult: enriched })
   }, [updateCattle])
+
+  const finalizeCalvingObservation = useCallback(
+    (payload: FinalizeCalvingObservationPayload) => {
+      const { cattleId, observationId, record, confirmedRisk } = payload
+      const list = observationsByCattleId[cattleId] ?? []
+      const o = list.find((x) => x.id === observationId)
+      const finalAi = buildFinalCalvingObservationAi(o?.aiResult, confirmedRisk)
+
+      setObservationsByCattleId((prev) => ({
+        ...prev,
+        [cattleId]: (prev[cattleId] ?? []).map((ob) =>
+          ob.id === observationId ? { ...ob, aiResult: finalAi } : ob
+        ),
+      }))
+
+      const nextCalvingStatus: StoredCalvingStatus =
+        record.forceComplicationsOutcome || confirmedRisk === "call-vet" ? "complications" : "calved"
+
+      updateCattle(cattleId, {
+        calvingAiResult: finalAi,
+        calvingStatus: nextCalvingStatus,
+        healthStatus: cattleHealthStatusFromRiskLevel(confirmedRisk),
+      })
+    },
+    [observationsByCattleId, updateCattle]
+  )
 
   const handleRecordCalvingSave = useCallback(
     async (record: CalvingRecord) => {
@@ -441,12 +606,125 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
   )
 
   const handleLogSave = useCallback(
-    async (
-      data: { category: Category; notes: string; loggedBy: string; aiResult: AIResult },
-      meta?: { stage: "commit" | "done" }
-    ) => {
+    async (data: LogObservationSavePayload, meta?: { stage: "commit" | "done" | "discard" }) => {
       if (!logObservationTarget) return
       const stage = meta?.stage ?? "done"
+
+      if (logObservationTarget.kind === "pasture") {
+        if (data.kind !== "pasture") return
+        const pastureId = logObservationTarget.pastureId
+        const list = pastureChecksByPastureId[pastureId] ?? []
+
+        if (stage === "discard") {
+          const targetId = lastPastureCheckCommitIdRef.current
+          lastPastureCheckCommitIdRef.current = null
+          const snap = targetId ? list.find((e) => e.id === targetId) : undefined
+          if (snap && targetId) {
+            const postRemove = list.filter((e) => e.id !== targetId)
+            setPastureChecksForPasture(pastureId, postRemove)
+            showObservationDiscardedToast(
+              () => {
+                setPastureChecksForPasture(pastureId, [snap, ...postRemove])
+              },
+              { message: "Pasture check discarded" }
+            )
+          }
+          setLogObservationTarget(null)
+          return
+        }
+
+        if (stage === "commit") {
+          const entry: PastureCheckEntry = {
+            id: crypto.randomUUID(),
+            pastureId,
+            date: Date.now(),
+            category: data.category,
+            status: riskLevelToPastureStatus(data.aiResult.riskLevel),
+            body: data.notes,
+            author: data.loggedBy,
+            aiResult: data.aiResult,
+          }
+          lastPastureCheckCommitIdRef.current = entry.id
+          appendPastureCheck(pastureId, entry)
+          return
+        }
+
+        const targetId = lastPastureCheckCommitIdRef.current
+        lastPastureCheckCommitIdRef.current = null
+        if (targetId) {
+          const nextList = list.map((e) =>
+            e.id === targetId
+              ? {
+                  ...e,
+                  category: data.category,
+                  body: data.notes,
+                  author: data.loggedBy,
+                  aiResult: data.aiResult,
+                  status: riskLevelToPastureStatus(data.aiResult.riskLevel),
+                }
+              : e
+          )
+          setPastureChecksForPasture(pastureId, nextList)
+        }
+        setLogObservationTarget(null)
+        return
+      }
+
+      if (data.kind !== "animal") return
+      const animalData = {
+        category: data.category,
+        notes: data.notes,
+        loggedBy: data.loggedBy,
+        aiResult: data.aiResult,
+      }
+
+      if (stage === "discard") {
+        if (logObservationTarget.kind === "horse") {
+          const key = horseRowKey(logObservationTarget.row)
+          const editing = logObservationTarget.editingEntry
+          const targetId = editing?.id ?? lastHorseObservationCommitIdRef.current
+          lastHorseObservationCommitIdRef.current = null
+          const list = observationsByHorse[key] ?? []
+          const snap = targetId ? list.find((o) => o.id === targetId) : undefined
+          if (snap && targetId) {
+            const postRemove = list.filter((o) => o.id !== targetId)
+            removeHorseObservation(key, targetId)
+            syncHorseProfileFromObservations(key, postRemove, updateHerdHorse)
+            showObservationDiscardedToast(() => {
+              setObservationsForHorse(key, [snap, ...postRemove])
+              syncHorseProfileFromObservations(key, [snap, ...postRemove], updateHerdHorse)
+            })
+          }
+        } else {
+          const c = logObservationTarget.cattle
+          const editing = logObservationTarget.editingEntry
+          const targetId = editing?.id ?? lastCattleObservationCommitIdRef.current
+          lastCattleObservationCommitIdRef.current = null
+          const list = observationsByCattleId[c.id] ?? []
+          const snap = targetId ? list.find((o) => o.id === targetId) : undefined
+          if (snap && targetId) {
+            const postRemove = list.filter((o) => o.id !== targetId)
+            removeCattleObservation(c.id, targetId)
+            const lvl = getAiRiskLevelFromObservations(postRemove)
+            updateCattle(c.id, {
+              healthStatus: lvl ? cattleHealthStatusFromRiskLevel(lvl) : "Good",
+            })
+            showObservationDiscardedToast(() => {
+              appendCattleObservation(c.id, snap)
+              const merged = [snap, ...postRemove]
+              const restoreLvl = getAiRiskLevelFromObservations(merged)
+              updateCattle(c.id, {
+                healthStatus: restoreLvl
+                  ? cattleHealthStatusFromRiskLevel(restoreLvl)
+                  : cattleHealthStatusFromRiskLevel(snap.aiResult?.riskLevel ?? "good"),
+                lastObservation: formatDistanceToNow(new Date(), { addSuffix: true }),
+              })
+            })
+          }
+        }
+        setLogObservationTarget(null)
+        return
+      }
 
       if (logObservationTarget.kind === "horse") {
         const key = horseRowKey(logObservationTarget.row)
@@ -459,11 +737,11 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
               o.id === editing.id
                 ? {
                     ...o,
-                    category: data.category,
-                    observationDomain: observationDomainFromCategory(data.category),
-                    notes: data.notes,
-                    loggedBy: data.loggedBy,
-                    aiResult: data.aiResult,
+                    category: animalData.category,
+                    observationDomain: observationDomainFromCategory(animalData.category),
+                    notes: animalData.notes,
+                    loggedBy: animalData.loggedBy,
+                    aiResult: animalData.aiResult,
                   }
                 : o
             )
@@ -473,11 +751,11 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
             const entry: ObservationEntry = {
               id: crypto.randomUUID(),
               date: formatObservationDate(new Date()),
-              category: data.category,
-              observationDomain: observationDomainFromCategory(data.category),
-              notes: data.notes,
-              loggedBy: data.loggedBy,
-              aiResult: data.aiResult,
+              category: animalData.category,
+              observationDomain: observationDomainFromCategory(animalData.category),
+              notes: animalData.notes,
+              loggedBy: animalData.loggedBy,
+              aiResult: animalData.aiResult,
             }
             lastHorseObservationCommitIdRef.current = entry.id
             appendObservation(key, entry)
@@ -495,11 +773,11 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
             o.id === targetId
               ? {
                   ...o,
-                  category: data.category,
-                  observationDomain: observationDomainFromCategory(data.category),
-                  notes: data.notes,
-                  loggedBy: data.loggedBy,
-                  aiResult: data.aiResult,
+                  category: animalData.category,
+                  observationDomain: observationDomainFromCategory(animalData.category),
+                  notes: animalData.notes,
+                  loggedBy: animalData.loggedBy,
+                  aiResult: animalData.aiResult,
                 }
               : o
           )
@@ -511,7 +789,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
         if (stage === "commit") {
           lastCattleObservationCommitIdRef.current = saveCattleObservationLog(
             c.id,
-            data,
+            animalData,
             logObservationTarget.editingEntry
           )
           return
@@ -528,16 +806,16 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
               o.id === targetId
                 ? {
                     ...o,
-                    category: data.category,
-                    notes: data.notes,
-                    loggedBy: data.loggedBy,
-                    aiResult: data.aiResult,
+                    category: animalData.category,
+                    notes: animalData.notes,
+                    loggedBy: animalData.loggedBy,
+                    aiResult: animalData.aiResult,
                   }
                 : o
             ),
           }))
           updateCattle(c.id, {
-            healthStatus: cattleHealthStatusFromRiskLevel(data.aiResult.riskLevel),
+            healthStatus: cattleHealthStatusFromRiskLevel(animalData.aiResult.riskLevel),
             lastObservation: formatDistanceToNow(new Date(), { addSuffix: true }),
           })
         }
@@ -546,48 +824,32 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       setLogObservationTarget(null)
     },
     [
+      appendCattleObservation,
       appendObservation,
+      appendPastureCheck,
       logObservationTarget,
+      observationsByCattleId,
       observationsByHorse,
+      pastureChecksByPastureId,
+      removeCattleObservation,
+      removeHorseObservation,
       saveCattleObservationLog,
       setObservationsForHorse,
       setObservationsByCattleId,
+      setPastureChecksForPasture,
       updateCattle,
       updateHerdHorse,
     ]
-  )
-
-  const commitPastureCheck = useCallback(
-    (target: PastureCheckModalTarget, data: PastureCheckData) => {
-      const notesTrim = data.notes.trim()
-      const check: PastureCheck = {
-        id: crypto.randomUUID(),
-        pastureId: target.pastureId,
-        date: new Date().toISOString(),
-        loggedBy: data.loggedBy.trim(),
-        allClear: data.allClear,
-        notes: data.allClear && !notesTrim ? undefined : notesTrim,
-      }
-      appendPastureCheck(check)
-    },
-    [appendPastureCheck]
-  )
-
-  const handlePastureCheckModalSave = useCallback(
-    (data: PastureCheckData) => {
-      if (!pastureCheckUi || pastureCheckUi.variant !== "modal") return
-      commitPastureCheck(pastureCheckUi.target, data)
-      setPastureCheckUi(null)
-    },
-    [commitPastureCheck, pastureCheckUi]
   )
 
   const logModalAnimalName =
     logObservationTarget?.kind === "horse"
       ? logObservationTarget.row.name
       : logObservationTarget?.kind === "cattle"
-        ? logObservationTarget.cattle.tagNumber
-        : ""
+        ? formatCattleTagDisplay(logObservationTarget.cattle.tagNumber)
+        : logObservationTarget?.kind === "pasture"
+          ? logObservationTarget.pastureName
+          : ""
 
   const logModalAnimalPhoto =
     logObservationTarget?.kind === "horse" ? logObservationTarget.row.photoUrl : undefined
@@ -602,6 +864,11 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       const pastureName = pastures.find((p) => p.id === c.pastureId)?.name ?? "Pasture"
       return `${c.breed} · ${c.age}y · ${pastureName}`
     }
+    if (logObservationTarget?.kind === "pasture") {
+      const meta = pastures.find((p) => p.id === logObservationTarget.pastureId)
+      const typeLabel = meta?.type.replace("-", " ") ?? "pasture"
+      return `Pasture · ${typeLabel}`
+    }
     return undefined
   }, [logObservationTarget, pastures])
 
@@ -610,10 +877,8 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       return herdFieldToModalStatusBadge(logObservationTarget.row.healthStatus)
     }
     if (logObservationTarget?.kind === "cattle") {
-      return (
-        riskLevelToModalStatusBadge(
-          getAiRiskLevelFromObservations(observationsByCattleId[logObservationTarget.cattle.id])
-        ) ?? logObservationTarget.cattle.healthStatus
+      return riskLevelToModalStatusBadge(
+        getCattleEffectiveHealthRisk(logObservationTarget.cattle, observationsByCattleId)
       )
     }
     return undefined
@@ -625,7 +890,15 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
     return herdFieldToModalStatusBadge(logObservationTarget.row.behaviorStatus)
   }, [logObservationTarget])
 
-  const pastureCheckModal = pastureCheckUi?.target ?? null
+  const pastureCheckModal = useMemo((): PastureCheckModalTarget | null => {
+    if (logObservationTarget?.kind === "pasture") {
+      return {
+        pastureId: logObservationTarget.pastureId,
+        pastureName: logObservationTarget.pastureName,
+      }
+    }
+    return null
+  }, [logObservationTarget])
 
   const value = useMemo(
     () => ({
@@ -646,9 +919,12 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       handleLogSave,
       logObservationTarget,
       pastures,
+      updatePasture,
       cattle,
       pastureChecks,
+      pastureChecksByPastureId,
       appendPastureCheck,
+      setPastureChecksForPasture,
       observationsByCattleId,
       appendCattleObservation,
       removeCattleObservation,
@@ -659,7 +935,10 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       openRecordCalvingModal,
       closeRecordCalvingModal,
       commitCattleCalvingRecord,
+      updateCattleCalvingRecord,
+      discardCalvingObservation,
       persistCalvingObservationAi,
+      finalizeCalvingObservation,
       saveCattleObservationLog,
       updateCattle,
       markCattleInLabor,
@@ -682,9 +961,12 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       handleLogSave,
       logObservationTarget,
       pastures,
+      updatePasture,
       cattle,
       pastureChecks,
+      pastureChecksByPastureId,
       appendPastureCheck,
+      setPastureChecksForPasture,
       observationsByCattleId,
       appendCattleObservation,
       removeCattleObservation,
@@ -695,7 +977,10 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       openRecordCalvingModal,
       closeRecordCalvingModal,
       commitCattleCalvingRecord,
+      updateCattleCalvingRecord,
+      discardCalvingObservation,
       persistCalvingObservationAi,
+      finalizeCalvingObservation,
       saveCattleObservationLog,
       updateCattle,
       markCattleInLabor,
@@ -706,8 +991,16 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
   return (
     <RanchDataContext.Provider value={value}>
       {children}
+      <LogPastureCheckSheet
+        open={logObservationTarget?.kind === "pasture" && !isMdUp}
+        pastureId={logObservationTarget?.kind === "pasture" ? logObservationTarget.pastureId : ""}
+        pastureName={logObservationTarget?.kind === "pasture" ? logObservationTarget.pastureName : ""}
+        pastureSubtitle={logObservationTarget?.kind === "pasture" ? logModalAnimalSubtitle : undefined}
+        onClose={closeLogModal}
+        onSave={handleLogSave}
+      />
       <LogObservationModal
-        open={!!logObservationTarget}
+        open={!!logObservationTarget && (logObservationTarget?.kind !== "pasture" || isMdUp)}
         animalName={logModalAnimalName}
         animalPhoto={logModalAnimalPhoto}
         animalSubtitle={logModalAnimalSubtitle}
@@ -721,24 +1014,13 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
         categories={
           logObservationTarget?.kind === "horse" ? HORSE_OBSERVATION_CATEGORIES : undefined
         }
+        hideCategoryField={logObservationTarget?.kind === "cattle"}
+        logMode={logObservationTarget?.kind === "pasture" ? "pasture" : "animal"}
+        modalHeading={logObservationTarget?.kind === "pasture" ? "Log pasture check" : "Log observation"}
+        stableKey={logObservationTarget?.kind === "pasture" ? logObservationTarget.pastureId : undefined}
         onClose={closeLogModal}
         onSave={handleLogSave}
       />
-      <LogPastureCheckModal
-        open={pastureCheckUi?.variant === "modal"}
-        pastureName={pastureCheckUi?.target.pastureName ?? ""}
-        onClose={closePastureCheckModal}
-        onSave={handlePastureCheckModalSave}
-      />
-      {pastureCheckUi?.variant === "sheet" ? (
-        <LogPastureCheckSheet
-          pastureName={pastureCheckUi.target.pastureName}
-          onClose={closePastureCheckModal}
-          onSave={(data) => {
-            commitPastureCheck(pastureCheckUi.target, data)
-          }}
-        />
-      ) : null}
       <RecordCalvingModal
         open={!!recordCalvingModal}
         cattle={recordCalvingModal?.cattle ?? null}
@@ -746,6 +1028,9 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
         onClose={closeRecordCalvingModal}
         onSave={handleRecordCalvingSave}
         onPersistCalvingAi={persistCalvingObservationAi}
+        onFinalizeCalvingObservation={finalizeCalvingObservation}
+        onUpdateCalvingRecord={updateCattleCalvingRecord}
+        onDiscardCalving={discardCalvingObservation}
         onCalvingDone={recordCalvingModal?.onCalvingDone}
       />
     </RanchDataContext.Provider>

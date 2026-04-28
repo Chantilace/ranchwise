@@ -1,7 +1,18 @@
 import { differenceInDays, format, parseISO, startOfDay } from "date-fns"
-import { getAiRiskLevelFromObservations } from "@/lib/animalUtils"
-import type { Cattle } from "@/types/cattle"
+import { getCalvingStatus } from "@/lib/calvingStatus"
+import { getCattleEffectiveHealthRisk } from "@/lib/cattleSelectors"
+import type { Cattle, EffectiveCalvingStatus } from "@/types/cattle"
 import type { ObservationEntry } from "@/types/observation"
+
+/** Canonical stored form: letters + digits, no `#` prefix (seed + new animals). */
+export function cattleTagBare(tagNumber: string): string {
+  return tagNumber.trim().replace(/^#+/, "")
+}
+
+/** Display tag without `#` prefix (handles legacy stored `#H001` by stripping). */
+export function formatCattleTagDisplay(tagNumber: string): string {
+  return cattleTagBare(tagNumber)
+}
 
 /** Due date falls between today and today + `maxInclusiveDays` (inclusive). */
 export function isDueWithinDaysFromToday(
@@ -52,6 +63,39 @@ export function cattleObservationStorageKey(cattleId: string) {
   return `cattle:${cattleId}`
 }
 
+/** Good / monitor / flagged counts for herd health bar (full herd; uses effective health from observations + roster hint). */
+export function countCattleHerdHealthForBar(
+  herd: readonly Cattle[],
+  observationsByCattleId: Record<string, ObservationEntry[]>
+): { good: number; monitor: number; flagged: number } {
+  let good = 0
+  let monitor = 0
+  let flagged = 0
+  for (const c of herd) {
+    const r = getCattleEffectiveHealthRisk(c, observationsByCattleId)
+    if (r === "call-vet") flagged += 1
+    else if (r === "monitor") monitor += 1
+    else good += 1
+  }
+  return { good, monitor, flagged }
+}
+
+/** Per-effective-calving counts for roster pills (Open = `none`; pregnant vs calving-soon follows `getCalvingStatus`). */
+export function countCattleByEffectiveCalving(herd: readonly Cattle[]): Record<EffectiveCalvingStatus, number> {
+  const counts: Record<EffectiveCalvingStatus, number> = {
+    pregnant: 0,
+    "calving-soon": 0,
+    "in-labor": 0,
+    calved: 0,
+    complications: 0,
+    none: 0,
+  }
+  for (const c of herd) {
+    counts[getCalvingStatus(c)] += 1
+  }
+  return counts
+}
+
 export function getPastureSignalCounts(
   pastureId: string,
   cattle: Cattle[],
@@ -62,7 +106,7 @@ export function getPastureSignalCounts(
   let monitored = 0
   let calvingSoon = 0
   for (const c of pastureAnimals) {
-    const level = getAiRiskLevelFromObservations(observationsByCattleId[c.id])
+    const level = getCattleEffectiveHealthRisk(c, observationsByCattleId)
     if (level === "call-vet") flagged += 1
     else if (level === "monitor") monitored += 1
     const open = c.calvingStatus === "pregnant" || c.calvingStatus === "in-labor"
