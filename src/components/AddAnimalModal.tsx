@@ -18,6 +18,7 @@ import { useRanchData } from "@/contexts/RanchDataContext"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { AppMenuSelect } from "@/components/ui/app-menu-select"
 import { FormLabel } from "@/components/ui/form-label"
+import { useOverlayRegistration } from "@/contexts/OverlayRegistryContext"
 import { cn } from "@/lib/utils"
 
 function AddAnimalFieldLabel({
@@ -43,6 +44,7 @@ export type AddAnimalModalProps = {
 }
 
 export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnimalModalProps) {
+  useOverlayRegistration(open)
   const isMobile = useMediaQuery("(max-width: 640px)")
   const { pastures, appendCattle } = useRanchData()
   const [form, setForm] = useState<AddAnimalFormState>(() => emptyAddAnimalFormState(defaultPastureId))

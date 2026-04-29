@@ -15,12 +15,13 @@ import {
 import { LogObservationFAB } from "@/components/LogObservationFAB";
 import { NavItem } from "@/components/NavItem";
 import { RanchWiseMark } from "@/components/RanchWiseMark";
+import { SidebarPortfolioCredit } from "@/components/sidebar/SidebarPortfolioCredit";
 import { SidebarAccountMenu } from "@/components/workspace/SidebarAccountMenu";
 import { Button } from "@/components/ui/button";
 import { SearchField } from "@/components/ui/search-field";
 import { useRanchData } from "@/contexts/RanchDataContext";
 import { useLogObservation } from "@/contexts/LogObservationContext";
-import { CURRENT_USER, RANCH_DISPLAY_NAME } from "@/lib/workspaceIdentity";
+import { CURRENT_USER, DESIGNER_PORTFOLIO_URL, RANCH_DISPLAY_NAME } from "@/lib/workspaceIdentity";
 import { cn } from "@/lib/utils";
 
 function RanchWiseWordmark({ className }: { className?: string }) {
@@ -327,9 +328,20 @@ export function RanchWorkspaceShell({
               />
             </nav>
 
-            <div className="shrink-0 pt-3">
-              <SidebarAccountMenu sidebarExpanded={sidebarOpen} variant="sidebar" />
-            </div>
+            {sidebarOpen ? (
+              <div className="mt-auto flex w-full min-w-0 shrink-0 flex-col">
+                <div className="mb-6 shrink-0 px-0.5 pt-2">
+                  <SidebarPortfolioCredit portfolioUrl={DESIGNER_PORTFOLIO_URL} />
+                </div>
+                <div className="shrink-0 px-0.5">
+                  <SidebarAccountMenu sidebarExpanded={sidebarOpen} variant="sidebar" />
+                </div>
+              </div>
+            ) : (
+              <div className="mt-auto shrink-0 pt-3">
+                <SidebarAccountMenu sidebarExpanded={sidebarOpen} variant="sidebar" />
+              </div>
+            )}
           </div>
         </aside>
       </div>
@@ -534,12 +546,17 @@ export function RanchWorkspaceShell({
                 />
               </nav>
 
-              <div className="shrink-0 px-3 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                <SidebarAccountMenu
-                  sidebarExpanded
-                  variant="drawer"
-                  onAfterNavigate={dismissMobileNav}
-                />
+              <div className="mt-auto flex min-w-0 shrink-0 flex-col">
+                <div className="mb-6 shrink-0 px-3 pt-2">
+                  <SidebarPortfolioCredit portfolioUrl={DESIGNER_PORTFOLIO_URL} />
+                </div>
+                <div className="shrink-0 px-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+                  <SidebarAccountMenu
+                    sidebarExpanded
+                    variant="drawer"
+                    onAfterNavigate={dismissMobileNav}
+                  />
+                </div>
               </div>
             </div>,
             document.body,

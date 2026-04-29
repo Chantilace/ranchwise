@@ -3,6 +3,7 @@ import { useCallback } from "react"
 import { useMatch } from "react-router-dom"
 import { horseRowKey } from "@/components/RanchWiseHorseRoster"
 import { useLogObservation } from "@/contexts/LogObservationContext"
+import { useOverlayRegistry } from "@/contexts/OverlayRegistryContext"
 import { useRanchData } from "@/contexts/RanchDataContext"
 import { cn } from "@/lib/utils"
 
@@ -16,6 +17,7 @@ type LogObservationFABProps = {
  */
 export function LogObservationFAB({ className }: LogObservationFABProps) {
   const { open: openUnifiedSheet } = useLogObservation()
+  const { hasOpenOverlay } = useOverlayRegistry()
   const { herdRows, cattle, pastures, openLogModal, openCattleLogModal, openPastureCheckModal } =
     useRanchData()
 
@@ -78,6 +80,8 @@ export function LogObservationFAB({ className }: LogObservationFABProps) {
     pastureThenAnimalMatch?.params.pastureId,
     pastures,
   ])
+
+  if (hasOpenOverlay) return null
 
   return (
     <button

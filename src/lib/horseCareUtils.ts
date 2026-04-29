@@ -92,7 +92,14 @@ export function getCareDueSummary(
   horses: HorseTableRow[],
   today: Date = new Date(),
   observationsByHorse?: Record<string, ObservationEntry[]>
-): { farrierHorses: HorseTableRow[]; dentalHorses: HorseTableRow[]; totalUnique: number } {
+): {
+  farrierHorses: HorseTableRow[]
+  dentalHorses: HorseTableRow[]
+  /** Horses with at least one care line (farrier and/or dental) due this week. */
+  totalUnique: number
+  /** Sum of farrier + dental due rows (exceeds `totalUnique` when a horse needs both). */
+  appointmentCount: number
+} {
   const farrierHorses: HorseTableRow[] = []
   const dentalHorses: HorseTableRow[] = []
   const anyKeys = new Set<string>()
@@ -107,5 +114,10 @@ export function getCareDueSummary(
     if (farrierQualifies || dentalQualifies) anyKeys.add(horseRowKey(h))
   }
 
-  return { farrierHorses, dentalHorses, totalUnique: anyKeys.size }
+  return {
+    farrierHorses,
+    dentalHorses,
+    totalUnique: anyKeys.size,
+    appointmentCount: farrierHorses.length + dentalHorses.length,
+  }
 }

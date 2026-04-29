@@ -37,7 +37,7 @@ export function compareAttentionObservations(
   dateA: number,
   dateB: number
 ): number {
-  const tier = (r: RiskLevel | null | undefined) => (r === "call-vet" ? 0 : r === "monitor" ? 1 : 2)
+  const tier = (r: RiskLevel | null | undefined) => (r === "flag" ? 0 : r === "monitor" ? 1 : 2)
   const ta = tier(a.aiResult?.riskLevel)
   const tb = tier(b.aiResult?.riskLevel)
   if (ta !== tb) return ta - tb
@@ -54,7 +54,7 @@ export function deriveHorseAttentionSummaryLine(entry: ObservationEntry): string
   const firstRec = entry.aiResult?.recommendations?.find((s) => s.trim())?.trim()
   if (firstRec) return truncateSummaryWords(firstRec)
 
-  if (risk === "call-vet") {
+  if (risk === "flag") {
     if (domain === "behavior") return "Behavior flagged urgent — vet follow-up recommended."
     return "Health concern flagged for vet follow-up."
   }
@@ -126,7 +126,7 @@ export type HorseHerdPulseMetrics = {
 }
 
 function isActionableHorseRisk(risk: RiskLevel | null | undefined): boolean {
-  return risk === "call-vet" || risk === "monitor"
+  return risk === "flag" || risk === "monitor"
 }
 
 export type HorseHomeWeeklyRollup = {
@@ -170,14 +170,14 @@ export function buildHorseHomeWeeklyRollup(
 
   const acuteHorseKeys = new Set<string>()
   for (const row of actionableFlat) {
-    if (row.entry.aiResult?.riskLevel === "call-vet") {
+    if (row.entry.aiResult?.riskLevel === "flag") {
       acuteHorseKeys.add(horseRowKey(row.horse))
     }
   }
 
   let acuteObsLast3Days = 0
   for (const row of actionableFlat) {
-    if (row.entry.aiResult?.riskLevel !== "call-vet") continue
+    if (row.entry.aiResult?.riskLevel !== "flag") continue
     if (row.t >= threeStart) acuteObsLast3Days += 1
   }
 

@@ -9,6 +9,7 @@ import {
 } from "@/components/AddHorseFormFields"
 import { Button } from "@/components/ui/button"
 import type { NewHorseData } from "@/lib/addHorseForm"
+import { useOverlayRegistration } from "@/contexts/OverlayRegistryContext"
 
 export type AddHorseSheetProps = {
   pastures: string[]
@@ -17,6 +18,7 @@ export type AddHorseSheetProps = {
 }
 
 export function AddHorseSheet({ pastures, onClose, onSave }: AddHorseSheetProps) {
+  useOverlayRegistration(true)
   const [expanded, setExpanded] = useState(false)
   const [name, setName] = useState("")
   const [sex, setSex] = useState("")

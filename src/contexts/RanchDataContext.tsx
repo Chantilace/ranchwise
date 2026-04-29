@@ -29,6 +29,7 @@ import { getObservationDomain, observationDomainFromCategory } from "@/lib/obser
 import { buildInitialPastureChecksByPastureId } from "@/lib/pastureCheckSeed"
 import { riskLevelToPastureStatus, type PastureCheckEntry } from "@/lib/pastureCheckTypes"
 import { buildInitialObservationsMap, formatObservationDate } from "@/lib/initialObservations"
+import type { LogObservationCommitAnalyzeMeta } from "@/lib/observationAnalyzeContext"
 import { HORSE_OBSERVATION_CATEGORIES } from "@/lib/observationCategories"
 import { calvingOutcomeConfirmationLabel } from "@/lib/calvingAnalyze"
 import { buildCalvingObservationNotes } from "@/lib/calvingStatus"
@@ -38,13 +39,13 @@ import type { CalvingRecord, Cattle, Pasture, StoredCalvingStatus } from "@/type
 import type { AIResult, Category, ObservationEntry, RiskLevel } from "@/types/observation"
 
 function horseStatusFromAiRiskLevel(level: RiskLevel | null): HorseTableRow["healthStatus"] {
-  if (level === "call-vet") return "flag"
+  if (level === "flag") return "flag"
   if (level === "monitor") return "monitor"
   return "good"
 }
 
 function cattleHealthStatusFromRiskLevel(level: RiskLevel): "Flag" | "Monitor" | "Good" {
-  if (level === "call-vet") return "Flag"
+  if (level === "flag") return "Flag"
   if (level === "monitor") return "Monitor"
   return "Good"
 }
@@ -59,7 +60,7 @@ function buildFinalCalvingObservationAi(base: AIResult | null | undefined, confi
     base ??
     ({
       riskLevel: "good",
-      riskLabel: "Stable",
+      riskLabel: "Good",
       recommendations: [],
       patternNote: null,
     } satisfies AIResult)
@@ -506,7 +507,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       showObservationDiscardedToast(() => {
         appendCattleObservation(cattleId, observation)
         updateCattle(cattleId, cattleRestore)
-      })
+      }, { message: "Calving record discarded" })
     },
     [appendCattleObservation, removeCattleObservation, updateCattle]
   )
@@ -542,7 +543,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       }))
 
       const nextCalvingStatus: StoredCalvingStatus =
-        record.forceComplicationsOutcome || confirmedRisk === "call-vet" ? "complications" : "calved"
+        record.forceComplicationsOutcome || confirmedRisk === "flag" ? "complications" : "calved"
 
       updateCattle(cattleId, {
         calvingAiResult: finalAi,
@@ -606,7 +607,10 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
   )
 
   const handleLogSave = useCallback(
-    async (data: LogObservationSavePayload, meta?: { stage: "commit" | "done" | "discard" }) => {
+    async (
+      data: LogObservationSavePayload,
+      meta?: { stage: "commit" | "done" | "discard" }
+    ): Promise<void | boolean | LogObservationCommitAnalyzeMeta> => {
       if (!logObservationTarget) return
       const stage = meta?.stage ?? "done"
 
@@ -634,6 +638,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
         }
 
         if (stage === "commit") {
+          const priorChecks = [...list]
           const entry: PastureCheckEntry = {
             id: crypto.randomUUID(),
             pastureId,
@@ -646,7 +651,13 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
           }
           lastPastureCheckCommitIdRef.current = entry.id
           appendPastureCheck(pastureId, entry)
-          return
+          const meta: LogObservationCommitAnalyzeMeta = {
+            kind: "pasture",
+            pastureId,
+            pastureName: logObservationTarget.pastureName,
+            priorChecks,
+          }
+          return meta
         }
 
         const targetId = lastPastureCheckCommitIdRef.current
@@ -731,8 +742,10 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
         const editing = logObservationTarget.editingEntry
 
         if (stage === "commit") {
+          const row = logObservationTarget.row
           if (editing) {
             lastHorseObservationCommitIdRef.current = editing.id
+            const priorForAi = (observationsByHorse[key] ?? []).filter((o) => o.id !== editing.id)
             const nextHorseObs = (observationsByHorse[key] ?? []).map((o) =>
               o.id === editing.id
                 ? {
@@ -747,22 +760,37 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
             )
             setObservationsForHorse(key, nextHorseObs)
             syncHorseProfileFromObservations(key, nextHorseObs, updateHerdHorse)
-          } else {
-            const entry: ObservationEntry = {
-              id: crypto.randomUUID(),
-              date: formatObservationDate(new Date()),
-              category: animalData.category,
-              observationDomain: observationDomainFromCategory(animalData.category),
-              notes: animalData.notes,
-              loggedBy: animalData.loggedBy,
-              aiResult: animalData.aiResult,
+            const meta: LogObservationCommitAnalyzeMeta = {
+              kind: "horse",
+              horseKey: key,
+              horseId: String(row.id),
+              entityName: row.name,
+              priorObservations: priorForAi,
             }
-            lastHorseObservationCommitIdRef.current = entry.id
-            appendObservation(key, entry)
-            const nextHorseObs = [entry, ...(observationsByHorse[key] ?? [])]
-            syncHorseProfileFromObservations(key, nextHorseObs, updateHerdHorse)
+            return meta
           }
-          return
+          const priorForAi = [...(observationsByHorse[key] ?? [])]
+          const entry: ObservationEntry = {
+            id: crypto.randomUUID(),
+            date: formatObservationDate(new Date()),
+            category: animalData.category,
+            observationDomain: observationDomainFromCategory(animalData.category),
+            notes: animalData.notes,
+            loggedBy: animalData.loggedBy,
+            aiResult: animalData.aiResult,
+          }
+          lastHorseObservationCommitIdRef.current = entry.id
+          appendObservation(key, entry)
+          const nextHorseObs = [entry, ...(observationsByHorse[key] ?? [])]
+          syncHorseProfileFromObservations(key, nextHorseObs, updateHerdHorse)
+          const meta: LogObservationCommitAnalyzeMeta = {
+            kind: "horse",
+            horseKey: key,
+            horseId: String(row.id),
+            entityName: row.name,
+            priorObservations: priorForAi,
+          }
+          return meta
         }
 
         // stage === "done": refresh AI payload on the committed entry, then close.
@@ -787,12 +815,29 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       } else {
         const c = logObservationTarget.cattle
         if (stage === "commit") {
+          const editingEntry = logObservationTarget.editingEntry
+          const priorForAi = (observationsByCattleId[c.id] ?? []).filter((o) =>
+            editingEntry ? o.id !== editingEntry.id : true
+          )
           lastCattleObservationCommitIdRef.current = saveCattleObservationLog(
             c.id,
             animalData,
-            logObservationTarget.editingEntry
+            editingEntry
           )
-          return
+          const meta: LogObservationCommitAnalyzeMeta = {
+            kind: "cattle",
+            cattleId: c.id,
+            entityName: formatCattleTagDisplay(c.tagNumber),
+            priorObservations: priorForAi,
+            calvingStatus: c.calvingStatus,
+            cattleCalvingSnapshot: {
+              calvingDate: c.calvingDate,
+              deliveryType: c.deliveryType ?? null,
+              calvingComplications: c.calvingComplications ?? null,
+              calvingStatus: c.calvingStatus,
+            },
+          }
+          return meta
         }
 
         // stage === "done": update the committed observation with final AI payload.

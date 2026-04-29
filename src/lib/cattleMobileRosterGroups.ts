@@ -37,7 +37,7 @@ export function partitionCattleForMobileRoster(
   }
   for (const c of rows) {
     if (used.has(c.id)) continue
-    if (getCattleEffectiveHealthRisk(c, observationsByCattleId) === "call-vet") {
+    if (getCattleEffectiveHealthRisk(c, observationsByCattleId) === "flag") {
       flagged.push(c)
       used.add(c.id)
     }

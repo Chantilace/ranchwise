@@ -19,7 +19,7 @@ function ai(riskLevel: RiskLevel, recommendations: string[], patternNote: string
   return {
     riskLevel,
     riskLabel:
-      riskLevel === "call-vet" ? "Call vet" : riskLevel === "monitor" ? "Monitor" : "No action needed",
+      riskLevel === "flag" ? "Flag" : riskLevel === "monitor" ? "Monitor" : "Good",
     recommendations,
     patternNote,
   }
@@ -48,7 +48,7 @@ function entry(
 
 function derivedCattleHealthLabel(list: ObservationEntry[]): "Flag" | "Monitor" | "Good" {
   const lvl = getAiRiskLevelFromObservations(list)
-  if (lvl === "call-vet") return "Flag"
+  if (lvl === "flag") return "Flag"
   if (lvl === "monitor") return "Monitor"
   return "Good"
 }
@@ -62,7 +62,7 @@ function hasRecentHealthFlag(list: ObservationEntry[], days: number): boolean {
   return list.some(
     (o) =>
       getObservationDomain(o) === "health" &&
-      o.aiResult?.riskLevel === "call-vet" &&
+      o.aiResult?.riskLevel === "flag" &&
       parseObservationDate(o.date) >= t0
   )
 }
@@ -70,7 +70,7 @@ function hasRecentHealthFlag(list: ObservationEntry[], days: number): boolean {
 function hasMonitorSupportingObs(list: ObservationEntry[]): boolean {
   return list.some(
     (o) =>
-      (o.aiResult?.riskLevel === "monitor" || o.aiResult?.riskLevel === "call-vet") &&
+      (o.aiResult?.riskLevel === "monitor" || o.aiResult?.riskLevel === "flag") &&
       (getObservationDomain(o) === "health" || getObservationDomain(o) === "behavior")
   )
 }
@@ -122,8 +122,8 @@ export function fillCattleObservationGaps(
             d0,
             "Calving",
             `Delivery logged with complications (${comps || "see vet sheet"}). Vet on site; calf status ${c.calfStatus ?? "live"}. Dam stabilized before haul to pen.`,
-            "Joe",
-            "call-vet",
+            "Wyatt",
+            "flag",
             [
               "IV protocol per vet orders.",
               "White blood card on gate for night check.",
@@ -146,7 +146,7 @@ export function fillCattleObservationGaps(
             followStr,
             "Health",
             `Post-complication recheck — ${comps || "uterine event"} per vet plan. Appetite at 70%, manure formed, temp normal this morning.`,
-            "Maria",
+            "Lou",
             "monitor",
             [
               "Continue antibiotics through printed course.",
@@ -174,7 +174,7 @@ export function fillCattleObservationGaps(
             seedDaysAgo(0),
             "Calving",
             "Entered active labor on watch — tail switching, cow isolated in calving pen, feet not yet presented. Crew on radio.",
-            "Chantale",
+            "Juniper",
             "monitor",
             [
               "Check every 20 minutes until calf on ground.",
@@ -193,8 +193,8 @@ export function fillCattleObservationGaps(
         const delivery = c.deliveryType ?? "normal"
         const calf = c.calfStatus ?? "live"
         let postpartumRisk: RiskLevel = "good"
-        if (calf === "stillborn") postpartumRisk = "call-vet"
-        else if (hs === "Flag") postpartumRisk = "call-vet"
+        if (calf === "stillborn") postpartumRisk = "flag"
+        else if (hs === "Flag") postpartumRisk = "flag"
         else if (hs === "Monitor") postpartumRisk = "monitor"
         push(id, [
           entry(
@@ -202,14 +202,14 @@ export function fillCattleObservationGaps(
             d,
             "Calving",
             `Calving logged ${d} — ${delivery === "normal" ? "unassisted" : delivery === "assisted" ? "assisted" : "c-section"} pull. Calf ${calf === "live" ? "live and nursing" : calf === "stillborn" ? "stillborn — dam attended by vet" : "status recorded on tag card"}. Dam up on all fours within 2h, placenta watched through next checks.`,
-            "Maria",
+            "Oliver",
             postpartumRisk,
-            postpartumRisk === "call-vet"
+            postpartumRisk === "flag"
               ? ["Metritis watch 72h.", "Vet callback window on whiteboard.", "Hold from transport list."]
               : postpartumRisk === "monitor"
                 ? ["Second weigh in 10 days.", "Note dam appetite vs pen average."]
                 : ["Record calf tag match to dam.", "Electrolyte bucket at gate day 3 if hot."],
-            postpartumRisk === "call-vet" ? "Postpartum watch — keep eyes on dam through first week." : null
+            postpartumRisk === "flag" ? "Postpartum watch — keep eyes on dam through first week." : null
           ),
         ])
       }
@@ -229,7 +229,7 @@ export function fillCattleObservationGaps(
           seedDaysAgo(2),
           "Health",
           "Watch list from roster — soft manure this morning, otherwise bright at bunk. Temp not taken yet.",
-          "Maria",
+          "Frankie",
           "monitor",
           [
             "Take temp before evening feed.",
@@ -249,8 +249,8 @@ export function fillCattleObservationGaps(
           seedDaysAgo(1),
           "Health",
           "Urgent check — down once getting up from loafing shed, reluctant to weight left rear. Handler held for exam.",
-          "Chantale",
-          "call-vet",
+          "Juniper",
+          "flag",
           [
             "Vet line aware — photos sent.",
             "Keep on deep straw, limit pushing in alley.",
@@ -271,8 +271,8 @@ export function fillCattleObservationGaps(
           seedDaysAgo(0),
           "Health",
           "Second look at lunch — nasal froth with exercise, lungs sound rough ventrally. Pulled from rotation list.",
-          "Joe",
-          "call-vet",
+          "Wyatt",
+          "flag",
           [
             "Vet scheduled for late afternoon haul if fever spikes.",
             "Isolate air space as much as pens allow.",
@@ -286,7 +286,7 @@ export function fillCattleObservationGaps(
           seedDaysAgo(1),
           "Health",
           "Body condition slipped half a score since last weigh tape — ribs easier to read, still eating but slower at bunk.",
-          "Jake",
+          "Wes",
           "monitor",
           [
             "Offer second cut hay overnight.",

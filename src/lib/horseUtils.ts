@@ -14,14 +14,14 @@ export function getHorseAiRiskLevel(
 export function riskLevelToModalStatusBadge(
   level: RiskLevel | null
 ): "Flag" | "Monitor" | "Good" | undefined {
-  if (level === "call-vet") return "Flag"
+  if (level === "flag") return "Flag"
   if (level === "monitor") return "Monitor"
   if (level === "good") return "Good"
   return undefined
 }
 
 export function aiRiskLevelSortOrder(level: RiskLevel | null): number {
-  if (level === "call-vet") return 0
+  if (level === "flag") return 0
   if (level === "monitor") return 1
   if (level === "good") return 2
   return 3

@@ -3,7 +3,7 @@ export type Category = "Health" | "Behavior" | "Feeding" | "Calving"
 /** Persisted on horse observations for dual-status writeback and to-do derivation. */
 export type ObservationDomain = "health" | "behavior"
 
-export type RiskLevel = "call-vet" | "monitor" | "good"
+export type RiskLevel = "flag" | "monitor" | "good"
 
 export interface AIResult {
   riskLevel: RiskLevel

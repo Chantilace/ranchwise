@@ -470,8 +470,8 @@ export function PastureRosterPage() {
                 className="w-full max-w-[194px] shrink-0"
               />
             </div>
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden md:flex-row md:items-stretch md:gap-6">
-              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden md:flex-row md:items-start md:gap-6">
+              <div className="flex min-h-0 min-w-0 shrink-0 flex-col overflow-x-auto">
                 <CattleRosterTable
                   rows={roster}
                   showPastureColumn={false}
@@ -482,18 +482,20 @@ export function PastureRosterPage() {
                   onOpenObservationLog={openCattleSlideToObservationLog}
                 />
               </div>
-              <CattleDetailPanel
-                cattle={selectedSlideCattle}
-                pastureName={pasture.name}
-                observations={
-                  selectedSlideCattle
-                    ? observationsByCattleId[selectedSlideCattle.id] ?? []
-                    : []
-                }
-                onClose={closeCattleSlide}
-                slideLogOpen={slideLogOpen}
-                onSlideLogOpenConsumed={consumeSlideLogOpen}
-              />
+              <div className="flex min-h-0 min-w-0 flex-1 self-stretch flex-col overflow-hidden">
+                <CattleDetailPanel
+                  cattle={selectedSlideCattle}
+                  pastureName={pasture.name}
+                  observations={
+                    selectedSlideCattle
+                      ? observationsByCattleId[selectedSlideCattle.id] ?? []
+                      : []
+                  }
+                  onClose={closeCattleSlide}
+                  slideLogOpen={slideLogOpen}
+                  onSlideLogOpenConsumed={consumeSlideLogOpen}
+                />
+              </div>
             </div>
           </div>
         ) : (

@@ -13,6 +13,8 @@ import { horseRowKey } from "@/components/RanchWiseHorseRoster";
 import { HorseshoeMark } from "@/components/icons/HorseshoeMark";
 import { HorseLogSheet } from "@/components/HorseLogSheet";
 import { ObservationTimelineEntryCard } from "@/components/ObservationTimelineEntryCard";
+import { ProfilePhotoLetterbox } from "@/components/ProfilePhotoLetterbox";
+import { horseProfileLetterboxColor } from "@/data/seedHorses";
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell";
 import { useRanchData } from "@/contexts/RanchDataContext";
 import { useCloseOnOutsidePointerDown } from "@/hooks/useCloseOnOutsidePointerDown";
@@ -97,8 +99,7 @@ function observationEntryMatchesStatusFilters(
   if (filters.size === 0 || isFullObservationStatusFilterSet(filters)) return true;
   const r = entry.aiResult?.riskLevel;
   if (!r) return false;
-  const id = r === "call-vet" ? "flag" : r;
-  return filters.has(id);
+  return filters.has(r);
 }
 
 function initials(name: string) {
@@ -124,7 +125,7 @@ function formatCareDateShort(iso: string | null): string {
 function horseTableStatusToBadge(
   status: HorseTableRow["healthStatus"],
 ): StatusBadgeStatus {
-  if (status === "flag") return "call-vet";
+  if (status === "flag") return "flag";
   if (status === "monitor") return "monitor";
   return "good";
 }
@@ -758,42 +759,43 @@ export function HorseProfile() {
             </div>
           </header>
 
-          {/* Mode B: &lt; md — square hero, floating name card only; Health summary + Care; tabs */}
+          {/* Mode B: &lt; md — letterbox hero + floating name card; Health summary + Care; tabs */}
           <div className="flex min-w-0 flex-col md:hidden">
-            <div className="relative mx-auto mb-4 aspect-square w-full min-w-0 max-w-[400px] overflow-hidden rounded-xl">
-              {profileImageSrc ? (
-                <img
+            <div className="mb-4 w-full min-w-0">
+              <div className="relative w-full min-w-0">
+                <ProfilePhotoLetterbox
                   src={profileImageSrc}
                   alt={profileHorse.name}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
+                  ambientColor={horseProfileLetterboxColor(profileHorseId)}
+                  outerAspectRatio="16 / 9"
+                  placeholder={
+                    <HorseshoeMark
+                      className="size-16 shrink-0 text-[var(--color-text-tertiary)] opacity-50"
+                      aria-hidden
+                    />
+                  }
                 />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-secondary">
-                  <HorseshoeMark
-                    className="size-16 shrink-0 text-[var(--color-text-tertiary)] opacity-50"
-                    aria-hidden
-                  />
-                </div>
-              )}
-              <div className="absolute bottom-3 left-3 right-3 z-10 rounded-[var(--border-radius-md)] bg-white p-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
-                <div className="flex items-start justify-between gap-2.5">
-                  <div className="min-w-0 flex-1">
-                    <h2 className="text-[22px] font-medium leading-tight tracking-[-0.01em] text-foreground">
-                      {profileHorse.name}
-                    </h2>
-                    <p className="mt-0.5 text-[13px] leading-snug text-[var(--color-text-tertiary)]">
-                      {metadataOneLine}
-                    </p>
+                <div className="absolute -bottom-8 left-3 right-3 z-10 rounded-[var(--border-radius-md)] bg-white p-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-[22px] font-medium leading-tight tracking-[-0.01em] text-foreground">
+                        {profileHorse.name}
+                      </h2>
+                      <p className="mt-0.5 text-[13px] leading-snug text-[var(--color-text-tertiary)]">
+                        {metadataOneLine}
+                      </p>
+                    </div>
+                    <StatusBadge
+                      status={horseProfileOverallBadgeStatus(profileHorse)}
+                      size="md"
+                      emphasis="secondary"
+                      className="shrink-0"
+                    />
                   </div>
-                  <StatusBadge
-                    status={horseProfileOverallBadgeStatus(profileHorse)}
-                    size="md"
-                    emphasis="secondary"
-                    className="shrink-0"
-                  />
                 </div>
               </div>
+              {/* Clears the card sitting ~32px below the letterbox bottom */}
+              <div className="h-10 shrink-0" aria-hidden />
             </div>
 
             <div className="mb-4 flex min-w-0 flex-col gap-3">

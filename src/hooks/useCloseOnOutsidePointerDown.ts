@@ -9,7 +9,12 @@ export function useCloseOnOutsidePointerDown({
   open,
   setOpen,
   ref,
-  ignoreClosestSelectors = ["[data-ranch-filter-popover]", '[role="menu"]'],
+  ignoreClosestSelectors = [
+    "[data-mobile-roster-filter-sheet]",
+    "[data-ranch-filter-popover]",
+    '[role="menu"]',
+    '[role="listbox"]',
+  ],
 }: {
   open: boolean
   setOpen: (next: boolean) => void
@@ -20,9 +25,11 @@ export function useCloseOnOutsidePointerDown({
     if (!open) return
     function handlePointerDown(e: PointerEvent) {
       const el = e.target as Element | null
-      if (el && ignoreClosestSelectors.some((sel) => el.closest(sel))) return
+      const ignoredBySelector = el ? ignoreClosestSelectors.some((sel) => el.closest(sel)) : false
+      if (ignoredBySelector) return
       const t = e.target as Node
-      if (ref.current && ref.current.contains(t)) return
+      const insideRef = Boolean(ref.current && ref.current.contains(t))
+      if (insideRef) return
       setOpen(false)
     }
     document.addEventListener("pointerdown", handlePointerDown)

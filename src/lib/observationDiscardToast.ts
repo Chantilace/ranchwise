@@ -1,6 +1,7 @@
 import { toast } from "sonner"
 
-export const OBSERVATION_DISCARD_TOAST_MS = 5000
+/** Matches `<Toaster duration={4000} />`. Visual treatment: `index.css` Sonner overrides + `App.tsx` Toaster. */
+export const OBSERVATION_DISCARD_TOAST_MS = 4000
 
 type ObservationDiscardToastOptions = {
   /** Defaults to "Observation discarded". */

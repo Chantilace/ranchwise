@@ -73,7 +73,7 @@ export function countCattleHerdHealthForBar(
   let flagged = 0
   for (const c of herd) {
     const r = getCattleEffectiveHealthRisk(c, observationsByCattleId)
-    if (r === "call-vet") flagged += 1
+    if (r === "flag") flagged += 1
     else if (r === "monitor") monitor += 1
     else good += 1
   }
@@ -96,6 +96,16 @@ export function countCattleByEffectiveCalving(herd: readonly Cattle[]): Record<E
   return counts
 }
 
+/**
+ * Calving-season cohort from roster data: every head with an active calving pipeline status
+ * (`pregnant`, `calving-soon`, `in-labor`, `calved`, `complications`). Excludes opens and bulls
+ * (`none`). Use for home calving progress denominator, not total herd size.
+ */
+export function countCattleCalvingSeasonCohort(herd: readonly Cattle[]): number {
+  const c = countCattleByEffectiveCalving(herd)
+  return c.pregnant + c["calving-soon"] + c["in-labor"] + c.calved + c.complications
+}
+
 export function getPastureSignalCounts(
   pastureId: string,
   cattle: Cattle[],
@@ -107,7 +117,7 @@ export function getPastureSignalCounts(
   let calvingSoon = 0
   for (const c of pastureAnimals) {
     const level = getCattleEffectiveHealthRisk(c, observationsByCattleId)
-    if (level === "call-vet") flagged += 1
+    if (level === "flag") flagged += 1
     else if (level === "monitor") monitored += 1
     const open = c.calvingStatus === "pregnant" || c.calvingStatus === "in-labor"
     if (open && c.dueDate) {

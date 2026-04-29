@@ -23,6 +23,7 @@ import type {
 } from "@/types/cattle"
 import type { AIResult, ObservationEntry, RiskLevel } from "@/types/observation"
 import { cn } from "@/lib/utils"
+import { useOverlayRegistration } from "@/contexts/OverlayRegistryContext"
 
 export type PersistCalvingAiPayload = {
   cattleId: string
@@ -82,17 +83,17 @@ const COMPLICATION_OPTIONS: { id: CalvingComplication; label: string }[] = [
 const CALVING_CONFIRM_STATUS_OPTIONS = [
   {
     id: "good" as const,
-    label: "Stable",
+    label: "Good",
     active: "bg-status-good-bg border-status-good-bg text-status-good-text",
   },
   {
     id: "monitor" as const,
-    label: "Concern",
+    label: "Monitor",
     active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
   },
   {
-    id: "call-vet" as const,
-    label: "Action needed",
+    id: "flag" as const,
+    label: "Flag",
     active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
   },
 ] as const
@@ -348,6 +349,8 @@ export function RecordCalvingEditor(props: RecordCalvingEditorProps) {
       aiResult: aiResult ?? undefined,
       observationDomain: "health",
     }
+    // Mirror observation-log discard behavior: close first, then toast + undo via store callback.
+    onFlowFinished?.()
     onDiscardCalving({
       cattleId: cattle.id,
       observationId: committedObservationId,
@@ -358,7 +361,6 @@ export function RecordCalvingEditor(props: RecordCalvingEditorProps) {
     setCommittedObservationId(null)
     cattlePreCommitRef.current = null
     cattlePostAiRef.current = null
-    onFlowFinished?.()
   }
 
   const fieldsLocked = phase !== "input"
@@ -676,6 +678,7 @@ export function RecordCalvingModal({
   onDiscardCalving,
   onCalvingDone,
 }: RecordCalvingModalProps) {
+  useOverlayRegistration(open)
   return (
     <Dialog.Root
       open={open}

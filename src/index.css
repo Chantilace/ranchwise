@@ -98,6 +98,13 @@
   /** Dark AI insight card surface + muted text on that surface */
   --ai-accent-deep: #26215C;
   --ai-accent-soft: #CECBF6;
+  /**
+   * AI (periwinkle) mid + muted stops for structured homepage Smart Suggestions cards.
+   * - `mid` anchors the AI mark box on deep surfaces.
+   * - `muted` is eyebrow-tier ink that still meets AA on `--ai-accent-deep`.
+   */
+  --ai-accent-mid: #534AB7;
+  --ai-accent-muted: #9089D6;
 
   --muted: #F5F5F4;
   /** Opaque hover for sticky table cells (replaces bg-muted/50 over --background to avoid scroll bleed-through). */
@@ -144,6 +151,8 @@
   /* Sidebar internals */
   --sidebar-hover-bg: rgba(255, 255, 255, 0.1);
   --sidebar-active-bg: #5E3A1A;
+  /** Portfolio credit card hover (sidebar camel surface). */
+  --sidebar-credit-hover-bg: #6b4220;
   --sidebar-mark-bg: #FFFFFF;
   --sidebar-mark-fg: #9C6A40;
   --sidebar-foreground-disabled: rgba(255, 255, 255, 0.6);
@@ -262,6 +271,8 @@
   --color-ai-accent-wash: var(--ai-accent-wash);
   --color-ai-accent-deep: var(--ai-accent-deep);
   --color-ai-accent-soft: var(--ai-accent-soft);
+  --color-ai-accent-mid: var(--ai-accent-mid);
+  --color-ai-accent-muted: var(--ai-accent-muted);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted-cool-foreground: var(--muted-cool-foreground);
@@ -293,6 +304,7 @@
   /* Sidebar internals */
   --color-sidebar-hover-bg: var(--sidebar-hover-bg);
   --color-sidebar-active-bg: var(--sidebar-active-bg);
+  --color-sidebar-credit-hover-bg: var(--sidebar-credit-hover-bg);
   --color-sidebar-mark-bg: var(--sidebar-mark-bg);
   --color-sidebar-mark-fg: var(--sidebar-mark-fg);
   --color-sidebar-foreground-disabled: var(--sidebar-foreground-disabled);
@@ -383,5 +395,66 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/*
+ * Sonner injects its stylesheet after index.css; these overrides align default toasts
+ * (discard undo, demo sign-out, etc.) with RanchWise surfaces + AI accent actions.
+ */
+@layer components {
+  /* Base UI / portalled menus should sit above mobile scrims (filter sheets use z-[80]). */
+  [role="menu"] {
+    z-index: 120 !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+    background-color: var(--card) !important;
+    border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: var(--radius) !important;
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.08),
+      0 1px 3px rgba(0, 0, 0, 0.06) !important;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    line-height: 1.45 !important;
+    color: var(--foreground) !important;
+    gap: 12px !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-title] {
+    font-weight: 400 !important;
+    line-height: 1.45 !important;
+    color: var(--foreground) !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-description] {
+    font-size: var(--text-body-min) !important;
+    line-height: var(--text-body-min--line-height) !important;
+    color: var(--muted-foreground) !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button] {
+    border-radius: var(--border-radius-md) !important;
+    border: none !important;
+    background: transparent !important;
+    color: var(--ai-accent) !important;
+    font-size: var(--text-body-min) !important;
+    font-weight: 500 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 4px 8px !important;
+    margin-left: auto !important;
+    transition: color 150ms ease !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button]:hover {
+    color: var(--ai-accent-deep) !important;
+    background: transparent !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button]:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--focus-ring) !important;
   }
 }

@@ -17,10 +17,14 @@ import { EntityFilterPanel, type EntityFilterDimension } from "@/components/work
 import { RosterLastActivitySortSelect } from "@/components/workspace/RosterLastActivitySortSelect"
 import { EntityFilterToolbar } from "@/components/workspace/EntityFilterToolbar"
 import { FilteredCountDisplay } from "@/components/workspace/FilteredCountDisplay"
+import { MobileRosterFilterSheet } from "@/components/workspace/MobileRosterFilterSheet"
 import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles"
 import { RosterPageAddButton } from "@/components/workspace/RosterPageAddButton"
 import { useRanchData } from "@/contexts/RanchDataContext"
+import { useOverlayRegistration } from "@/contexts/OverlayRegistryContext"
+import { ROSTER_HEADCOUNT_BADGE_CLASS } from "@/lib/categoryBadgeClass"
 import { useCloseOnOutsidePointerDown } from "@/hooks/useCloseOnOutsidePointerDown"
+import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { getPastureDerivedStatus } from "@/lib/pastureDerivedStatus"
 import {
   isPastureCheckOverdue,
@@ -162,7 +166,7 @@ function PastureRosterSortableHeader({
 
 const PASTURE_RECENCY_OPTIONS = [
   { id: "recent", label: "Recently checked" },
-  { id: "borderline", label: "Borderline" },
+  { id: "borderline", label: "Due soon" },
   { id: "overdue", label: "Overdue" },
 ] as const
 
@@ -182,6 +186,8 @@ function pastureCheckRecencyFilterId(p: Pasture): "recent" | "borderline" | "ove
 }
 
 export function PasturesPage() {
+  const isMobile = useMediaQuery("(max-width: 767px)")
+  const isMdUp = useMediaQuery("(min-width: 768px)")
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const overdueChecksOnly = searchParams.get("overdueChecks") === "true"
@@ -198,6 +204,9 @@ export function PasturesPage() {
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
   const [aiPastureId, setAiPastureId] = useState<string | null>(null)
   const [aiPanelSuggestions, setAiPanelSuggestions] = useState<readonly string[] | null>(null)
+  const aiInsightOpen = aiPanelOpen && aiPastureId != null && Boolean(aiPanelSuggestions?.length)
+
+  useOverlayRegistration(aiInsightOpen)
 
   useEffect(() => {
     if (overdueChecksOnly && recencyFilters.size === 0) {
@@ -247,7 +256,7 @@ export function PasturesPage() {
   )
 
   useCloseOnOutsidePointerDown({
-    open: pastureFilterOpen,
+    open: pastureFilterOpen && isMdUp,
     setOpen: setPastureFilterOpen,
     ref: pastureFilterRef,
   })
@@ -401,9 +410,7 @@ export function PasturesPage() {
         className="flex min-w-0 flex-wrap items-center gap-x-3.5 gap-y-2 text-[13px] leading-snug"
         aria-label="Pasture check summary"
       >
-        <span className="inline-flex shrink-0 items-center rounded-md bg-muted px-2.5 py-1 text-[13px] font-normal tabular-nums text-muted-foreground">
-          {pastures.length} pastures
-        </span>
+        <span className={ROSTER_HEADCOUNT_BADGE_CLASS}>{pastures.length} pastures</span>
         <span className="shrink-0 select-none text-muted-foreground/70" aria-hidden>
           ·
         </span>
@@ -414,7 +421,7 @@ export function PasturesPage() {
         </span>
         <span className="inline-flex min-w-0 items-center gap-2">
           <span className="size-2 shrink-0 rounded-full bg-badge-monitor-mid-bg" aria-hidden />
-          <span className="text-foreground">Borderline</span>
+          <span className="text-foreground">Due soon</span>
           <span className="tabular-nums text-muted-foreground">{pastureCheckSummaryCounts.borderline}</span>
         </span>
         <span className="inline-flex min-w-0 items-center gap-2">
@@ -425,6 +432,14 @@ export function PasturesPage() {
       </div>
     ) : null
 
+  const pastureFilterPanelInner = (
+    <EntityFilterPanel
+      dimensions={pastureFilterDimensions}
+      onMultiChange={onPastureFilterMultiChange}
+      onRadioChange={onPastureFilterRadioChange}
+    />
+  )
+
   const pastureFilterControl = (
     <div className="relative shrink-0" ref={pastureFilterRef}>
       <EntityFilterToolbar
@@ -434,14 +449,8 @@ export function PasturesPage() {
         onClearAll={clearAllPastureRosterFilters}
         filterButtonAriaLabel="Filter pastures roster"
       />
-      {pastureFilterOpen ? (
-        <div className={workspaceFilterPanelClass}>
-          <EntityFilterPanel
-            dimensions={pastureFilterDimensions}
-            onMultiChange={onPastureFilterMultiChange}
-            onRadioChange={onPastureFilterRadioChange}
-          />
-        </div>
+      {pastureFilterOpen && !isMobile ? (
+        <div className={workspaceFilterPanelClass}>{pastureFilterPanelInner}</div>
       ) : null}
     </div>
   )
@@ -458,6 +467,7 @@ export function PasturesPage() {
   )
 
   return (
+    <>
     <RanchWorkspaceShell
       searchValue=""
       onSearchChange={() => {}}
@@ -465,7 +475,7 @@ export function PasturesPage() {
       searchAriaLabel="Search everything"
       contentClassName={WORKSPACE_PAGE_ROSTER_FILL_CLASS}
     >
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col md:hidden">
           <RosterMobileHeader
             title="Pastures"
@@ -478,7 +488,7 @@ export function PasturesPage() {
                 dotClassName: "bg-badge-good-mid-bg",
               },
               {
-                label: "Borderline",
+                label: "Due soon",
                 count: pastureCheckSummaryCounts.borderline,
                 dotClassName: "bg-badge-monitor-mid-bg",
               },
@@ -538,7 +548,6 @@ export function PasturesPage() {
             <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
               <div className="flex flex-col gap-2.5 px-1">
                 {rows.map((p) => {
-                  const tier = pastureRosterCheckSummaryTier(p)
                   const d = pastureDaysSinceLastCheck(p)
                   const lastCheckLabel =
                     d === null ? "No check logged" : d === 0 ? "Today" : `${d}d ago`
@@ -573,22 +582,13 @@ export function PasturesPage() {
                           <div className="mb-0.5 flex items-center justify-between gap-2">
                             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                               <p className="text-[14px] font-medium text-foreground">{shortName}</p>
-                              {tier !== "recent" ? (
-                                <StatusBadge
-                                  status={tier === "borderline" ? "monitor" : "call-vet"}
-                                  label={tier === "borderline" ? "Borderline" : "Overdue"}
-                                  compactLabel
-                                  size="sm"
-                                  emphasis="secondary"
-                                />
-                              ) : null}
+                              <StatusBadge status={derived} size="sm" emphasis="secondary" />
                             </div>
                             <span className="shrink-0 text-[13px] text-muted-foreground">{lastCheckLabel}</span>
                           </div>
                           <p className="truncate text-[13px] text-muted-foreground">
                             {p.animalCount} head · {p.acreage} acres · {p.terrain}
                           </p>
-                          <span className="sr-only">Pasture status {derived}</span>
                         </div>
                       </Link>
                       <RosterMobileLogIconButton
@@ -852,7 +852,7 @@ export function PasturesPage() {
       </div>
 
       <Dialog.Root
-        open={aiPanelOpen && selectedPasture != null && Boolean(aiPanelSuggestions?.length)}
+        open={aiInsightOpen}
         onOpenChange={(open) => {
           if (!open) {
             setAiPanelOpen(false)
@@ -890,5 +890,13 @@ export function PasturesPage() {
         </Dialog.Portal>
       </Dialog.Root>
     </RanchWorkspaceShell>
+    <MobileRosterFilterSheet
+      open={pastureFilterOpen && isMobile}
+      title="Filters"
+      onClose={() => setPastureFilterOpen(false)}
+    >
+      {pastureFilterPanelInner}
+    </MobileRosterFilterSheet>
+    </>
   )
 }

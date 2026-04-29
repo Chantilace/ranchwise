@@ -139,12 +139,19 @@ export function MenuMultiSelectField({
           </div>
         </Menu.Trigger>
         <Menu.Portal>
-          <Menu.Positioner side="bottom" align="start" sideOffset={4} className="z-[100] outline-none">
+          <Menu.Positioner
+            side="bottom"
+            align="start"
+            sideOffset={4}
+            className="z-[100] outline-none"
+            data-ranch-filter-popover=""
+          >
             <Menu.Popup
               className={cn(
                 appMenuPopupClass,
                 "max-h-60 min-w-[var(--anchor-width)] w-[var(--anchor-width)] overflow-y-auto"
               )}
+              data-ranch-filter-popover=""
             >
               <Menu.Item
                 closeOnClick={false}
@@ -265,12 +272,19 @@ export function MenuRadioSelectField({
           </div>
         </Menu.Trigger>
         <Menu.Portal>
-          <Menu.Positioner side="bottom" align="start" sideOffset={4} className="z-[100] outline-none">
+          <Menu.Positioner
+            side="bottom"
+            align="start"
+            sideOffset={4}
+            className="z-[100] outline-none"
+            data-ranch-filter-popover=""
+          >
             <Menu.Popup
               className={cn(
                 appMenuPopupClass,
                 "max-h-60 min-w-[var(--anchor-width)] w-[var(--anchor-width)] overflow-y-auto"
               )}
+              data-ranch-filter-popover=""
             >
               <Menu.RadioGroup value={value} onValueChange={(v) => onChange(String(v))}>
                 {options.map((opt) => (

@@ -1,5 +1,7 @@
 import type { PastureCheckCategory, PastureCheckEntry } from "@/lib/pastureCheckTypes"
+import type { ApprovedLogAuthor } from "@/lib/ranchCrewAuthors"
 import type { PastureStatus } from "@/lib/statusUtils"
+import type { AIResult } from "@/types/observation"
 
 const MS_DAY = 86_400_000
 
@@ -12,22 +14,21 @@ type SeedRow = Omit<PastureCheckEntry, "id" | "pastureId" | "date"> & {
   id: string
 }
 
-const AUTHORS = ["Chantale", "Joe", "Maria", "Jake"] as const
-
 function row(
   id: string,
   daysAgo: number,
   category: PastureCheckCategory,
   status: PastureStatus,
   body: string,
-  author: (typeof AUTHORS)[number]
+  author: ApprovedLogAuthor,
+  aiResult?: AIResult | null
 ): SeedRow {
-  return { id, daysAgo, category, status, body, author, aiResult: null }
+  return { id, daysAgo, category, status, body, author, aiResult: aiResult ?? null }
 }
 
 /**
  * Demo checks per pasture (6–8 each, ~30 days).
- * Latest checks: four pastures within ~5–7d; Northwest ~11d (Watch on home, not High).
+ * Latest checks: four pastures within ~5–7d; Northwest includes demo progression pair (18d / 11d) plus a recent drive-by.
  */
 const SEED_ROWS: Record<string, SeedRow[]> = {
   east: [
@@ -37,7 +38,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "walk_through",
       "stable",
       "Walked full perimeter — hot wire singing, no shorts. East troughs full, float on north tank quiet. Herd spread from gate to mid-slope, calves on clean green strip.",
-      "Chantale"
+      "Juniper"
     ),
     row(
       "pc-east-2",
@@ -45,7 +46,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "drive_by",
       "stable",
       "Drive-by at lunch: no fence lean, salt tubs visible, cattle heads up chewing.",
-      "Joe"
+      "Wyatt"
     ),
     row(
       "pc-east-3",
@@ -53,7 +54,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "targeted_check",
       "concern",
       "Targeted look at low gate corner after rain — rutting 6 inches deep, water not ponding yet but getting soft.",
-      "Maria"
+      "Lou"
     ),
     row(
       "pc-east-4",
@@ -61,7 +62,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "walk_through",
       "stable",
       "Fence brush cleared off bottom wire for 200 yards. Creek branch running clear, no cattle belly-deep.",
-      "Jake"
+      "Wes"
     ),
     row(
       "pc-east-5",
@@ -69,7 +70,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "maintenance",
       "stable",
       "Replaced two fiberglass posts west knoll; tamped cold mix in post holes, tension reset next morning.",
-      "Chantale"
+      "Juniper"
     ),
     row(
       "pc-east-6",
@@ -77,7 +78,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "walk_through",
       "concern",
       "Wild rose runners grabbing bottom wire in draw — trimmed by hand, flagged east end for mower when dry.",
-      "Joe"
+      "Wyatt"
     ),
   ],
   northeast: [
@@ -87,7 +88,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "walk_through",
       "concern",
       "Full walk — pond ring firm but cattle have carved a deep path on north bank. Salt low in second tub.",
-      "Maria"
+      "Lou"
     ),
     row(
       "pc-ne-2",
@@ -95,7 +96,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "drive_by",
       "stable",
       "Evening drive-by: hay ring has hay, no fence pressure at feed.",
-      "Joe"
+      "Wyatt"
     ),
     row(
       "pc-ne-3",
@@ -103,7 +104,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "targeted_check",
       "action_needed",
       "Checked pond overflow — pipe mouth partly blocked with debris after wind. Cleared by hand; want gravel on spill path.",
-      "Chantale"
+      "Juniper"
     ),
     row(
       "pc-ne-4",
@@ -111,7 +112,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "walk_through",
       "stable",
       "Counted waterers at dusk, all four cycling. Heifers calm, no buller activity noted.",
-      "Jake"
+      "Wes"
     ),
     row(
       "pc-ne-5",
@@ -119,7 +120,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "maintenance",
       "stable",
       "Greased north gate hinges and replaced bent latch pin — swings one-handed again.",
-      "Maria"
+      "Lou"
     ),
     row(
       "pc-ne-6",
@@ -127,18 +128,18 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "drive_by",
       "concern",
       "Quick pass: dust trail tight on fence line — cattle walking wire; note for walk-through soon.",
-      "Chantale"
+      "Juniper"
     ),
   ],
   southeast: [
-    row("pc-se-1", 4, "drive_by", "stable", "Morning drive-by — pairs up on feed, no limping visible from road.", "Joe"),
+    row("pc-se-1", 4, "drive_by", "stable", "Morning drive-by — pairs up on feed, no limping visible from road.", "Wyatt"),
     row(
       "pc-se-2",
       4,
       "walk_through",
       "stable",
       "Creek crossing boards solid, gravel apron holding. Fence tension even both sides of dip.",
-      "Chantale"
+      "Juniper"
     ),
     row(
       "pc-se-3",
@@ -146,7 +147,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "targeted_check",
       "stable",
       "Investigated south gate creep — latch was backing off; tightened bolts, added second pin.",
-      "Maria"
+      "Lou"
     ),
     row(
       "pc-se-4",
@@ -154,7 +155,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "walk_through",
       "concern",
       "Muddy pull-up at gate deeper after truck traffic — want 2 yards gravel on schedule.",
-      "Jake"
+      "Wes"
     ),
     row(
       "pc-se-5",
@@ -162,7 +163,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "drive_by",
       "stable",
       "Dusk pass — herd on hay ring, no bellowing at water.",
-      "Joe"
+      "Wyatt"
     ),
     row(
       "pc-se-6",
@@ -170,7 +171,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "maintenance",
       "stable",
       "Trimmed willow limbs drooping into hot wire along south fence; hauled brush out.",
-      "Chantale"
+      "Juniper"
     ),
     row(
       "pc-se-7",
@@ -178,7 +179,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "walk_through",
       "stable",
       "Salt blocks at two stations, both half gone — normal use for group size.",
-      "Maria"
+      "Lou"
     ),
   ],
   west: [
@@ -188,7 +189,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "walk_through",
       "concern",
       "Bull pasture walk — dominant bull visible, fence hot OK, but tank float chattering — valve may be worn.",
-      "Maria"
+      "Lou"
     ),
     row(
       "pc-w-2",
@@ -196,7 +197,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "drive_by",
       "stable",
       "Drive-by only — bulls loafing in shade, no pushing at gate.",
-      "Joe"
+      "Wyatt"
     ),
     row(
       "pc-w-3",
@@ -204,7 +205,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "targeted_check",
       "action_needed",
       "Opened solar pump box — connection tight, but pressure switch cycling fast; temp bypass until parts.",
-      "Chantale"
+      "Juniper"
     ),
     row(
       "pc-w-4",
@@ -212,7 +213,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "walk_through",
       "stable",
       "H-brace temp wire still holding; marked post for permanent brace kit next haul.",
-      "Jake"
+      "Wes"
     ),
     row(
       "pc-w-5",
@@ -220,7 +221,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "maintenance",
       "concern",
       "Replaced 40 feet of worn poly along creek bend; old wire had UV cracks — hot tested 6.2 kv after.",
-      "Maria"
+      "Lou"
     ),
     row(
       "pc-w-6",
@@ -228,57 +229,49 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "walk_through",
       "stable",
       "Water tank level good after repair; no algae film on walls.",
-      "Chantale"
+      "Juniper"
     ),
   ],
   northwest: [
     row(
-      "pc-nw-1",
+      "pc-nw-demo-1",
+      18,
+      "walk_through",
+      "stable",
+      "Good cover overall on sage flats. Minimal bare patches. Fence intact, water levels strong. Cattle distributed evenly.",
+      "Juniper",
+      {
+        riskLevel: "good",
+        riskLabel: "Stable",
+        recommendations: ["Continue rotation schedule as planned."],
+        patternNote: null,
+      }
+    ),
+    row(
+      "pc-nw-demo-2",
       11,
       "walk_through",
       "concern",
-      "Heifer group calm but north fence line has fresh rub marks on T-post paint — watch for wire contact.",
-      "Joe"
+      "Sage flats grazed evenly. Scattered bare patches starting at south end. Water levels good, fence intact.",
+      "Lou",
+      {
+        riskLevel: "monitor",
+        riskLabel: "Concern",
+        patternNote:
+          "Bare patch development on south end is early — not yet at recovery threshold but worth tracking on next check.",
+        recommendations: [
+          "Recheck within 7–10 days to confirm whether bare patches are progressing or holding.",
+          "Note grazing pressure and recent rainfall in next observation.",
+        ],
+      }
     ),
     row(
-      "pc-nw-2",
-      19,
+      "pc-nw-recent-1",
+      5,
       "drive_by",
       "stable",
-      "Drive-by mid-day: four waterers visible, cattle not bunched.",
-      "Chantale"
-    ),
-    row(
-      "pc-nw-3",
-      22,
-      "targeted_check",
-      "stable",
-      "Checked automatic on hill — filter screen cleaned, flow strong.",
-      "Maria"
-    ),
-    row(
-      "pc-nw-4",
-      25,
-      "walk_through",
-      "action_needed",
-      "Found loose brace wire on corner H — retensioned and flagged for crew to reset post when equipment free.",
-      "Jake"
-    ),
-    row(
-      "pc-nw-5",
-      28,
-      "maintenance",
-      "stable",
-      "Oiled all gate latches on west haul road access; replaced one hinge bolt that was backing out.",
-      "Joe"
-    ),
-    row(
-      "pc-nw-6",
-      30,
-      "walk_through",
-      "stable",
-      "Creek bank stable, willow shade intact, no new cattle trails cutting bank.",
-      "Maria"
+      "Drive-by mid-day: four waterers visible, cattle not bunched on sage flats.",
+      "Wyatt"
     ),
   ],
 }

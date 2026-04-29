@@ -7,6 +7,7 @@ import {
   buildHomeSmartSuggestionCardsModel,
   type SmartSuggestionCardPriority,
 } from "@/lib/homeSmartSuggestionCards"
+import { homepageSoftShadowClass } from "@/lib/homePageCardChrome"
 import { cn } from "@/lib/utils"
 
 function priorityLabel(p: SmartSuggestionCardPriority): string {
@@ -25,11 +26,13 @@ const suggestionsTrackClass = cn(
 const smartSuggestionCardLinkClass = cn(
   "group flex min-h-[140px] min-w-0 flex-col rounded-[var(--radius)] bg-[var(--ai-accent-deep)] p-4 text-[var(--ai-accent-soft)]",
   "touch-manipulation no-underline outline-none transition-colors duration-150 ease-out",
-  "hover:bg-[#1F1B47] active:scale-[0.99]",
+  // Hover needs to be perceptible; brighten toward periwinkle.
+  "hover:bg-[var(--ai-hover)] active:scale-[0.99]",
   "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   "w-[80%] max-w-[320px] shrink-0 snap-start",
   "lg:w-[420px] lg:max-w-none",
   "xl:w-auto xl:min-w-0 xl:shrink",
+  homepageSoftShadowClass,
 )
 
 type HomeSmartSuggestionCardProps = {
@@ -53,17 +56,17 @@ function HomeSmartSuggestionCard({
         <div className="flex min-w-0 items-center gap-1.5">
           <div
             className="flex size-[22px] shrink-0 items-center justify-center rounded-md"
-            style={{ background: "rgba(123, 111, 222, 0.25)" }}
+            style={{ background: "var(--ai-accent-mid)" }}
           >
-            <AiAnnotationMark className="text-[13px] text-ai-accent-soft" />
+            <AiAnnotationMark className="text-[13px] text-white" />
           </div>
-          <span className="min-w-0 truncate text-[13px] font-medium uppercase tracking-wide text-[var(--ai-accent-soft)]">
+          <span className="min-w-0 truncate text-[13px] font-medium uppercase tracking-[0.6px] text-[var(--ai-accent-muted)] group-hover:text-white">
             {categoryLabel}
           </span>
         </div>
         <ArrowUpRight
-          className="h-[18px] w-[18px] shrink-0 text-[var(--ai-accent-soft)] transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-          strokeWidth={2}
+          className="h-4 w-4 shrink-0 text-white transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+          strokeWidth={2.25}
           aria-hidden
         />
       </div>
@@ -71,7 +74,7 @@ function HomeSmartSuggestionCard({
       <p className="mb-3 min-w-0 flex-1 text-[14px] leading-snug text-white">{statement}</p>
 
       <span
-        className="self-start rounded-full bg-[rgba(255,255,255,0.1)] px-2 py-0.5 text-[13px] font-medium text-[var(--ai-accent-soft)]"
+        className="self-start rounded-full bg-transparent px-2 py-[1px] text-[13px] font-medium text-[var(--ai-accent-soft)] border border-[rgba(207,203,246,0.35)] group-hover:text-white"
       >
         {priorityLabel(priority)}
       </span>

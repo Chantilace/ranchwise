@@ -14,7 +14,9 @@ import {
   deriveHorseAttentionSummaryLine,
   type HorseWeeklyAttentionPick,
 } from "@/lib/homeHorseSummaryDerivers"
+import { homepageCardChromeClass, homepageCategoryBadgeClass } from "@/lib/homePageCardChrome"
 import { getObservationDomain } from "@/lib/observationDomain"
+import { cn } from "@/lib/utils"
 import type { ObservationEntry, RiskLevel } from "@/types/observation"
 function shortAgo(entryMs: number): string {
   const now = Date.now()
@@ -39,7 +41,7 @@ function observationRiskLevel(entry: ObservationEntry): RiskLevel {
 }
 
 function riskToBadgeStatus(risk: RiskLevel): StatusBadgeStatus {
-  if (risk === "call-vet") return "call-vet"
+  if (risk === "flag") return "flag"
   if (risk === "monitor") return "monitor"
   return "good"
 }
@@ -67,8 +69,12 @@ function RecentObservationCompactTile({ pick }: { pick: HorseWeeklyAttentionPick
 
   return (
     <div
-      className="flex min-w-0 flex-col rounded-md border-[0.5px] bg-card p-3.5"
-      style={{ borderColor: "var(--color-border-tertiary)" }}
+      className={cn(
+        // Nested tiles inside the homepage Recent Observations card should be flat
+        // (outer card already carries the lift shadow).
+        "flex min-w-0 flex-col rounded-md p-3.5",
+        "border-[0.5px] border-[rgba(0,0,0,0.06)] bg-card",
+      )}
     >
       <div className="mb-2 flex items-start gap-2.5">
         <Link
@@ -96,15 +102,7 @@ function RecentObservationCompactTile({ pick }: { pick: HorseWeeklyAttentionPick
         <div className="min-w-0 flex-1">
           <div className="mb-0.5 flex min-w-0 flex-wrap items-center gap-1.5">
             <p className="min-w-0 text-[15px] font-medium leading-tight text-foreground">{pick.horse.name}</p>
-            <span
-              className="shrink-0 rounded-[4px] px-1.5 py-px text-[13px] leading-tight"
-              style={{
-                background: "var(--color-background-secondary)",
-                color: "var(--color-text-secondary)",
-              }}
-            >
-              {categoryLabel}
-            </span>
+            <span className={cn("shrink-0", homepageCategoryBadgeClass)}>{categoryLabel}</span>
             {risk !== "good" ? (
               <StatusBadge status={riskToBadgeStatus(risk)} size="sm" emphasis="secondary" />
             ) : null}
@@ -153,7 +151,7 @@ export function HomeRecentObservationsCard() {
   )
 
   return (
-    <section className="flex flex-col rounded-[var(--radius)] border-[0.5px] border-border bg-card p-[18px]">
+    <section className={cn("flex flex-col rounded-[var(--radius)] p-[18px]", homepageCardChromeClass)}>
       <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-2 gap-y-2">
         <span className="text-base font-medium text-foreground">Recent observations</span>
         <div className="ml-auto flex min-w-0 shrink-0 items-center gap-3">

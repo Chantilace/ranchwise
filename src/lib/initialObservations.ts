@@ -21,7 +21,7 @@ function fillHorseObservationGaps(map: Record<string, ObservationEntry[]>) {
     return entries.some(
       (o) =>
         getObservationDomain(o) === "health" &&
-        o.aiResult?.riskLevel === "call-vet" &&
+        o.aiResult?.riskLevel === "flag" &&
         parseObservationDate(o.date) >= fourteenAgo
     )
   }
@@ -33,7 +33,7 @@ function fillHorseObservationGaps(map: Record<string, ObservationEntry[]>) {
     if (row.healthStatus === "monitor") {
       const healthObs = cur.filter((o) => getObservationDomain(o) === "health")
       const lr = latestRisk(healthObs)
-      if (lr !== "monitor" && lr !== "call-vet") {
+      if (lr !== "monitor" && lr !== "flag") {
         cur = [
           {
             id: `gap-${key}-hm`,
@@ -42,7 +42,7 @@ function fillHorseObservationGaps(map: Record<string, ObservationEntry[]>) {
             observationDomain: "health",
             notes:
               "Roster watch — hay ration cleaned up slower than pen mates, manure a bit loose, otherwise bright at the gate.",
-            loggedBy: "Jake",
+            loggedBy: "Wes",
             aiResult: {
               riskLevel: "monitor",
               riskLabel: "Monitor",
@@ -71,10 +71,10 @@ function fillHorseObservationGaps(map: Record<string, ObservationEntry[]>) {
           observationDomain: "health",
           notes:
             "Acute episode on roster — hard breathing after short walk to chute, nose dry, handler stopped work and shaded her.",
-          loggedBy: "Chantale",
+          loggedBy: "Juniper",
           aiResult: {
-            riskLevel: "call-vet",
-            riskLabel: "Call vet",
+            riskLevel: "flag",
+            riskLabel: "Flag",
             recommendations: [
               "Vet callback scheduled from field.",
               "No transport until respiratory rate normalizes.",
@@ -93,7 +93,7 @@ function fillHorseObservationGaps(map: Record<string, ObservationEntry[]>) {
     if (row.behaviorStatus === "monitor") {
       const behObs = cur.filter((o) => getObservationDomain(o) === "behavior")
       const lr = latestRisk(behObs)
-      if (lr !== "monitor" && lr !== "call-vet") {
+      if (lr !== "monitor" && lr !== "flag") {
         cur = [
           {
             id: `gap-${key}-bm`,
@@ -102,7 +102,7 @@ function fillHorseObservationGaps(map: Record<string, ObservationEntry[]>) {
             observationDomain: "behavior",
             notes:
               "Halter session — rushed backing steps when asked to yield hindquarters, no bite but tight in poll.",
-            loggedBy: "Maria",
+            loggedBy: "Lou",
             aiResult: {
               riskLevel: "monitor",
               riskLabel: "Monitor",
@@ -124,7 +124,7 @@ function fillHorseObservationGaps(map: Record<string, ObservationEntry[]>) {
 
     if (row.behaviorStatus === "flag") {
       const behObs = cur.filter((o) => getObservationDomain(o) === "behavior")
-      if (latestRisk(behObs) !== "call-vet") {
+      if (latestRisk(behObs) !== "flag") {
         cur = [
           {
             id: `gap-${key}-bf`,
@@ -133,10 +133,10 @@ function fillHorseObservationGaps(map: Record<string, ObservationEntry[]>) {
             observationDomain: "behavior",
             notes:
               "Serious herd incident — pinned a younger gelding against panels at hay drop, drew blood on withers before split.",
-            loggedBy: "Joe",
+            loggedBy: "Wyatt",
             aiResult: {
-              riskLevel: "call-vet",
-              riskLabel: "Call vet",
+            riskLevel: "flag",
+            riskLabel: "Flag",
               recommendations: [
                 "Separate until vet clears for turnout.",
                 "Document wound photos for file.",
@@ -178,8 +178,8 @@ function minnieAiResult(logId: string, log: ActivityLogEntry): AIResult | null {
       }
     case "2":
       return {
-        riskLevel: "call-vet",
-        riskLabel: "Call vet",
+        riskLevel: "flag",
+        riskLabel: "Flag",
         recommendations: log.aiNextSteps ?? [],
         patternNote:
           "Withdrawal and repeated avoidance may indicate sustained herd pressure; coordinate with vet if lethargy continues.",
@@ -187,7 +187,7 @@ function minnieAiResult(logId: string, log: ActivityLogEntry): AIResult | null {
     case "3":
       return {
         riskLevel: "good",
-        riskLabel: "No action needed",
+        riskLabel: "Good",
         recommendations:
           log.aiNextSteps && log.aiNextSteps.length > 0
             ? log.aiNextSteps
@@ -197,7 +197,7 @@ function minnieAiResult(logId: string, log: ActivityLogEntry): AIResult | null {
     case "4":
       return {
         riskLevel: "good",
-        riskLabel: "No action needed",
+        riskLabel: "Good",
         recommendations: log.aiNextSteps ?? [],
         patternNote: null,
       }
@@ -253,7 +253,7 @@ function inferRiskLevelFromLog(log: ActivityLogEntry): RiskLevel {
     "isolation",
     "isolate immediately",
   ]
-  if (callVetTerms.some((t) => text.includes(t))) return "call-vet"
+  if (callVetTerms.some((t) => text.includes(t))) return "flag"
 
   // Monitor indicators
   const monitorTerms = [
@@ -310,11 +310,11 @@ export function buildInitialObservationsMap(): Record<string, ObservationEntry[]
         aiResult = {
           riskLevel,
           riskLabel:
-            riskLevel === "call-vet"
-              ? "Call vet"
+            riskLevel === "flag"
+              ? "Flag"
               : riskLevel === "monitor"
                 ? "Monitor"
-                : "No action needed",
+                : "Good",
           recommendations: log.aiNextSteps,
           patternNote: null,
         }

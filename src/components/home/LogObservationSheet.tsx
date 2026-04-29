@@ -24,6 +24,7 @@ import {
   type LogObservationFormController,
   type UseLogObservationFormControllerArgs,
 } from "@/components/LogObservationModal"
+import type { LogObservationCommitAnalyzeMeta } from "@/lib/observationAnalyzeContext"
 import { useRanchData } from "@/contexts/RanchDataContext"
 import { getCattleEffectiveHealthRisk } from "@/lib/cattleSelectors"
 import { cattleTagBare, formatCattleTagDisplay } from "@/lib/cattleUi"
@@ -31,6 +32,7 @@ import { useScrollShadow } from "@/hooks/useScrollShadow"
 import type { Cattle } from "@/types/cattle"
 import type { ObservationEntry, RiskLevel } from "@/types/observation"
 import { cn } from "@/lib/utils"
+import { useOverlayRegistration } from "@/contexts/OverlayRegistryContext"
 
 type SheetState = "search" | "cattle-prep" | "form"
 type Species = "cattle" | "horse"
@@ -54,7 +56,7 @@ type UnifiedAnimal =
     })
 
 function horseStatusFromAiRiskLevel(level: RiskLevel | null): HorseTableRow["healthStatus"] {
-  if (level === "call-vet") return "flag"
+  if (level === "flag") return "flag"
   if (level === "monitor") return "monitor"
   return "good"
 }
@@ -81,13 +83,13 @@ function syncHorseProfileFromObservations(
 }
 
 function cattleHealthFromRiskLevel(level: RiskLevel): NonNullable<Cattle["healthStatus"]> {
-  if (level === "call-vet") return "Flag"
+  if (level === "flag") return "Flag"
   if (level === "monitor") return "Monitor"
   return "Good"
 }
 
 function riskLevelToConfirmStatus(r: RiskLevel): ConfirmStatus {
-  if (r === "call-vet") return "flag"
+  if (r === "flag") return "flag"
   if (r === "monitor") return "monitor"
   return "good"
 }
@@ -96,26 +98,26 @@ function healthBadgeStatus(
   species: Species,
   row: UnifiedAnimal,
   observationsByCattleId?: Record<string, ObservationEntry[]>
-): "good" | "monitor" | "call-vet" {
+): "good" | "monitor" | "flag" {
   if (species === "cattle") {
     if (observationsByCattleId) {
       const r = getCattleEffectiveHealthRisk(row as Cattle, observationsByCattleId)
-      if (r === "call-vet") return "call-vet"
+      if (r === "flag") return "flag"
       if (r === "monitor") return "monitor"
       return "good"
     }
     const h = (row as Cattle).healthStatus ?? "Good"
-    if (h === "Flag") return "call-vet"
+    if (h === "Flag") return "flag"
     if (h === "Monitor") return "monitor"
     return "good"
   }
-  if (row.healthStatus === "flag") return "call-vet"
+  if (row.healthStatus === "flag") return "flag"
   if (row.healthStatus === "monitor") return "monitor"
   return "good"
 }
 
-function behaviorBadgeStatus(row: HorseTableRow): "good" | "monitor" | "call-vet" {
-  if (row.behaviorStatus === "flag") return "call-vet"
+function behaviorBadgeStatus(row: HorseTableRow): "good" | "monitor" | "flag" {
+  if (row.behaviorStatus === "flag") return "flag"
   if (row.behaviorStatus === "monitor") return "monitor"
   return "good"
 }
@@ -197,6 +199,7 @@ export type LogObservationSheetProps = {
 }
 
 export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetProps) {
+  useOverlayRegistration(open)
   const {
     cattle,
     herdRows,
@@ -395,6 +398,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
     if (stage === "commit") {
       if (selectedAnimal.species === "horse") {
         const key = horseRowKey(selectedAnimal)
+        const priorForAi = [...(observationsByHorse[key] ?? [])]
         const entry: ObservationEntry = {
           id: crypto.randomUUID(),
           date: formatObservationDate(new Date()),
@@ -409,17 +413,39 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
         appendObservation(key, entry)
         const nextHorseObs = [entry, ...(observationsByHorse[key] ?? [])]
         syncHorseProfileFromObservations(key, nextHorseObs, updateHerdHorse)
-      } else {
-        const cid = selectedAnimal.id
-        committedCattleIdRef.current = cid
-        const returned = saveCattleObservationLog(
-          cid,
-          { category: data.category, notes: data.notes.trim(), loggedBy: data.loggedBy.trim(), aiResult: data.aiResult },
-          undefined
-        )
-        committedCattleObsIdRef.current = typeof returned === "string" ? returned : null
+        const metaOut: LogObservationCommitAnalyzeMeta = {
+          kind: "horse",
+          horseKey: key,
+          horseId: String(selectedAnimal.id),
+          entityName: identityTitle(selectedAnimal),
+          priorObservations: priorForAi,
+        }
+        return metaOut
       }
-      return
+      const cid = selectedAnimal.id
+      const priorForAi = [...(observationsByCattleId[cid] ?? [])]
+      committedCattleIdRef.current = cid
+      const returned = saveCattleObservationLog(
+        cid,
+        { category: data.category, notes: data.notes.trim(), loggedBy: data.loggedBy.trim(), aiResult: data.aiResult },
+        undefined
+      )
+      committedCattleObsIdRef.current = typeof returned === "string" ? returned : null
+      const c = selectedAnimal as Cattle
+      const metaOut: LogObservationCommitAnalyzeMeta = {
+        kind: "cattle",
+        cattleId: cid,
+        entityName: identityTitle(selectedAnimal),
+        priorObservations: priorForAi,
+        calvingStatus: c.calvingStatus,
+        cattleCalvingSnapshot: {
+          calvingDate: c.calvingDate,
+          deliveryType: c.deliveryType ?? null,
+          calvingComplications: c.calvingComplications ?? null,
+          calvingStatus: c.calvingStatus,
+        },
+      }
+      return metaOut
     }
 
     if (stage === "discard") {

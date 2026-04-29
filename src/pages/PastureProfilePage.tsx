@@ -282,7 +282,7 @@ export function PastureProfilePage() {
     let n = 0
     for (const c of cattleOnPasture) {
       const r = getCattleEffectiveHealthRisk(c, observationsByCattleId)
-      if (r === "call-vet") n += 1
+      if (r === "flag") n += 1
     }
     return n
   }, [cattleOnPasture, observationsByCattleId])
@@ -415,15 +415,31 @@ export function PastureProfilePage() {
         <div className="grid grid-cols-1 gap-8 md:min-h-0 md:flex-1 md:grid-cols-[300px_minmax(0,1fr)] md:gap-5 md:overflow-hidden lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-6">
           <aside className="flex flex-col gap-4 md:sticky md:top-0 md:self-start">
             <div>
+              <div className="md:hidden">
+                {profileImageSrc ? (
+                  <div className="overflow-hidden rounded-xl">
+                    <img
+                      src={profileImageSrc}
+                      alt={pasture.name}
+                      className="block h-auto w-full"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-40 w-full items-center justify-center rounded-xl bg-muted text-2xl font-semibold text-muted-foreground sm:h-48">
+                    {pasture.name.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </div>
               {profileImageSrc ? (
                 <img
                   src={profileImageSrc}
                   alt=""
-                  className="h-40 w-full rounded-xl object-cover sm:h-48 md:aspect-square md:h-auto md:min-h-0"
+                  className="hidden h-40 w-full rounded-xl object-cover sm:h-48 md:block md:aspect-square md:h-auto md:min-h-0"
                   loading="lazy"
                 />
               ) : (
-                <div className="flex h-40 w-full items-center justify-center rounded-xl bg-muted text-2xl font-semibold text-muted-foreground sm:h-48 md:aspect-square md:h-auto md:min-h-0">
+                <div className="hidden h-40 w-full items-center justify-center rounded-xl bg-muted text-2xl font-semibold text-muted-foreground sm:h-48 md:flex md:aspect-square md:h-auto md:min-h-0">
                   {pasture.name.slice(0, 2).toUpperCase()}
                 </div>
               )}

@@ -1,4 +1,5 @@
 import { useMemo } from "react"
+import { RiToothLine } from "react-icons/ri"
 import { Link } from "react-router-dom"
 import type { HorseTableRow } from "@/components/RanchWiseHorseRoster"
 import { horseRowKey } from "@/components/RanchWiseHorseRoster"
@@ -12,6 +13,7 @@ import {
   getDentalStatusForHorse,
   getFarrierStatusForHorse,
 } from "@/lib/horseCareUtils"
+import { homepageCardChromeClass } from "@/lib/homePageCardChrome"
 import { HORSE_ROSTER_FIT_FOR_WORK_FILTER_PARAM, isHorseFitForWorkRow } from "@/lib/horseListFilter"
 import { cn } from "@/lib/utils"
 
@@ -119,25 +121,6 @@ function FitForWorkAvatarStack({
   )
 }
 
-function ToothCareIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={cn("shrink-0", className)}
-      aria-hidden
-    >
-      <path
-        d="M12 4c-2.1 0-3.5 1.5-3.5 3.8V11c0 1.2.3 2.4 1 3.5.5.8 1.1 1.5 1.9 1.5.8 0 1.4-.7 1.9-1.5.7-1.1 1-2.3 1-3.5V7.8C14 5.5 12.6 4 12 4Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 export function HomeHorseSummaryCard() {
   const { herdRows, observationsByHorse } = useRanchData()
 
@@ -149,7 +132,7 @@ export function HomeHorseSummaryCard() {
 
   const careDue = useMemo(() => {
     const today = new Date()
-    const { farrierHorses, dentalHorses, totalUnique } = getCareDueSummary(herdRows, today, observationsByHorse)
+    const { farrierHorses, dentalHorses } = getCareDueSummary(herdRows, today, observationsByHorse)
 
     const farrierEntries: CareHorseEntry[] = farrierHorses.map((horse) => {
       const r = getFarrierStatusForHorse(horse, today, observationsByHorse)
@@ -173,12 +156,16 @@ export function HomeHorseSummaryCard() {
     return {
       farrierEntries,
       dentalEntries,
-      anyCareCount: totalUnique,
     }
   }, [herdRows, observationsByHorse])
 
   return (
-    <section className="flex h-full min-h-0 flex-col rounded-[var(--radius)] border-[0.5px] border-border bg-card p-[18px]">
+    <section
+      className={cn(
+        "flex h-full min-h-0 flex-col rounded-[var(--radius)] p-[18px]",
+        homepageCardChromeClass,
+      )}
+    >
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-base font-medium leading-none text-foreground">Horses</h3>
         <CardHeaderArrowLink to="/horses" aria-label="View horses roster" />
@@ -201,16 +188,9 @@ export function HomeHorseSummaryCard() {
       </div>
 
       <div className="mt-auto pt-4">
-        <div className="mb-3 flex items-baseline justify-between gap-2">
-          <p className="text-[13px] font-medium uppercase tracking-[0.05em] text-[var(--color-text-tertiary)]">
-            Care due this week
-          </p>
-          {careDue.anyCareCount > 0 && (
-            <span className="text-[13px] text-[var(--color-text-tertiary)]">
-              {careDue.anyCareCount} {careDue.anyCareCount === 1 ? "horse" : "horses"}
-            </span>
-          )}
-        </div>
+        <p className="mb-3 text-[13px] font-medium uppercase tracking-[0.05em] text-[var(--color-text-tertiary)]">
+          Care due this week
+        </p>
 
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           <Link
@@ -261,7 +241,7 @@ export function HomeHorseSummaryCard() {
               style={{ background: "#E1F5EE", color: "#0F6E56" }}
               aria-hidden
             >
-              <ToothCareIcon className="size-[14px]" />
+              <RiToothLine className="size-[14px] shrink-0" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium leading-none text-foreground">Dental</p>

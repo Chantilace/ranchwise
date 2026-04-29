@@ -14,7 +14,7 @@ import {
 export type { PastureStatus } from "@/lib/statusUtils"
 
 /** Health / risk + pasture semantic statuses (pasture reuses good / monitor / flag ramps). */
-export type StatusBadgeStatus = "good" | "monitor" | "call-vet" | PastureStatus
+export type StatusBadgeStatus = "good" | "monitor" | "flag" | PastureStatus
 
 export interface StatusBadgeProps {
   status: StatusBadgeStatus
@@ -30,7 +30,7 @@ export interface StatusBadgeProps {
 const statusConfig: Record<StatusBadgeStatus, { label: string }> = {
   good: { label: "Good" },
   monitor: { label: "Monitor" },
-  "call-vet": { label: "Flag" },
+  flag: { label: "Flag" },
   stable: { label: PASTURE_STATUS_LABELS.stable },
   concern: { label: PASTURE_STATUS_LABELS.concern },
   action_needed: { label: PASTURE_STATUS_LABELS.action_needed },
@@ -39,7 +39,7 @@ const statusConfig: Record<StatusBadgeStatus, { label: string }> = {
 const canonicalByStatus: Record<StatusBadgeStatus, StatusCanonical> = {
   good: "good",
   monitor: "monitor",
-  "call-vet": "flag",
+  flag: "flag",
   stable: "good",
   concern: "monitor",
   action_needed: "flag",

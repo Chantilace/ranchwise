@@ -200,7 +200,11 @@ export function CattleRosterTable({
   const { openCattleLogModal } = useRanchData()
   const colSpan = showPastureColumn ? 12 : 11
   return (
-    <Table className="border-separate border-spacing-0" containerClassName="min-w-0">
+    <Table
+      tableLayout="intrinsic"
+      className="min-w-[1180px] border-separate border-spacing-0"
+      containerClassName="min-w-0"
+    >
       <TableHeader>
         <TableRow className="border-neutral-200 hover:bg-transparent">
           <CattleRosterSortableColumnHeader
@@ -369,8 +373,8 @@ export function CattleRosterTable({
                 </div>
               </TableCell>
               <TableCell className={cn(cellBg, "min-w-[96px] whitespace-nowrap pl-4")}>
-                {healthRisk === "call-vet" ? (
-                  <StatusBadge status="call-vet" size="table" emphasis="secondary" />
+                {healthRisk === "flag" ? (
+                  <StatusBadge status="flag" size="table" emphasis="secondary" />
                 ) : healthRisk === "monitor" ? (
                   <StatusBadge status="monitor" size="table" emphasis="secondary" />
                 ) : null}

@@ -11,7 +11,12 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { LOG_OBSERVATION_IDENTITY_ROW } from "@/lib/logObservationLayout"
 import { PastureLogFormFields } from "@/components/PastureLogFormFields"
 import { PASTURE_SEED_MEDIA } from "@/lib/pastureSeedMedia"
-import { mockAnalyze, mockAnalyzePastureCheck } from "@/lib/observationAnalyze"
+import {
+  buildEntityContextFromCommitMeta,
+  mockAnalyze,
+  mockAnalyzePastureCheck,
+} from "@/lib/observationAnalyze"
+import type { LogObservationCommitAnalyzeMeta } from "@/lib/observationAnalyzeContext"
 import {
   pastureAssessedLabelFromRisk,
   type PastureCheckCategory,
@@ -53,13 +58,15 @@ export interface LogObservationModalProps {
   onSave: (
     data: LogObservationSavePayload,
     meta?: { stage: "commit" | "done" | "discard" }
-  ) => void | boolean | Promise<void | boolean>
+  ) => void | boolean | LogObservationCommitAnalyzeMeta | Promise<void | boolean | LogObservationCommitAnalyzeMeta>
 }
+
+export type { LogObservationCommitAnalyzeMeta } from "@/lib/observationAnalyzeContext"
 
 type Phase = "input" | "saving" | "result"
 
 function statusFromModalBadge(badge?: "Flag" | "Monitor" | "Good") {
-  if (badge === "Flag") return "call-vet" as const
+  if (badge === "Flag") return "flag" as const
   if (badge === "Monitor") return "monitor" as const
   if (badge === "Good") return "good" as const
   return "good" as const
@@ -232,7 +239,7 @@ export function useLogObservationFormController({
 
   function aiRiskLabel(level: RiskLevel) {
     if (logMode === "pasture") return pastureAssessedLabelFromRisk(level)
-    if (level === "call-vet") return "Flag"
+    if (level === "flag") return "Flag"
     if (level === "monitor") return "Monitor"
     return "Good"
   }
@@ -257,23 +264,31 @@ export function useLogObservationFormController({
           patternNote: null,
         } satisfies AIResult)
 
-      if (logMode === "pasture") {
-        await onSave(
-          { kind: "pasture", category: pastureCategory, notes, loggedBy, aiResult: provisional },
-          { stage: "commit" }
-        )
-      } else {
-        await onSave(
-          { kind: "animal", category, notes, loggedBy, aiResult: provisional },
-          { stage: "commit" }
-        )
-      }
+      const commitReturn =
+        logMode === "pasture"
+          ? await onSave(
+              { kind: "pasture", category: pastureCategory, notes, loggedBy, aiResult: provisional },
+              { stage: "commit" }
+            )
+          : await onSave(
+              { kind: "animal", category, notes, loggedBy, aiResult: provisional },
+              { stage: "commit" }
+            )
       setCommitted(true)
+
+      const meta =
+        commitReturn &&
+        typeof commitReturn === "object" &&
+        "kind" in commitReturn &&
+        (commitReturn.kind === "horse" || commitReturn.kind === "cattle" || commitReturn.kind === "pasture")
+          ? commitReturn
+          : undefined
+      const entityContext = buildEntityContextFromCommitMeta(meta)
 
       const result =
         logMode === "pasture"
-          ? await mockAnalyzePastureCheck(pastureCategory, notes, animalName)
-          : await mockAnalyze(category, notes, animalName)
+          ? await mockAnalyzePastureCheck(pastureCategory, notes, animalName, entityContext)
+          : await mockAnalyze(category, notes, animalName, entityContext)
       const merged: AIResult = {
         ...result,
       }
@@ -425,7 +440,7 @@ export function useLogObservationFormController({
                         active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
                       },
                       {
-                        id: "call-vet" as const,
+                        id: "flag" as const,
                         label: "Action needed",
                         active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
                       },
@@ -442,7 +457,7 @@ export function useLogObservationFormController({
                         active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
                       },
                       {
-                        id: "call-vet" as const,
+                        id: "flag" as const,
                         label: "Flag",
                         active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
                       },

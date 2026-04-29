@@ -1,11 +1,13 @@
+import { parseObservationDate } from "@/lib/initialObservations"
 import { observationDomainFromCategory } from "@/lib/observationDomain"
+import { APPROVED_LOG_AUTHORS } from "@/lib/ranchCrewAuthors"
 import { seedDaysAgo } from "@/lib/observationSeedDates"
 import type { AIResult, Category, ObservationEntry, RiskLevel } from "@/types/observation"
 
 function ai(riskLevel: RiskLevel, recommendations: string[], patternNote: string | null = null): AIResult {
   return {
     riskLevel,
-    riskLabel: riskLevel === "call-vet" ? "Call vet" : riskLevel === "monitor" ? "Monitor" : "No action needed",
+    riskLabel: riskLevel === "flag" ? "Flag" : riskLevel === "monitor" ? "Monitor" : "Good",
     recommendations,
     patternNote,
   }
@@ -40,7 +42,7 @@ function aceRecoveredNotes(): ObservationEntry[] {
       12,
       "Health",
       "Wire scrape on left shoulder — hair growing back flat, no heat, sound at trot in hand. Vet cleared light riding.",
-      "Joe",
+      "Wyatt",
       "good",
       ["Resume normal work week.", "Note any rub on blanket seam."]
     ),
@@ -49,7 +51,7 @@ function aceRecoveredNotes(): ObservationEntry[] {
       9,
       "Behavior",
       "Hand-grazed along barn aisle — relaxed at grass, head level when trailer passed on county road.",
-      "Jake",
+      "Wes",
       "good",
       ["Repeat once more before first ride back in arena.", "End on slack in the rope."]
     ),
@@ -64,7 +66,7 @@ function lunaRoutineNotes(): ObservationEntry[] {
       10,
       "Health",
       "Bright check after light week — temp normal, appetite ahead of pen average, gut sounds both sides.",
-      "Chantale",
+      "Juniper",
       "good",
       ["Hold current hay ration.", "Log workload after each arena session."]
     ),
@@ -73,7 +75,7 @@ function lunaRoutineNotes(): ObservationEntry[] {
       8,
       "Behavior",
       "Round pen at trot — smooth inside turns, ears soft when asked for whoa.",
-      "Maria",
+      "Lou",
       "good",
       ["Add one figure-eight next session.", "Quit while transitions stay quiet."]
     ),
@@ -87,7 +89,7 @@ function rioRoutineNotes(): ObservationEntry[] {
       11,
       "Health",
       "Pastern bump from two weeks ago — cold hosed, vet cleared; no heat today at pick-up.",
-      "Jake",
+      "Wes",
       "good",
       ["Keep turnout on soft footing two more days.", "Trot in hand before saddling."]
     ),
@@ -96,7 +98,7 @@ function rioRoutineNotes(): ObservationEntry[] {
       9,
       "Behavior",
       "Walk-trot longe — relaxed frame, no head toss on downward transitions.",
-      "Maria",
+      "Lou",
       "good",
       ["Same warm-up before next ride.", "Note if he guards the near hind when grooming."]
     ),
@@ -110,7 +112,7 @@ function peteTrainingThisWeek(): ObservationEntry[] {
       1,
       "Behavior",
       "Worked Pete on flying lead changes — smoother today than last week.",
-      "Jake",
+      "Wes",
       "monitor",
       [
         "Repeat same grid tomorrow with one fewer pole.",
@@ -128,7 +130,7 @@ function junieJuvenileThisWeek(): ObservationEntry[] {
       2,
       "Behavior",
       "Caught Junie easily in pasture for first time without grain bait.",
-      "Maria",
+      "Lou",
       "monitor",
       [
         "Reward catch with quiet release to graze.",
@@ -172,10 +174,8 @@ const BULK_HORSE_KEYS = [
 
 type BulkKey = (typeof BULK_HORSE_KEYS)[number]
 
-const OBS = ["Maria", "Joe", "Jake", "Chantale"] as const
-
 function author(seed: number, offset = 0): string {
-  return OBS[(seed + offset) % 4]!
+  return APPROVED_LOG_AUTHORS[(seed + offset) % APPROVED_LOG_AUTHORS.length]!
 }
 
 /** Stable per-horse offset so bulk snippets rotate independently (avoids duplicate bodies across the herd). */
@@ -183,6 +183,54 @@ function snippetKeyOffset(key: string): number {
   let h = 0
   for (let i = 0; i < key.length; i++) h = (Math.imul(31, h) + key.charCodeAt(i)) | 0
   return h >>> 0
+}
+
+function mergeObsNewestFirst(extra: ObservationEntry[], base: ObservationEntry[]): ObservationEntry[] {
+  return [...extra, ...base].sort((a, b) => parseObservationDate(b.date) - parseObservationDate(a.date))
+}
+
+function dustyDemoRecheckPrior(): ObservationEntry {
+  return {
+    id: "sup-dusty-demo-recheck-prior",
+    date: seedDaysAgo(4),
+    category: "Behavior",
+    observationDomain: observationDomainFromCategory("Behavior"),
+    notes:
+      "Cross-tied in aisle — accepted face brushing along cheeks without flinching. Slightly alert posture but no withdrawal. Held still through full grooming sequence.",
+    loggedBy: "Juniper",
+    aiResult: {
+      riskLevel: "good",
+      riskLabel: "Good",
+      patternNote:
+        "Solid response from Dusty on face contact — that's a sensitive area for most horses, more so for green ones, so this reads as real progress. Worth seeing whether it holds in a different context.",
+      recommendations: [
+        "Try the same handling somewhere else next session — stall, paddock, wherever else this horse spends time.",
+        "Note the context every time so the pattern's traceable across the log.",
+      ],
+    },
+  }
+}
+
+function maverickRegressionDemoPrior(): ObservationEntry {
+  return {
+    id: "sup-maverick-demo-regression-prior",
+    date: seedDaysAgo(6),
+    category: "Behavior",
+    observationDomain: observationDomainFromCategory("Behavior"),
+    notes:
+      "Haltered without resistance, led from stall to cross-tie cleanly. Stood quietly through grooming including face brushing and feet picking. Calm throughout.",
+    loggedBy: "Juniper",
+    aiResult: {
+      riskLevel: "good",
+      riskLabel: "Good",
+      patternNote:
+        "Solid baseline session for Maverick. Haltering, leading, grooming, and feet all in one calm session — that's a stack worth noting as the reference point.",
+      recommendations: [
+        "Vary context next session — same sequence somewhere different.",
+        "Note this baseline so future shifts are easier to catch.",
+      ],
+    },
+  }
 }
 
 /** ~60% health / ~40% behavior across “this week” rows for all-good horses. Every `notes` string is unique. */
@@ -436,7 +484,7 @@ function bulkForHorse(key: BulkKey, globalIndex: number): ObservationEntry[] {
   }
 
   const flagStory = pick(RECOVERED_FLAG, globalIndex)
-  out.push(obs(`sup-${key}-f0`, 12, "Health", flagStory.notes, author(globalIndex), "call-vet", [...flagStory.recs]))
+  out.push(obs(`sup-${key}-f0`, 12, "Health", flagStory.notes, author(globalIndex), "flag", [...flagStory.recs]))
   out.push(
     obs(
       `sup-${key}-f1`,
@@ -482,5 +530,7 @@ export function buildSupplementalHorseObservations(): Record<string, Observation
     const key = BULK_HORSE_KEYS[i]!
     out[key] = bulkForHorse(key, i)
   }
+  out.dusty = mergeObsNewestFirst([dustyDemoRecheckPrior()], out.dusty ?? [])
+  out.maverick = mergeObsNewestFirst([maverickRegressionDemoPrior()], out.maverick ?? [])
   return out
 }

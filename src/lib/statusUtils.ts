@@ -153,6 +153,6 @@ export function getPastureStatusDotClass(status: PastureStatus): string {
 export function getObservationTimelineDotClass(level: RiskLevel | null): string {
   if (level === "good") return STATUS_TOKENS.good.dot
   if (level === "monitor") return STATUS_TOKENS.monitor.dot
-  if (level === "call-vet") return STATUS_TOKENS.flag.dot
+  if (level === "flag") return STATUS_TOKENS.flag.dot
   return "bg-muted"
 }

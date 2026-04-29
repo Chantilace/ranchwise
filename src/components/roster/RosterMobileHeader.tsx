@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { ROSTER_HEADCOUNT_BADGE_CLASS } from "@/lib/categoryBadgeClass"
 import { cn } from "@/lib/utils"
 
 export type RosterMobileHeaderStatusItem = {
@@ -31,7 +32,7 @@ export function RosterMobileHeader({
       <div className="flex min-w-0 flex-col">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-[22px] font-medium tracking-normal text-foreground sm:text-[24px]">{title}</h1>
-          <span className="rounded-md bg-muted px-2 py-0.5 text-[13px] font-medium text-muted-foreground">
+          <span className={ROSTER_HEADCOUNT_BADGE_CLASS}>
             {count} {entityLabel}
           </span>
         </div>

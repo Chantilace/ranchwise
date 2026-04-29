@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { SearchField } from "@/components/ui/search-field"
 import { EntityFilterPanel, type EntityFilterDimension } from "@/components/workspace/EntityFilterPanel"
 import { RosterLastActivitySortSelect } from "@/components/workspace/RosterLastActivitySortSelect"
+import { MobileRosterFilterSheet } from "@/components/workspace/MobileRosterFilterSheet"
 import { EntityFilterToolbar } from "@/components/workspace/EntityFilterToolbar"
 import { FilteredCountDisplay } from "@/components/workspace/FilteredCountDisplay"
 import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles"
@@ -31,6 +32,7 @@ import { RosterPageAddButton } from "@/components/workspace/RosterPageAddButton"
 import { useRanchData } from "@/contexts/RanchDataContext"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { useCloseOnOutsidePointerDown } from "@/hooks/useCloseOnOutsidePointerDown"
+import { ROSTER_HEADCOUNT_BADGE_CLASS } from "@/lib/categoryBadgeClass"
 import { resetHorseToolbarFilters } from "@/lib/horseFilterReset"
 import {
   filterHorseList,
@@ -114,6 +116,7 @@ export function HorsesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { openLogModal, herdRows, pastureOptions, appendHerdHorse, observationsByHorse } = useRanchData()
   const isMobile = useMediaQuery("(max-width: 767px)")
+  const isMdUp = useMediaQuery("(min-width: 768px)")
   const [search, setSearch] = useState("")
   const [addHorseOpen, setAddHorseOpen] = useState(false)
   const [logSheetHorse, setLogSheetHorse] = useState<HorseTableRow | null>(null)
@@ -178,7 +181,7 @@ export function HorsesPage() {
   }, [searchParams])
 
   useCloseOnOutsidePointerDown({
-    open: horseFilterOpen,
+    open: horseFilterOpen && isMdUp,
     setOpen: setHorseFilterOpen,
     ref: horseFilterRef,
   })
@@ -375,6 +378,14 @@ export function HorsesPage() {
     return sortHorseRowsUnified(filteredRows, sort, observationsByHorse)
   }, [filteredRows, horseSortQueryKey, observationsByHorse])
 
+  const horseFilterPanelInner = (
+    <EntityFilterPanel
+      dimensions={horseFilterDimensions}
+      onMultiChange={onHorseFilterMultiChange}
+      onRadioChange={onHorseFilterRadioChange}
+    />
+  )
+
   const horseFilterControl = (
     <div className="relative shrink-0" ref={horseFilterRef}>
       <EntityFilterToolbar
@@ -384,14 +395,8 @@ export function HorsesPage() {
         onClearAll={clearAllHorseRosterFilters}
         filterButtonAriaLabel="Filter horses roster"
       />
-      {horseFilterOpen ? (
-        <div className={workspaceFilterPanelClass}>
-          <EntityFilterPanel
-            dimensions={horseFilterDimensions}
-            onMultiChange={onHorseFilterMultiChange}
-            onRadioChange={onHorseFilterRadioChange}
-          />
-        </div>
+      {horseFilterOpen && !isMobile ? (
+        <div className={workspaceFilterPanelClass}>{horseFilterPanelInner}</div>
       ) : null}
     </div>
   )
@@ -403,9 +408,7 @@ export function HorsesPage() {
       className="flex min-w-0 flex-wrap items-center gap-x-3.5 gap-y-2 text-[13px] leading-snug"
       aria-label="Herd health summary"
     >
-      <span className="inline-flex shrink-0 items-center rounded-md bg-muted px-2.5 py-1 text-[13px] font-normal tabular-nums text-muted-foreground">
-        {herdRows.length} horses
-      </span>
+      <span className={ROSTER_HEADCOUNT_BADGE_CLASS}>{herdRows.length} horses</span>
       <span className="shrink-0 select-none text-muted-foreground/70" aria-hidden>
         ·
       </span>
@@ -454,7 +457,7 @@ export function HorsesPage() {
         searchAriaLabel="Search everything"
         contentClassName={WORKSPACE_PAGE_ROSTER_FILL_CLASS}
       >
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col md:hidden">
             <RosterMobileHeader
               title="Horses"
@@ -560,14 +563,14 @@ export function HorsesPage() {
                             <p className="text-[14px] font-medium text-foreground">{row.name}</p>
                             {row.healthStatus !== "good" ? (
                               <StatusBadge
-                                status={row.healthStatus === "flag" ? "call-vet" : "monitor"}
+                                status={row.healthStatus === "flag" ? "flag" : "monitor"}
                                 size="sm"
                                 emphasis="secondary"
                               />
                             ) : null}
                             {row.behaviorStatus !== "good" ? (
                               <StatusBadge
-                                status={row.behaviorStatus === "flag" ? "call-vet" : "monitor"}
+                                status={row.behaviorStatus === "flag" ? "flag" : "monitor"}
                                 label="Behavior"
                                 compactLabel
                                 size="sm"
@@ -633,7 +636,7 @@ export function HorsesPage() {
               entityName="horses"
               className="mt-3 shrink-0"
             />
-            <div className="mt-2 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="mt-2 min-w-0 shrink-0 overflow-x-auto">
               <RanchWiseHorseRoster
                 horseRows={sortedHorseRows}
                 sortColumn={horseSort.column}
@@ -679,6 +682,13 @@ export function HorsesPage() {
           </div>
         </div>
       </RanchWorkspaceShell>
+      <MobileRosterFilterSheet
+        open={horseFilterOpen && isMobile}
+        title="Filters"
+        onClose={() => setHorseFilterOpen(false)}
+      >
+        {horseFilterPanelInner}
+      </MobileRosterFilterSheet>
       {!isMobile ? (
         <AddHorseModal
           open={addHorseOpen}

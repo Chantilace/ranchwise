@@ -22,13 +22,13 @@ function observationAiSuggestionText(entry: ObservationEntry): string | null {
 }
 
 function riskLevelToBadgeStatus(level: RiskLevel): StatusBadgeStatus {
-  if (level === "call-vet") return "call-vet"
+  if (level === "flag") return "flag"
   if (level === "monitor") return "monitor"
   return "good"
 }
 
 function riskLevelToPlainLabel(level: RiskLevel): string {
-  if (level === "call-vet") return "Flag"
+  if (level === "flag") return "Flag"
   if (level === "monitor") return "Monitor"
   return "Good"
 }

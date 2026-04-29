@@ -14,7 +14,7 @@ export function getCattleDisplayHealth(
 }
 
 function storedHealthToRiskLevel(health?: Cattle["healthStatus"]): RiskLevel {
-  if (health === "Flag") return "call-vet"
+  if (health === "Flag") return "flag"
   if (health === "Monitor") return "monitor"
   return "good"
 }
@@ -37,7 +37,7 @@ export function cattleEffectiveHealthBucket(
   observationsByCattleId: Record<string, ObservationEntry[]>
 ): "Flag" | "Monitor" | "Good" {
   const r = getCattleEffectiveHealthRisk(cattle, observationsByCattleId)
-  if (r === "call-vet") return "Flag"
+  if (r === "flag") return "Flag"
   if (r === "monitor") return "Monitor"
   return "Good"
 }

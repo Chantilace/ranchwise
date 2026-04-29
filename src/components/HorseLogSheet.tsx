@@ -14,10 +14,12 @@ import { getAiRiskLevelFromObservations, getLatestObservationWithAi } from "@/li
 import { formatObservationDate } from "@/lib/initialObservations"
 import { LOG_OBSERVATION_IDENTITY_ROW, LOG_OBSERVATION_IDENTITY_ROW_STACK } from "@/lib/logObservationLayout"
 import { mockAnalyze } from "@/lib/observationAnalyze"
+import { entriesToRecentSnapshots, type EntityContext } from "@/lib/observationAnalyzeContext"
 import { showObservationDiscardedToast } from "@/lib/observationDiscardToast"
 import { getObservationDomain, observationDomainFromCategory } from "@/lib/observationDomain"
 import { useScrollShadow } from "@/hooks/useScrollShadow"
 import { cn } from "@/lib/utils"
+import { useOverlayRegistration } from "@/contexts/OverlayRegistryContext"
 import type { AIResult, Category, ObservationEntry, RiskLevel } from "@/types/observation"
 
 export type HorseLogSheetProps = {
@@ -36,20 +38,20 @@ function initialsFromName(name: string) {
     .toUpperCase()
 }
 
-function horseRowStatusToBadge(status: HorseTableRow["healthStatus"]): "good" | "monitor" | "call-vet" {
-  if (status === "flag") return "call-vet"
+function horseRowStatusToBadge(status: HorseTableRow["healthStatus"]): "good" | "monitor" | "flag" {
+  if (status === "flag") return "flag"
   if (status === "monitor") return "monitor"
   return "good"
 }
 
 function horseStatusFromAiRiskLevel(level: RiskLevel | null): HorseTableRow["healthStatus"] {
-  if (level === "call-vet") return "flag"
+  if (level === "flag") return "flag"
   if (level === "monitor") return "monitor"
   return "good"
 }
 
 function riskLevelToHorseStatus(r: RiskLevel): HorseTableRow["healthStatus"] {
-  if (r === "call-vet") return "flag"
+  if (r === "flag") return "flag"
   if (r === "monitor") return "monitor"
   return "good"
 }
@@ -125,7 +127,14 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
       const nextAfterAppend = [entry, ...(observationsByHorse[horseKey] ?? [])]
       syncHorseProfileFromObservations(horseKey, nextAfterAppend, updateHerdHorse)
 
-      const merged = await mockAnalyze(category, notes.trim(), horse.name)
+      const priorOnly = observationsByHorse[horseKey] ?? []
+      const analyzeContext: EntityContext = {
+        entityKind: "horse",
+        entityId: String(horse.id),
+        entityName: horse.name,
+        recentObservations: entriesToRecentSnapshots(priorOnly),
+      }
+      const merged = await mockAnalyze(category, notes.trim(), horse.name, analyzeContext)
       setAiResult(merged)
       setConfirmedRiskLevel(merged.riskLevel)
 
@@ -158,7 +167,7 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
       ...aiResult,
       riskLevel: confirmedRiskLevel,
       riskLabel:
-        confirmedRiskLevel === "call-vet"
+        confirmedRiskLevel === "flag"
           ? "Flag"
           : confirmedRiskLevel === "monitor"
             ? "Monitor"
@@ -349,7 +358,7 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
             <p className="mt-0.5 text-[13px] text-foreground">
               <AiAnnotationMark /> AI assessed:{" "}
               <span className="text-foreground">
-                {aiResult.riskLevel === "call-vet"
+                {aiResult.riskLevel === "flag"
                   ? "Flag"
                   : aiResult.riskLevel === "monitor"
                     ? "Monitor"
@@ -371,7 +380,7 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
                   active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
                 },
                 {
-                  id: "call-vet" as const,
+                  id: "flag" as const,
                   label: "Flag",
                   active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
                 },
@@ -469,6 +478,7 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
 }
 
 export function HorseLogSheet({ horse, onClose }: HorseLogSheetProps) {
+  useOverlayRegistration(true)
   const [view, setView] = useState<HorseLogView>("input")
 
   return (

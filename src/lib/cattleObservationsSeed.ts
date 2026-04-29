@@ -24,11 +24,11 @@ function obs(
     aiResult: {
       riskLevel,
       riskLabel:
-        riskLevel === "call-vet"
-          ? "Call vet"
+        riskLevel === "flag"
+          ? "Flag"
           : riskLevel === "monitor"
             ? "Monitor"
-            : "No action needed",
+            : "Good",
       recommendations,
       patternNote: patternNote ?? null,
     },
@@ -53,7 +53,7 @@ export function buildInitialCattleObservationsMap(): Record<string, ObservationE
       seedDaysAgo(4),
       "Health",
       "Routine bunk check — eating with group, manure formed, no lameness at walk-by.",
-      "Maria",
+      "Lou",
       "good",
       ["Continue rotation as posted.", "Note heat load if wind quits."],
     ),
@@ -65,7 +65,7 @@ export function buildInitialCattleObservationsMap(): Record<string, ObservationE
       seedDaysAgo(3),
       "Feeding",
       "Hay ring topped off — clean grass hay, pairs spread evenly, no choke risk at gate.",
-      "Joe",
+      "Wyatt",
       "good",
       ["Same drop tomorrow.", "Photo tag board if count changes."],
     ),
@@ -77,7 +77,7 @@ export function buildInitialCattleObservationsMap(): Record<string, ObservationE
       seedDaysAgo(5),
       "Behavior",
       "Moved group through alley without bunching — lead cows steady, calves stayed paired.",
-      "Jake",
+      "Oliver",
       "good",
       ["Good handling note for crew board.", "Repeat same order next move."],
     ),
@@ -94,8 +94,8 @@ export function buildInitialCattleObservationsMap(): Record<string, ObservationE
       seedDaysAgo(0),
       "Health",
       "Cow slow to rise after loafing — tracking left rear, warm hock, vet text sent with short video.",
-      "Chantale",
-      "call-vet",
+      "Juniper",
+      "flag",
       [
         "Hold from shipping list until vet clears.",
         "Deep straw pen only — no alley pushing.",
@@ -111,8 +111,8 @@ export function buildInitialCattleObservationsMap(): Record<string, ObservationE
       seedDaysAgo(1),
       "Health",
       "Off feed at morning grain — stood with arched back, manure loose but not watery. Temp not taken yet.",
-      "Maria",
-      "call-vet",
+      "Frankie",
+      "flag",
       [
         "Pull to sick pen with shade and fresh water.",
         "Take temp before evening feed; page vet line if >103°F.",

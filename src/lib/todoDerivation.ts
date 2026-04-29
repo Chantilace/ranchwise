@@ -44,7 +44,7 @@ export type ActiveTodo = {
 function observationTriState(entry: ObservationEntry): "good" | "monitor" | "flag" | null {
   const rl = entry.aiResult?.riskLevel
   if (!rl) return null
-  if (rl === "call-vet") return "flag"
+  if (rl === "flag") return "flag"
   if (rl === "monitor") return "monitor"
   return "good"
 }

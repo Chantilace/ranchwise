@@ -71,7 +71,7 @@ const minnieLogs: ActivityLogEntry[] = [
     date: "3/26/26",
     category: "health",
     notes: "Appetite fair, skin dry.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiRecommendation:
       "Mild dehydration or seasonal dry coat may explain reduced appetite and skin condition. No acute distress signals from this note alone.",
     aiNextSteps: [
@@ -86,7 +86,7 @@ const minnieLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Ponies are messing with Minnie. She is lethargic and running away. She is not defending herself.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiRecommendation:
       "Pattern suggests herd stress or bullying with withdrawal. Lethargy warrants ruling out pain or illness alongside social dynamics.",
     aiNextSteps: [
@@ -100,7 +100,7 @@ const minnieLogs: ActivityLogEntry[] = [
     date: "2/16/26",
     category: "health",
     notes: "Routine mouth exam performed. NSF",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiRecommendation:
       "Post-procedure NSF (no significant findings) usually means smooth recovery expected; soft tissue should be monitored short term.",
     aiNextSteps: [
@@ -114,7 +114,7 @@ const minnieLogs: ActivityLogEntry[] = [
     date: "1/8/26",
     category: "health",
     notes: "Switched to senior feed with probiotics; intake normal.",
-    loggedBy: "Maria",
+    loggedBy: "Oliver",
     aiRecommendation:
       "Diet change appears tolerated with normal intake. Probiotics may help transition; watch for loose manure during the first week.",
     aiNextSteps: [
@@ -129,7 +129,7 @@ const minnieLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Left shoulder wound first noticed — small laceration, possibly wire. Cleaned, no stitches needed. Monitoring.",
-    loggedBy: "Jake",
+    loggedBy: "Frankie",
     aiRecommendation: "Early wound management reduces infection risk significantly.",
     aiNextSteps: [
       "Clean twice daily with dilute betadine.",
@@ -143,7 +143,7 @@ const minnieLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Good session in the arena today. Responsive, no resistance. Energy appropriate for the cold weather.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiNextSteps: ["Continue regular arena work.", "Note any behavioral changes after herd movement."],
   },
   {
@@ -152,7 +152,7 @@ const minnieLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Slight dry skin along topline. Feed includes probiotics — may add omega supplement. Eating and moving well.",
-    loggedBy: "Maria",
+    loggedBy: "Oliver",
     aiRecommendation: "Dry skin in winter often responds to omega-3 supplementation.",
     aiNextSteps: ["Trial omega supplement for 30 days.", "Reassess coat and skin condition in February."],
   },
@@ -162,7 +162,7 @@ const minnieLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Minnie pinning ears at feeding — low-level tension with the two younger mares. Not escalating.",
-    loggedBy: "Jake",
+    loggedBy: "Frankie",
     aiRecommendation: "Ear pinning at feeding is common herd hierarchy behavior. Watch for escalation.",
     aiNextSteps: ["Spread feed stations to reduce competition.", "Monitor for any biting or kicking."],
   },
@@ -172,7 +172,7 @@ const minnieLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Farrier visit — hooves in good shape. Some minor flaring on front left, addressed. No thrush.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiNextSteps: ["Next farrier in 8 weeks.", "Keep hooves dry through wet season."],
   },
   {
@@ -181,7 +181,7 @@ const minnieLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Annual vaccines administered by vet. Good overall health. Vet noted she's in excellent condition for 13.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiRecommendation: "Vaccines current. No acute concerns noted at annual exam.",
     aiNextSteps: ["Schedule mouth maintenance for early 2026.", "Continue senior monitoring protocol."],
   },
@@ -194,7 +194,7 @@ const peteLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Pete moving well today — stiffness from earlier in the month fully resolved. Ate full ration. Good energy for his age.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Continue daily morning walk routine.", "Next vet check scheduled for May."],
   },
   {
@@ -203,7 +203,7 @@ const peteLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Moving stiffly this morning, especially in left hind. Warmed up after 10 min walk. Ate full grain ration.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiRecommendation:
       "Stiffness in older horses often improves with consistent light movement. Monitor for worsening or heat in the joint.",
     aiNextSteps: [
@@ -218,7 +218,7 @@ const peteLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Weight looking good after senior feed increase last month. Coat dull but expected for this time of year.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiRecommendation:
       "Weight stabilization is a positive sign. Dull coat in late winter is normal — should improve with spring grass.",
     aiNextSteps: ["Continue current senior feed ration.", "Add omega supplement if coat doesn't improve by May."],
@@ -229,7 +229,7 @@ const peteLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Teeth floated by vet today. Some significant hooks on upper molars — vet said typical for his age. Should be more comfortable eating now.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiRecommendation: "Post-float recovery usually takes 24–48 hours. Soft feed short-term reduces discomfort.",
     aiNextSteps: [
       "Offer soaked hay or mash for 2–3 days post-float.",
@@ -243,7 +243,7 @@ const peteLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Pete staying back from herd at feeding. Not aggressive, just slow to approach. Ate once others cleared out.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiRecommendation:
       "Feeding order changes in older horses can signal discomfort, low herd status, or early pain response. Worth monitoring.",
     aiNextSteps: [
@@ -256,7 +256,7 @@ const peteLogs: ActivityLogEntry[] = [
     date: "2/4/26",
     category: "health",
     notes: "Minor wound above right knee — looks like fence scrape. Cleaned and applied ointment. Superficial.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiRecommendation: "Superficial scrapes in healthy horses heal quickly with basic wound care.",
     aiNextSteps: ["Clean and re-apply ointment daily for 3–5 days.", "Watch for heat, swelling, or discharge."],
   },
@@ -266,7 +266,7 @@ const peteLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Stiffness worse after cold snap last week. Moving better now that temps are up. Eating well.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiRecommendation:
       "Temperature-correlated stiffness is common in horses with arthritis. Management focus should be on consistent warmth and movement.",
     aiNextSteps: [
@@ -280,7 +280,7 @@ const peteLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Senior feed increased to 8lb AM/PM per vet recommendation. Pete underweight going into winter — ribs slightly visible.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiRecommendation:
       "Older horses lose condition faster in winter. Feed increase is appropriate. Recheck weight in 3–4 weeks.",
     aiNextSteps: [
@@ -293,8 +293,8 @@ const peteLogs: ActivityLogEntry[] = [
     date: "12/14/25",
     category: "behavior",
     notes:
-      "Good spirits today — followed Maria around the pen. Engaged and curious, no signs of depression.",
-    loggedBy: "Maria",
+      "Good spirits today — followed Lou around the pen. Engaged and curious, no signs of depression.",
+    loggedBy: "Lou",
     aiRecommendation:
       "Positive engagement and curiosity in older horses is a good quality of life indicator.",
     aiNextSteps: ["Continue daily interaction routine.", "Note any withdrawal or change in sociability."],
@@ -305,7 +305,7 @@ const peteLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Annual vet visit. Vaccinations current, teeth flagged for float in 3 months, joints show mild arthritis consistent with age. Overall healthy for 23.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiRecommendation:
       "Vet assessment confirms age-appropriate management plan. Dental and joint monitoring are the two active items.",
     aiNextSteps: ["Schedule teeth float for mid-March.", "Discuss joint supplement options with vet at next visit."],
@@ -316,7 +316,7 @@ const peteLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Farrier visit. Hooves in good shape considering age. No cracks or thrush. Trimmed, no shoes needed.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiNextSteps: ["Schedule next farrier trim in 8 weeks.", "Check hooves weekly for any new cracks."],
   },
 ]
@@ -327,7 +327,7 @@ const ciscoLogs: ActivityLogEntry[] = [
     date: "4/5/26",
     category: "health",
     notes: "Routine check — good weight, coat coming in nicely for spring. Moving well. No concerns.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Continue current feed and turnout schedule."],
   },
   {
@@ -336,7 +336,7 @@ const ciscoLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Cisco unsettled for two days when new horses arrived in adjacent pasture. Settled back to normal by day 3.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiRecommendation:
       "Temporary anxiety during herd changes is normal. No intervention needed if horse returns to baseline quickly.",
     aiNextSteps: ["Monitor for 5 days after any herd changes.", "Note if anxiety recurs or escalates."],
@@ -347,7 +347,7 @@ const ciscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Minor scrape on right shoulder — cleaned and treated. Likely from fence or gate. Healed within a week.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiNextSteps: ["Daily ointment for 5 days.", "Watch for infection signs."],
   },
   {
@@ -356,7 +356,7 @@ const ciscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Farrier visit. Good hoof quality. Trimmed all four. Vet noted healthy sole depth for a working horse.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Next farrier in 8 weeks.", "Continue regular hoof picks after work."],
   },
   {
@@ -365,7 +365,7 @@ const ciscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Teeth floated. Some minor points but nothing severe. Eating normally, no quidding observed.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiNextSteps: ["Schedule next float in 12 months.", "Monitor chewing and grain intake."],
   },
   {
@@ -374,7 +374,7 @@ const ciscoLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Calm and reliable during cattle work today. Good energy, no resistance. One of the better days.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiNextSteps: ["Note any change in energy or willingness after extended work periods."],
   },
   {
@@ -383,7 +383,7 @@ const ciscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Annual vet exam. Vaccinations current. Heart, lungs clear. Vet says Cisco is in excellent working condition.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiRecommendation: "Clean bill of health. Continue current management.",
     aiNextSteps: ["Dental float due in January.", "Schedule farrier for February."],
   },
@@ -393,7 +393,7 @@ const ciscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Mild cough noted over two days — resolved on its own. Likely dust from dry conditions. No fever.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiRecommendation:
       "Short-duration cough without fever is usually environmental. Monitor closely for 48 hours.",
     aiNextSteps: [
@@ -411,7 +411,7 @@ const dustyLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Dusty much calmer around the tractor today — 4 weeks of gradual exposure working. No spooking.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiRecommendation:
       "Desensitization progress is holding. Continue gradual exposure to maintain comfort.",
     aiNextSteps: ["Introduce other machinery sounds gradually.", "Log any regression."],
@@ -421,7 +421,7 @@ const dustyLogs: ActivityLogEntry[] = [
     date: "3/14/26",
     category: "behavior",
     notes: "Spooky near tractor again but recovering faster — 5 seconds vs last month's 30+. Progress.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiNextSteps: ["Continue daily short exposure sessions.", "End each session on a calm moment."],
   },
   {
@@ -430,7 +430,7 @@ const dustyLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Good weight, clean eyes, responsive. Farrier noted hooves are excellent quality for a working horse.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Next farrier in 8 weeks.", "Continue current feed regimen."],
   },
   {
@@ -439,7 +439,7 @@ const dustyLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Significant spook response to tractor starting nearby. Bolted 20 feet, settled after 2 minutes. Starting desensitization protocol.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiRecommendation:
       "Machinery fear in working horses can be addressed with systematic desensitization. Consistent daily work usually shows results in 3–6 weeks.",
     aiNextSteps: [
@@ -454,7 +454,7 @@ const dustyLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Routine occlusal work by vet. Minimal points — good mouth health for his age. Back on full grain same day.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiNextSteps: ["Recheck mouth in 12 months."],
   },
   {
@@ -463,7 +463,7 @@ const dustyLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Annual vaccines done. Vet happy with overall condition. Weight 1,150 lbs, appropriate for frame.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiNextSteps: ["Mouth maintenance due January.", "Continue current management protocol."],
   },
   {
@@ -472,7 +472,7 @@ const dustyLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Mild skin irritation along girth area — saddle fit checked, no pressure sores. Treated with antifungal wash.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiRecommendation:
       "Girth-area irritation often responds quickly to antifungal treatment and improved airflow.",
     aiNextSteps: [
@@ -486,7 +486,7 @@ const dustyLogs: ActivityLogEntry[] = [
     date: "10/12/25",
     category: "health",
     notes: "Farrier visit. Clean feet, good angles. Dusty was cooperative throughout.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiNextSteps: ["Next farrier in 8 weeks."],
   },
 ]
@@ -498,7 +498,7 @@ const amigoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Good check this morning — bright eyes, full water bucket drained overnight. Energetic at turnout.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Continue monitoring water intake during warmer weather."],
   },
   {
@@ -507,7 +507,7 @@ const amigoLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "High energy day — bucking at turnout, running fence line. No signs of distress, just fresh after two days off.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiRecommendation:
       "Exuberant behavior after rest days is normal for energetic horses. Not a welfare concern.",
     aiNextSteps: ["Longe before riding after rest days.", "Note if energy level is consistently elevated."],
@@ -518,7 +518,7 @@ const amigoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Colic scare this morning — pawing, looking at flank. Gut sounds present both sides. Hand-walked 30 min, passed manure, resolved.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiRecommendation:
       "Gas colic that resolves with walking and normal gut sounds is low risk. Monitor closely for 24 hours.",
     aiNextSteps: [
@@ -534,7 +534,7 @@ const amigoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Farrier visit. Front feet showing some chipping — likely from rocky terrain in west pasture. Trimmed and balanced.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiNextSteps: [
       "Consider hoof hardener if chipping continues.",
       "Next farrier in 7 weeks given current wear rate.",
@@ -546,7 +546,7 @@ const amigoLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Amigo challenging Bosco at the water trough — ears back, moving him off. Watched for 10 min, no escalation.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiRecommendation:
       "Resource guarding at water is common. Adding a second trough reduces competition pressure.",
     aiNextSteps: ["Add second water source in the pasture.", "Monitor for escalation over next week."],
@@ -556,7 +556,7 @@ const amigoLogs: ActivityLogEntry[] = [
     date: "1/8/26",
     category: "health",
     notes: "Dental float done. Good teeth for age — minor hooks only. Eating well.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiNextSteps: ["Next float in 12 months."],
   },
   {
@@ -565,7 +565,7 @@ const amigoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Annual vet exam. All vaccines current. Healthy weight at 1,100 lbs. Vet noted very clean lungs.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiNextSteps: ["Dental float due January.", "Farrier due February."],
   },
   {
@@ -574,7 +574,7 @@ const amigoLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Settled well after moving pastures — adjusted to new herd dynamic faster than expected. Eating normally by day 2.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Monitor for a full week after any pasture changes."],
   },
 ]
@@ -586,7 +586,7 @@ const boscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Looking much better — weight back to normal after winter feed increase. Coat starting to shed nicely.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Taper back to standard feed ration by May.", "Continue monitoring body condition weekly."],
   },
   {
@@ -595,7 +595,7 @@ const boscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Fence post scrape on left hip — superficial but about 4 inches long. Cleaned and bandaged. No lameness.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiRecommendation:
       "Long superficial lacerations heal well with consistent wound care. Watch for proud flesh.",
     aiNextSteps: [
@@ -610,7 +610,7 @@ const boscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Weight still low — adding 2 extra pounds of hay per day. Ribs slightly visible. No other concerns.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiRecommendation:
       "Winter weight loss in working horses is common. Increased forage is the right approach.",
     aiNextSteps: ["Recheck body condition in 3 weeks.", "Consider senior feed if weight doesn't improve."],
@@ -621,7 +621,7 @@ const boscoLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Calm and consistent at work today. Bosco is the quietest horse in the pen — easy to handle.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiNextSteps: ["No concerns. Continue current routine."],
   },
   {
@@ -630,7 +630,7 @@ const boscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Farrier visit. Good hooves, slightly dry from winter conditions. Applied hoof conditioner.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiNextSteps: ["Apply hoof conditioner weekly through winter.", "Next farrier in 8 weeks."],
   },
   {
@@ -639,7 +639,7 @@ const boscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Weight trending down since November — increasing hay ration. Not dropping fast but worth watching.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiRecommendation:
       "Gradual winter weight loss warrants early intervention with increased forage before muscle loss occurs.",
     aiNextSteps: ["Increase hay by 2 lbs per day.", "Body condition score weekly through January."],
@@ -650,7 +650,7 @@ const boscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Annual vaccines administered. Vet noted good muscle tone and clean respiratory. Weight at lower end of normal.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiNextSteps: ["Monitor winter weight. Increase feed if BCS drops below 4.", "Dental float due February."],
   },
   {
@@ -659,7 +659,7 @@ const boscoLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Teeth floated. Good dental health — vet said one of the easier floats of the day. Back on grain same evening.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiNextSteps: ["Next float in 12 months."],
   },
 ]
@@ -670,7 +670,7 @@ const redLogs: ActivityLogEntry[] = [
     date: "4/4/26",
     category: "health",
     notes: "Spring check — good weight, bright eyes, shedding well. No issues.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Continue current management."],
   },
   {
@@ -678,7 +678,7 @@ const redLogs: ActivityLogEntry[] = [
     date: "3/8/26",
     category: "behavior",
     notes: "Red pinning ears at new horse in adjacent pasture. No fence contact. Monitoring.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiNextSteps: [
       "Give horses 2 weeks to adjust to visual proximity.",
       "Log if escalates to fence-charging.",
@@ -689,7 +689,7 @@ const redLogs: ActivityLogEntry[] = [
     date: "2/5/26",
     category: "health",
     notes: "Farrier visit. Hooves in excellent shape. Red was cooperative throughout.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiNextSteps: ["Next farrier in 8 weeks."],
   },
   {
@@ -697,7 +697,7 @@ const redLogs: ActivityLogEntry[] = [
     date: "12/10/25",
     category: "health",
     notes: "Annual vet exam and vaccines. Clean bill of health. Weight appropriate at 1,080 lbs.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiNextSteps: ["Dental float due February.", "Farrier due early March."],
   },
 ]
@@ -708,7 +708,7 @@ const hollywoodLogs: ActivityLogEntry[] = [
     date: "4/1/26",
     category: "behavior",
     notes: "Hollywood showing off at turnout — high-stepping, tail flagged. Good energy, no anxiety.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Normal expressive behavior. No action needed."],
   },
   {
@@ -717,7 +717,7 @@ const hollywoodLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Minor eye discharge noted — left eye slightly runny. No swelling or cloudiness. Monitoring.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiRecommendation:
       "Mild eye discharge without swelling or cloudiness is often environmental (dust, pollen).",
     aiNextSteps: [
@@ -731,7 +731,7 @@ const hollywoodLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Farrier and dental float same day. Good hooves, minor dental points addressed. Hollywood handled it well.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiNextSteps: ["Next farrier in 8 weeks.", "Next float in 12 months."],
   },
 ]
@@ -742,7 +742,7 @@ const blueberryLogs: ActivityLogEntry[] = [
     date: "3/28/26",
     category: "health",
     notes: "Routine check — good weight, clean feet, alert. Spring shedding underway.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Continue current management."],
   },
   {
@@ -750,7 +750,7 @@ const blueberryLogs: ActivityLogEntry[] = [
     date: "2/14/26",
     category: "behavior",
     notes: "Blueberry bonded with Jazzy — always grazing nearby. Positive herd integration.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiNextSteps: ["No action needed. Healthy social bond."],
   },
   {
@@ -758,7 +758,7 @@ const blueberryLogs: ActivityLogEntry[] = [
     date: "1/5/26",
     category: "health",
     notes: "Farrier visit. Good hooves for a younger horse. No issues.",
-    loggedBy: "Joe",
+    loggedBy: "Wyatt",
     aiNextSteps: ["Next farrier in 8 weeks."],
   },
 ]
@@ -769,7 +769,7 @@ const coyoteLogs: ActivityLogEntry[] = [
     date: "4/2/26",
     category: "behavior",
     notes: "Coyote leading well on both sides today. Consistent improvement over the past month.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiNextSteps: ["Introduce trailer loading next month.", "Continue daily handling sessions."],
   },
   {
@@ -777,7 +777,7 @@ const coyoteLogs: ActivityLogEntry[] = [
     date: "3/5/26",
     category: "behavior",
     notes: "Good groundwork session — yielding hindquarters, backing on cue. Curious and engaged.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiNextSteps: ["Introduce tying for short periods.", "Add saddle pad to desensitization routine."],
   },
   {
@@ -785,7 +785,7 @@ const coyoteLogs: ActivityLogEntry[] = [
     date: "2/8/26",
     category: "health",
     notes: "Vet visit — vaccines and first dental check. Vet says teeth look great. Healthy young horse.",
-    loggedBy: "Chantale",
+    loggedBy: "Juniper",
     aiNextSteps: ["Next vaccines in 12 months.", "First float likely needed at age 5."],
   },
 ]
@@ -797,7 +797,7 @@ const copperetteLogs: ActivityLogEntry[] = [
     category: "health",
     notes:
       "Growing well — gaining height and weight on schedule. Good coat, bright eyes. Easy to handle.",
-    loggedBy: "Maria",
+    loggedBy: "Lou",
     aiNextSteps: ["Continue foal/juvenile feed ration.", "Schedule first vet mouth review at age 3."],
   },
   {
@@ -806,7 +806,7 @@ const copperetteLogs: ActivityLogEntry[] = [
     category: "behavior",
     notes:
       "Copperette curious and friendly with handlers. Following lead rope well for her age.",
-    loggedBy: "Jake",
+    loggedBy: "Wes",
     aiNextSteps: ["Continue daily handling and halter work.", "Introduce hoof picking routine."],
   },
 ]
@@ -860,7 +860,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "3/1/26",
         category: "health",
         notes: "Cleaned bucket, full water.",
-        loggedBy: "Maria",
+        loggedBy: "Oliver",
         aiRecommendation:
           "Hydration access looks good. Routine bucket hygiene reduces algae and encourages drinking.",
         aiNextSteps: [
@@ -874,7 +874,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "behavior",
         notes:
           "Blondie spooking at the tarp in the arena corner. Worked through it slowly — touching by end of session.",
-        loggedBy: "Jake",
+        loggedBy: "Frankie",
         aiRecommendation: "Systematic desensitization to novel objects is core training work at this age.",
         aiNextSteps: ["Leave tarp in corner for a week.", "Reward any voluntary approach."],
       },
@@ -884,7 +884,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "health",
         notes:
           "First farrier visit. Blondie nervous but no pulling. Vet tech helped hold. All four feet done.",
-        loggedBy: "Joe",
+        loggedBy: "Wyatt",
         aiNextSteps: ["Desensitize to hoof handling daily.", "Next farrier in 8 weeks."],
       },
     ],
@@ -929,14 +929,14 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "3/20/26",
         category: "health",
         notes: "Cough noted at turnout — vet aware.",
-        loggedBy: "Jake",
+        loggedBy: "Oliver",
       },
       {
         id: "w2",
         date: "2/22/26",
         category: "behavior",
         notes: "Wilbur accepting the saddle pad without moving off. Big progress from last month.",
-        loggedBy: "Jake",
+        loggedBy: "Frankie",
         aiNextSteps: ["Introduce saddle weight next session.", "Keep sessions under 20 minutes."],
       },
       {
@@ -945,7 +945,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "behavior",
         notes:
           "First session with halter pressure — resisting but not panicking. Expected for this stage.",
-        loggedBy: "Jake",
+        loggedBy: "Wes",
         aiNextSteps: ["End each session on a moment of softness.", "Keep pressure-release timing consistent."],
       },
     ],
@@ -1060,7 +1060,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/20/26",
         category: "health",
         notes: "Right hind fully sound — no stiffness observed during morning work. Moving freely and willingly.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiNextSteps: ["Continue current workload.", "Note if stiffness returns after heavy sessions."],
       },
       {
@@ -1068,7 +1068,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/10/26",
         category: "health",
         notes: "Slight stiffness in right hind leg after morning work. Not lame but moving cautiously.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiRecommendation: "Early signs of muscle fatigue or mild strain. Rest and monitor.",
         aiNextSteps: [
           "Reduce workload for 3-5 days.",
@@ -1081,7 +1081,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/14/26",
         category: "health",
         notes: "Stiffness still present, slightly improved. Eating well.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiRecommendation: "Improvement noted but not resolved. Continue restricted activity.",
         aiNextSteps: [
           "Continue reduced workload.",
@@ -1094,7 +1094,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "1/18/26",
         category: "health",
         notes: "Farrier visit. Hooves clean and well-shaped. Jazzy was fidgety but manageable.",
-        loggedBy: "Joe",
+        loggedBy: "Wyatt",
         aiNextSteps: ["Practice standing tied before next farrier visit.", "Next farrier in 8 weeks."],
       },
       {
@@ -1103,7 +1103,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "health",
         notes:
           "Annual vet exam. Vaccines current. Vet noted Jazzy is in excellent condition — strong and well-muscled.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiNextSteps: ["Dental float due March.", "Continue current training and feed schedule."],
       },
     ],
@@ -1146,7 +1146,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/1/26",
         category: "health",
         notes: "Xinder is limping on front left. Hoof feels warm to the touch. Won't bear weight fully.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiRecommendation: "Symptoms consistent with hoof abscess. Requires immediate veterinary attention.",
         aiNextSteps: [
           "Contact veterinarian today — do not delay.",
@@ -1159,7 +1159,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/5/26",
         category: "health",
         notes: "Vet confirmed abscess. Draining and bandaged. Still uncomfortable but bearing some weight.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiRecommendation: "Abscess confirmed and draining — recovery on track. Strict stall rest required.",
         aiNextSteps: [
           "Keep bandage clean and dry — change daily.",
@@ -1172,7 +1172,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/12/26",
         category: "health",
         notes: "Moving better. Still some sensitivity but bearing full weight. Bandage removed by vet.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiRecommendation: "Recovery progressing well. Gradual return to light activity appropriate.",
         aiNextSteps: [
           "Begin short hand-walking sessions — 10 minutes twice daily.",
@@ -1186,7 +1186,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "behavior",
         notes:
           "Good session today — responsive and willing. No resistance noted. Best he's worked in weeks.",
-        loggedBy: "Jake",
+        loggedBy: "Wes",
         aiNextSteps: ["Build on positive sessions. Log what conditions led to success."],
       },
     ],
@@ -1246,7 +1246,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/20/26",
         category: "health",
         notes: "Weight improving after feed increase — ribs less visible, coat looking better. On track.",
-        loggedBy: "Maria",
+        loggedBy: "Oliver",
         aiNextSteps: [
           "Continue increased hay ration through end of month.",
           "Recheck body condition in two weeks.",
@@ -1257,7 +1257,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/8/26",
         category: "health",
         notes: "Weight looks slightly low for this time of year. Ribs more visible than usual.",
-        loggedBy: "Joe",
+        loggedBy: "Wyatt",
         aiRecommendation: "Possible weight loss — increase feed and monitor body condition score.",
         aiNextSteps: [
           "Add senior feed supplement to daily ration.",
@@ -1270,7 +1270,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "3/22/26",
         category: "health",
         notes: "Farrier visit today. Hooves clean and well-shaped. No issues. Ranger stood well for the trim.",
-        loggedBy: "Joe",
+        loggedBy: "Wyatt",
         aiNextSteps: ["Next farrier in 8 weeks."],
       },
       {
@@ -1279,7 +1279,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "health",
         notes:
           "Slight lameness in left front after morning work. Checked hoof — small stone lodged. Removed, sound by afternoon.",
-        loggedBy: "Maria",
+        loggedBy: "Lou",
         aiRecommendation: "Stone bruises resolve quickly after removal. Monitor for residual sensitivity.",
         aiNextSteps: [
           "Check all hooves before and after work this week.",
@@ -1293,7 +1293,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "behavior",
         notes:
           "Ranger leading the herd to the water trough at dusk — good energy, dominant but not aggressive.",
-        loggedBy: "Jake",
+        loggedBy: "Frankie",
         aiNextSteps: ["No action needed. Positive herd leadership noted."],
       },
       {
@@ -1302,7 +1302,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "health",
         notes:
           "Teeth floated. Minor points corrected. Eating well before and after — no significant discomfort noted.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiNextSteps: ["Next float in 12 months.", "Continue monitoring grain intake."],
       },
       {
@@ -1311,7 +1311,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "health",
         notes:
           "Weight and coat in good shape going into winter. Senior feed not needed — holding condition well on current ration.",
-        loggedBy: "Maria",
+        loggedBy: "Lou",
         aiNextSteps: ["Reassess condition score in March.", "Increase hay if temperatures drop below 20°F."],
       },
       {
@@ -1320,7 +1320,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "health",
         notes:
           "Annual vet visit. Vaccinations current. Clean exam — vet said Ranger is one of the healthiest 10-year-olds she's seen.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiRecommendation:
           "Excellent health baseline. Maintain current management and annual exam schedule.",
         aiNextSteps: ["Dental float due January.", "Farrier due in March."],
@@ -1331,7 +1331,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         category: "health",
         notes:
           "Minor cut above right eye — likely from brush or branch. Cleaned and applied ointment. Superficial.",
-        loggedBy: "Joe",
+        loggedBy: "Wyatt",
         aiNextSteps: ["Clean daily for 3 days.", "Watch for swelling near eye or discharge."],
       },
     ],
@@ -1374,7 +1374,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/15/26",
         category: "behavior",
         notes: "Maverick has been pinning ears and nipping at neighboring horses during feeding. Unusual for him.",
-        loggedBy: "Maria",
+        loggedBy: "Lou",
         aiRecommendation: "Behavioral change during feeding may indicate pain, stress, or social tension.",
         aiNextSteps: [
           "Separate feeding stations to reduce competition pressure.",
@@ -1405,7 +1405,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/2/26",
         category: "health",
         notes: "Wound on left shoulder — looks like a wire cut. About 3 inches, not deep but bleeding.",
-        loggedBy: "Joe",
+        loggedBy: "Wyatt",
         aiRecommendation: "Laceration requires prompt cleaning and assessment for sutures.",
         aiNextSteps: [
           "Clean wound with diluted betadine — do not use hydrogen peroxide.",
@@ -1418,7 +1418,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/7/26",
         category: "health",
         notes: "Wound healing well. No sutures needed per vet. Slight scabbing, no sign of infection.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiRecommendation: "Healing progressing normally. Continue monitoring for infection signs.",
         aiNextSteps: [
           "Apply wound ointment once daily.",
@@ -1481,7 +1481,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/11/26",
         category: "behavior",
         notes: "Storm is spooking more than usual during ground work. Very reactive to noise.",
-        loggedBy: "Maria",
+        loggedBy: "Lou",
         aiRecommendation: "Heightened reactivity may indicate anxiety, discomfort, or a training gap.",
         aiNextSteps: [
           "Reduce session intensity and increase desensitization work.",
@@ -1560,7 +1560,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/13/26",
         category: "health",
         notes: "Runny nose noted — clear discharge, no fever. Eating normally.",
-        loggedBy: "Jake",
+        loggedBy: "Wes",
         aiRecommendation: "Mild upper respiratory signs. Monitor closely — unlikely to be serious if no fever.",
         aiNextSteps: [
           "Take temperature twice daily for the next 3 days.",
@@ -1607,7 +1607,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/5/26",
         category: "health",
         notes: "Ember looks thin. Ribs visible, topline dropped. Not eating full ration.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiRecommendation: "Significant weight loss indicators. Requires immediate veterinary assessment.",
         aiNextSteps: [
           "Contact vet today — possible underlying illness or dental issue.",
@@ -1620,7 +1620,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/10/26",
         category: "health",
         notes: "Vet visit completed. Dental hooks found and floated. Starting appetite stimulant.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiRecommendation: "Root cause identified — dental pain was limiting feed intake. Recovery expected.",
         aiNextSteps: [
           "Feed soaked hay and senior feed for 2-3 weeks post-float.",
@@ -1715,7 +1715,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/9/26",
         category: "health",
         notes: "Bonnie showing mild signs of discomfort — pawing ground, looking at flank. Passed manure normally.",
-        loggedBy: "Chantale",
+        loggedBy: "Juniper",
         aiRecommendation: "Mild colic signs noted. Monitor closely — most mild colic resolves with movement.",
         aiNextSteps: [
           "Hand walk for 20 minutes and monitor for improvement.",
@@ -1794,7 +1794,7 @@ export const SAMPLE_HORSE_ROWS: HorseTableRow[] = [
         date: "4/16/26",
         category: "health",
         notes: "Fern has a small swelling on left knee. No heat, not lame, still active.",
-        loggedBy: "Jake",
+        loggedBy: "Wes",
         aiRecommendation: "Swelling without heat or lameness is low urgency but worth monitoring in a young horse.",
         aiNextSteps: [
           "Measure and photograph swelling — document for comparison.",
@@ -1972,15 +1972,19 @@ export function RanchWiseHorseRoster({
   const { openLogModal, observationsByHorse } = useRanchData()
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-h-0">
+    <div className="flex min-h-0 min-w-0 shrink-0 flex-col md:min-h-0">
       {filterSlot != null ? (
         <div className="flex w-full shrink-0 flex-wrap items-center gap-4 pt-0 pb-2">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-4">{filterSlot}</div>
         </div>
       ) : null}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col pb-4 md:pb-0">
-        <Table className="border-separate border-spacing-0" containerClassName="min-w-0">
+      <div className="flex min-h-0 min-w-0 shrink-0 flex-col pb-4 md:pb-0">
+        <Table
+          tableLayout="intrinsic"
+          className="min-w-[1180px] border-separate border-spacing-0"
+          containerClassName="min-w-0"
+        >
             <TableHeader>
               <TableRow className="border-neutral-200 hover:bg-transparent">
                 <HorseRosterSortableColumnHeader

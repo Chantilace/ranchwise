@@ -5,6 +5,11 @@ import {
   formatComplicationsSummary,
   formatDeliveryTypeLabel,
 } from "@/lib/calvingStatus"
+import {
+  buildCowPriorHistoryString,
+  generateDystociaObservationAiResult,
+  matchesCattleDystociaObservationScenario,
+} from "@/lib/cattleDystociaObservationAi"
 import { formatCattleTagDisplay } from "@/lib/cattleUi"
 import type { CalvingRecord, Cattle } from "@/types/cattle"
 import type { AIResult, RiskLevel } from "@/types/observation"
@@ -14,12 +19,12 @@ const CALVING_SYSTEM_PROMPT =
 
 /** Pasture-check style labels used in the calving "Confirm status" UI. */
 export function calvingOutcomeConfirmationLabel(level: RiskLevel): string {
-  if (level === "call-vet") return "Action needed"
-  if (level === "monitor") return "Concern"
-  return "Stable"
+  if (level === "flag") return "Flag"
+  if (level === "monitor") return "Monitor"
+  return "Good"
 }
 
-const RISK_ORDER: Record<RiskLevel, number> = { "call-vet": 2, monitor: 1, good: 0 }
+const RISK_ORDER: Record<RiskLevel, number> = { flag: 2, monitor: 1, good: 0 }
 
 function maxRisk(a: RiskLevel, b: RiskLevel): RiskLevel {
   return RISK_ORDER[a] >= RISK_ORDER[b] ? a : b
@@ -28,10 +33,10 @@ function maxRisk(a: RiskLevel, b: RiskLevel): RiskLevel {
 function riskFromCalving(record: CalvingRecord): { riskLevel: RiskLevel; riskLabel: string } {
   const comps = record.complications ?? []
   if (comps.includes("hemorrhage") || comps.includes("prolapse")) {
-    return { riskLevel: "call-vet", riskLabel: calvingOutcomeConfirmationLabel("call-vet") }
+    return { riskLevel: "flag", riskLabel: calvingOutcomeConfirmationLabel("flag") }
   }
   if (record.calfStatus === "stillborn") {
-    return { riskLevel: "call-vet", riskLabel: calvingOutcomeConfirmationLabel("call-vet") }
+    return { riskLevel: "flag", riskLabel: calvingOutcomeConfirmationLabel("flag") }
   }
   if (comps.some((c) => c !== "none")) {
     return { riskLevel: "monitor", riskLabel: calvingOutcomeConfirmationLabel("monitor") }
@@ -75,7 +80,7 @@ function keywordCalvingRisk(text: string): RiskLevel | null {
     "delivered without",
   ]
   for (const p of actionPhrases) {
-    if (t.includes(p)) return "call-vet"
+    if (t.includes(p)) return "flag"
   }
   for (const p of concernPhrases) {
     if (t.includes(p)) return "monitor"
@@ -86,7 +91,7 @@ function keywordCalvingRisk(text: string): RiskLevel | null {
   return null
 }
 
-/** Combines structured calving fields + free-text cues for canned AI status (Stable / Concern / Action needed). */
+/** Combines structured calving fields + free-text cues for canned AI status (Good / Monitor / Flag). */
 export function suggestCalvingObservationRisk(record: CalvingRecord): RiskLevel {
   const structural = riskFromCalving(record).riskLevel
   const realComps = (record.complications ?? []).filter((c) => c !== "none")
@@ -139,23 +144,29 @@ export async function analyzeCalvingRecord(cattle: Cattle, pastureName: string, 
     cattleRecordSummary: historyBits,
   }
 
-  // NOTE: In a real integration, send `userPayload` to Anthropic here.
   void userPayload
+
+  const notesBlob = [record.notes ?? "", buildCalvingObservationNotes(record)].join(" ")
+
+  if (matchesCattleDystociaObservationScenario(notesBlob)) {
+    const prior = buildCowPriorHistoryString(cattle).trim()
+    return generateDystociaObservationAiResult(formatCattleTagDisplay(cattle.tagNumber), prior)
+  }
 
   const riskLevel = suggestCalvingObservationRisk(record)
   const riskLabel = calvingOutcomeConfirmationLabel(riskLevel)
 
-  if (riskLevel === "call-vet") {
+  if (riskLevel === "flag") {
     return {
       riskLevel,
       riskLabel,
       recommendations: [
-        "Call your veterinarian now with the calving time, any blood loss estimates, and whether the placenta has passed.",
-        "Keep the cow quiet with water nearby; do not pull or manipulate retained tissue unless your vet instructs.",
-        "Prepare transport / vet access details and note any changes every 15–30 minutes until help arrives.",
+        "If you're concerned about blood loss, placenta timing, or how hard she's pushing, a vet on the phone with times and vitals usually earns its keep fast.",
+        "Keep the cow quiet with water nearby; hold off on pulling or manipulating tissue until you have a plan you're confident in.",
+        "Note any changes every 15–30 minutes so the trend's documented if someone else has to take over.",
       ],
       patternNote:
-        "High-risk calving complications were recorded — prioritize rapid vet involvement and close monitoring for the next 24 hours.",
+        "High-risk complications were flagged on this record — worth a close read on dam and calf for the next day, and clear notes if anything shifts.",
     }
   }
 
@@ -166,10 +177,10 @@ export async function analyzeCalvingRecord(cattle: Cattle, pastureName: string, 
       recommendations: [
         "Monitor dam appetite, attitude, and udder fill every 4–6 hours for 48 hours; log anything abnormal.",
         "Watch for fever, foul discharge, reduced milk letdown, or calf nursing issues.",
-        "Recheck calf vigor, suckle strength, and manure; intervene early if calf looks weak or cold.",
+        "Recheck calf vigor, suckle strength, and manure; if something drifts, that's when a vet call is the straightforward next step.",
       ],
       patternNote:
-        "This calving outcome warrants closer follow-up — complications or calf status suggests extra observation for the next day or two.",
+        "This calving outcome warrants a closer watch for a day or two — not necessarily alarm bells, but enough signal to keep eyes on dam and calf.",
     }
   }
 
@@ -178,8 +189,8 @@ export async function analyzeCalvingRecord(cattle: Cattle, pastureName: string, 
     riskLabel,
     recommendations: [
       "Confirm calf is nursing well within the first few hours; supplement if needed per your vet protocol.",
-      "Verify placenta passage within normal window for your operation; note time if uncertain.",
-      "Schedule a routine post-calving check (temperature + udder + feet) in the next 24–48 hours.",
+      "Verify placenta passage within the window you run on; note time if uncertain.",
+      "Routine post-calving check (temperature + udder + feet) in the next 24–48 hours fits most operations.",
     ],
     patternNote: null,
   }

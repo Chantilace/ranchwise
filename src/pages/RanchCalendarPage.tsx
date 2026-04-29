@@ -45,7 +45,7 @@ export function RanchCalendarPage() {
 
   return (
     <RanchWorkspaceShell
-      contentClassName="min-w-0 bg-background pb-10"
+      contentClassName="min-w-0 bg-[#FDFDFB] pb-10"
       searchValue={search}
       onSearchChange={setSearch}
       searchPlaceholder="Search"

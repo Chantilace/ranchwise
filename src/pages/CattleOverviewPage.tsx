@@ -21,11 +21,13 @@ import { RosterLastActivitySortSelect } from "@/components/workspace/RosterLastA
 import { EntityFilterToolbar } from "@/components/workspace/EntityFilterToolbar"
 import { FilteredCountDisplay } from "@/components/workspace/FilteredCountDisplay"
 import type { RanchFilterOption } from "@/components/workspace/RanchFilterCategoryField"
+import { MobileRosterFilterSheet } from "@/components/workspace/MobileRosterFilterSheet"
 import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles"
 import { RosterPageAddButton } from "@/components/workspace/RosterPageAddButton"
 import { AddAnimalModal } from "@/components/AddAnimalModal"
 import { Button } from "@/components/ui/button"
 import { useRanchData } from "@/contexts/RanchDataContext"
+import { ROSTER_HEADCOUNT_BADGE_CLASS } from "@/lib/categoryBadgeClass"
 import { parseCattleCareDueParam, type CattleCareDueKind } from "@/lib/cattleCareDue"
 import {
   applyCattleHerdRosterSortToSearchParams,
@@ -156,7 +158,7 @@ function CattleMobileRosterRow({
   tagLabel: string
   contextLine: string
   /** When set, shows a compact health status chip (e.g. Flagged section). */
-  healthBadge: "call-vet" | "monitor" | null
+  healthBadge: "flag" | "monitor" | null
   /** Single action: open observation log for this animal (no profile navigation). */
   onLogObservation: () => void
 }) {
@@ -328,7 +330,7 @@ export function CattleOverviewPage() {
   }, [slideCattleId])
 
   useCloseOnOutsidePointerDown({
-    open: herdFilterOpen,
+    open: herdFilterOpen && isMdUp,
     setOpen: setHerdFilterOpen,
     ref: herdFilterRef,
   })
@@ -499,6 +501,26 @@ export function CattleOverviewPage() {
     herdCalvingFilters,
   ])
 
+  const herdFilterPanelInner = (
+    <CattleFilterPanel
+      showSearch={false}
+      searchValue={herdSearch}
+      onSearchChange={setHerdSearch}
+      calvingFilters={herdCalvingFilters}
+      setCalvingFilters={setHerdCalvingFilters}
+      healthFilters={herdHealthFilters}
+      setHealthFilters={setHerdHealthFilters}
+      breedFilter={herdBreedFilter}
+      setBreedFilter={setHerdBreedFilter}
+      showBreedSection
+      showCalvingStatusSection
+      pastureFilterOptions={herdPastureFilterOptions}
+      pastureFilters={herdPastureFilters}
+      setPastureFilters={setHerdPastureFilters}
+      showFooter={false}
+    />
+  )
+
   const herdFilterControl = (
     <div className="relative shrink-0" ref={herdFilterRef}>
       <EntityFilterToolbar
@@ -508,26 +530,8 @@ export function CattleOverviewPage() {
         onClearAll={clearAllRosterFilters}
         filterButtonAriaLabel="Filter cattle roster"
       />
-      {herdFilterOpen ? (
-        <div className={workspaceFilterPanelClass}>
-          <CattleFilterPanel
-            showSearch={false}
-            searchValue={herdSearch}
-            onSearchChange={setHerdSearch}
-            calvingFilters={herdCalvingFilters}
-            setCalvingFilters={setHerdCalvingFilters}
-            healthFilters={herdHealthFilters}
-            setHealthFilters={setHerdHealthFilters}
-            breedFilter={herdBreedFilter}
-            setBreedFilter={setHerdBreedFilter}
-            showBreedSection
-            showCalvingStatusSection
-            pastureFilterOptions={herdPastureFilterOptions}
-            pastureFilters={herdPastureFilters}
-            setPastureFilters={setHerdPastureFilters}
-            showFooter={false}
-          />
-        </div>
+      {herdFilterOpen && isMdUp ? (
+        <div className={workspaceFilterPanelClass}>{herdFilterPanelInner}</div>
       ) : null}
     </div>
   )
@@ -547,9 +551,7 @@ export function CattleOverviewPage() {
         className="flex min-w-0 flex-wrap items-center gap-x-3.5 gap-y-2 text-[13px] leading-snug"
         aria-label="Herd health summary"
       >
-        <span className="inline-flex shrink-0 items-center rounded-md bg-muted px-2.5 py-1 text-[13px] font-normal tabular-nums text-muted-foreground">
-          {cattle.length} cattle
-        </span>
+        <span className={ROSTER_HEADCOUNT_BADGE_CLASS}>{cattle.length} cattle</span>
         <span className="shrink-0 select-none text-muted-foreground/70" aria-hidden>
           ·
         </span>
@@ -572,6 +574,7 @@ export function CattleOverviewPage() {
     ) : null
 
   return (
+    <>
     <RanchWorkspaceShell
       searchValue=""
       onSearchChange={() => {}}
@@ -580,7 +583,7 @@ export function CattleOverviewPage() {
       // Roster + panel fill the shell; table column and panel each own vertical scroll.
       contentClassName={WORKSPACE_PAGE_ROSTER_FILL_CLASS}
     >
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col md:hidden">
           <RosterMobileHeader
             title="Cattle"
@@ -701,7 +704,7 @@ export function CattleOverviewPage() {
                           key={cow.id}
                           cow={cow}
                           contextLine={`${pasture} · ${obs}`}
-                          healthBadge="call-vet"
+                          healthBadge="flag"
                           onLogObservation={() => openCattleSlideToObservationLog(cow, null)}
                           tagLabel={formatCattleTagDisplay(cow.tagNumber)}
                         />
@@ -833,8 +836,8 @@ export function CattleOverviewPage() {
           )}
 
           <div className="mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row md:items-stretch md:gap-4">
-              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row md:items-start md:gap-4">
+              <div className="flex min-h-0 min-w-0 shrink-0 flex-col overflow-x-auto">
                 <CattleRosterTable
                   rows={allHerdRows}
                   showPastureColumn
@@ -872,22 +875,24 @@ export function CattleOverviewPage() {
                 />
               </div>
               {isMdUp ? (
-                <CattleDetailPanel
-                  cattle={selectedSlideCattle}
-                  pastureName={
-                    selectedSlideCattle
-                      ? pastureNameById[selectedSlideCattle.pastureId] ?? selectedSlideCattle.pastureId
-                      : ""
-                  }
-                  observations={
-                    selectedSlideCattle
-                      ? observationsByCattleId[selectedSlideCattle.id] ?? []
-                      : []
-                  }
-                  onClose={closeCattleSlide}
-                  slideLogOpen={slideLogOpen}
-                  onSlideLogOpenConsumed={consumeSlideLogOpen}
-                />
+                <div className="flex min-h-0 min-w-0 flex-1 self-stretch flex-col overflow-hidden">
+                  <CattleDetailPanel
+                    cattle={selectedSlideCattle}
+                    pastureName={
+                      selectedSlideCattle
+                        ? pastureNameById[selectedSlideCattle.pastureId] ?? selectedSlideCattle.pastureId
+                        : ""
+                    }
+                    observations={
+                      selectedSlideCattle
+                        ? observationsByCattleId[selectedSlideCattle.id] ?? []
+                        : []
+                    }
+                    onClose={closeCattleSlide}
+                    slideLogOpen={slideLogOpen}
+                    onSlideLogOpenConsumed={consumeSlideLogOpen}
+                  />
+                </div>
               ) : null}
             </div>
           </div>
@@ -911,5 +916,13 @@ export function CattleOverviewPage() {
       </div>
       <AddAnimalModal open={addAnimalOpen} onOpenChange={setAddAnimalOpen} />
     </RanchWorkspaceShell>
+    <MobileRosterFilterSheet
+      open={herdFilterOpen && !isMdUp}
+      title="Filters"
+      onClose={() => setHerdFilterOpen(false)}
+    >
+      {herdFilterPanelInner}
+    </MobileRosterFilterSheet>
+    </>
   )
 }

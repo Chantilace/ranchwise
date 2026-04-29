@@ -12,8 +12,9 @@ export const WORKSPACE_PAGE_SHELL_FLUSH_TOP_CLASS = "pt-0 sm:pt-0 lg:pt-0"
  * Roster + side panel: fill the shell content column (no outer vertical scroll).
  * Shell already applies horizontal padding and bottom safe-area padding.
  */
+/** No `overflow-hidden` here so merged shell keeps vertical scroll and roster filter popovers/sheets are not clipped. */
 export const WORKSPACE_PAGE_ROSTER_FILL_CLASS =
-  "min-h-0 flex-1 flex-col gap-0 overflow-hidden bg-background"
+  "min-h-0 flex-1 flex-col gap-0 bg-background"
 
 /** Primary content wrapper — flush on page background (no card chrome). `gap-6` matches home vertical rhythm between title and body. */
 export const WORKSPACE_PAGE_CARD_CLASS =

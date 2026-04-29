@@ -33,19 +33,19 @@ export type PastureCheckEntry = {
 
 /** Maps mockAnalyze `RiskLevel` to persisted pasture status (same ramp as StatusBadge). */
 export function riskLevelToPastureStatus(level: RiskLevel): PastureStatus {
-  if (level === "call-vet") return "action_needed"
+  if (level === "flag") return "action_needed"
   if (level === "monitor") return "concern"
   return "stable"
 }
 
 export function pastureStatusToRiskLevel(status: PastureStatus): RiskLevel {
-  if (status === "action_needed") return "call-vet"
+  if (status === "action_needed") return "flag"
   if (status === "concern") return "monitor"
   return "good"
 }
 
 export function pastureAssessedLabelFromRisk(level: RiskLevel): string {
-  if (level === "call-vet") return PASTURE_STATUS_LABELS.action_needed
+  if (level === "flag") return PASTURE_STATUS_LABELS.action_needed
   if (level === "monitor") return PASTURE_STATUS_LABELS.concern
   return PASTURE_STATUS_LABELS.stable
 }

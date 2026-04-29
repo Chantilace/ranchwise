@@ -16,7 +16,9 @@ import { getCattleEffectiveHealthRisk } from "@/lib/cattleSelectors"
 import { formatDistanceToNow } from "date-fns"
 import { formatCattleTagDisplay } from "@/lib/cattleUi"
 import { showObservationDiscardedToast } from "@/lib/observationDiscardToast"
+import type { LogObservationCommitAnalyzeMeta } from "@/lib/observationAnalyzeContext"
 import { useRanchData } from "@/contexts/RanchDataContext"
+import { useOverlayRegistration } from "@/contexts/OverlayRegistryContext"
 import type { Cattle } from "@/types/cattle"
 import type { ObservationEntry, RiskLevel } from "@/types/observation"
 import { cn } from "@/lib/utils"
@@ -40,8 +42,8 @@ export type CattleDetailPanelProps = {
 
 type SheetView = "detail" | "record-calving" | "log-observation"
 
-function cattleRiskLevelToBadgeStatus(level: RiskLevel): "good" | "monitor" | "call-vet" {
-  if (level === "call-vet") return "call-vet"
+function cattleRiskLevelToBadgeStatus(level: RiskLevel): "good" | "monitor" | "flag" {
+  if (level === "flag") return "flag"
   if (level === "monitor") return "monitor"
   return "good"
 }
@@ -51,7 +53,7 @@ function cattleObsMap(cattleId: string, observations: readonly ObservationEntry[
 }
 
 function cattleHealthFromRiskLevel(level: RiskLevel): NonNullable<Cattle["healthStatus"]> {
-  if (level === "call-vet") return "Flag"
+  if (level === "flag") return "Flag"
   if (level === "monitor") return "Monitor"
   return "Good"
 }
@@ -194,6 +196,9 @@ function CattleEmbeddedLogObservationSubview({
       if (data.kind !== "animal") return
       const stage = meta?.stage ?? "done"
       if (stage === "commit") {
+        const priorForAi = observations.filter((o) =>
+          embeddedLogInitial ? o.id !== embeddedLogInitial.id : true
+        )
         const committedId = saveCattleObservationLog(
           cattle.id,
           {
@@ -208,7 +213,20 @@ function CattleEmbeddedLogObservationSubview({
           (typeof committedId === "string" ? committedId : null) ??
           embeddedLogInitial?.id ??
           null
-        return
+        const meta: LogObservationCommitAnalyzeMeta = {
+          kind: "cattle",
+          cattleId: cattle.id,
+          entityName: formatCattleTagDisplay(cattle.tagNumber),
+          priorObservations: priorForAi,
+          calvingStatus: cattle.calvingStatus,
+          cattleCalvingSnapshot: {
+            calvingDate: cattle.calvingDate,
+            deliveryType: cattle.deliveryType ?? null,
+            calvingComplications: cattle.calvingComplications ?? null,
+            calvingStatus: cattle.calvingStatus,
+          },
+        }
+        return meta
       }
 
       if (stage === "discard") {
@@ -223,6 +241,8 @@ function CattleEmbeddedLogObservationSubview({
           updateCattle(cattle.id, {
             healthStatus: lvl ? cattleHealthFromRiskLevel(lvl) : "Good",
           })
+          setEmbeddedLogInitial(null)
+          onClosePanel()
           showObservationDiscardedToast(() => {
             appendCattleObservation(cattle.id, snap)
             const merged = [snap, ...postRemove]
@@ -234,9 +254,10 @@ function CattleEmbeddedLogObservationSubview({
               lastObservation: formatDistanceToNow(new Date(), { addSuffix: true }),
             })
           })
+          return true
         }
         setEmbeddedLogInitial(null)
-        goDetail()
+        onClosePanel()
         return true
       }
 
@@ -628,6 +649,7 @@ function CattleBottomSheet({
   onSlideLogOpenConsumed?: () => void
   slideDetailFocusNonce?: number
 }) {
+  useOverlayRegistration(true)
   return (
     <Drawer.Root open onOpenChange={(open) => !open && onClose()}>
       <Drawer.Portal>
