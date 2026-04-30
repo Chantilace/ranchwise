@@ -24,6 +24,7 @@ import { EntityFilterPanel, type EntityFilterDimension } from "@/components/work
 import { EntityFilterToolbar } from "@/components/workspace/EntityFilterToolbar";
 import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles";
 import { FilteredCountDisplay } from "@/components/workspace/FilteredCountDisplay";
+import { MobileRosterFilterSheet } from "@/components/workspace/MobileRosterFilterSheet";
 import { StatusBadge, type StatusBadgeStatus } from "@/components/StatusBadge";
 import {
   getHorseEffectiveLastDentalIso,
@@ -200,8 +201,8 @@ export function HorseProfile() {
     removeHerdHorse,
     pastureOptions,
   } = useRanchData();
-  /** Log observation as bottom sheet at &lt;768px — matches profile layout: stacked shell only below `md`. */
-  const isNarrowMobile = useMediaQuery("(max-width: 767px)");
+  /** Log observation + observation filters: bottom sheet below `md`, modal / popover at `md+`. */
+  const isMdUp = useMediaQuery("(min-width: 768px)");
   const [logSheetOpen, setLogSheetOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<HorseProfileTabId>("observations");
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -230,7 +231,7 @@ export function HorseProfile() {
   const horseObsFilterRef = useRef<HTMLDivElement>(null);
 
   useCloseOnOutsidePointerDown({
-    open: horseObsFilterOpen,
+    open: horseObsFilterOpen && isMdUp,
     setOpen: setHorseObsFilterOpen,
     ref: horseObsFilterRef,
   });
@@ -547,7 +548,7 @@ export function HorseProfile() {
     "";
 
   function openHorseLog() {
-    if (isNarrowMobile) setLogSheetOpen(true);
+    if (!isMdUp) setLogSheetOpen(true);
     else openLogModal(profileHorse);
   }
 
@@ -574,6 +575,14 @@ export function HorseProfile() {
     return rows;
   }, [profileHorse, farrierDateIso, dentalDateIso, observationsByHorse, profileHorseId]);
 
+  const horseObsFilterPanelInner = (
+    <EntityFilterPanel
+      dimensions={horseObsFilterDimensions}
+      onMultiChange={onHorseObsMultiChange}
+      onRadioChange={onHorseObsRadioChange}
+    />
+  );
+
   const horseObsFilterControl = (
     <div className="relative shrink-0" ref={horseObsFilterRef}>
       <EntityFilterToolbar
@@ -583,14 +592,8 @@ export function HorseProfile() {
         onClearAll={clearHorseObsFilters}
         filterButtonAriaLabel="Filter observation log"
       />
-      {horseObsFilterOpen ? (
-        <div className={workspaceFilterPanelClass}>
-          <EntityFilterPanel
-            dimensions={horseObsFilterDimensions}
-            onMultiChange={onHorseObsMultiChange}
-            onRadioChange={onHorseObsRadioChange}
-          />
-        </div>
+      {horseObsFilterOpen && isMdUp ? (
+        <div className={workspaceFilterPanelClass}>{horseObsFilterPanelInner}</div>
       ) : null}
     </div>
   );
@@ -979,13 +982,21 @@ export function HorseProfile() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      {isNarrowMobile && logSheetOpen ? (
+      {!isMdUp && logSheetOpen ? (
         <HorseLogSheet
           key={profileHorseId}
           horse={profileHorse}
           onClose={() => setLogSheetOpen(false)}
         />
       ) : null}
+
+      <MobileRosterFilterSheet
+        open={horseObsFilterOpen && !isMdUp}
+        title="Filters"
+        onClose={() => setHorseObsFilterOpen(false)}
+      >
+        {horseObsFilterPanelInner}
+      </MobileRosterFilterSheet>
     </>
   );
 }

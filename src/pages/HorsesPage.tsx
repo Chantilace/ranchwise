@@ -115,7 +115,6 @@ export function HorsesPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { openLogModal, herdRows, pastureOptions, appendHerdHorse, observationsByHorse } = useRanchData()
-  const isMobile = useMediaQuery("(max-width: 767px)")
   const isMdUp = useMediaQuery("(min-width: 768px)")
   const [search, setSearch] = useState("")
   const [addHorseOpen, setAddHorseOpen] = useState(false)
@@ -395,7 +394,7 @@ export function HorsesPage() {
         onClearAll={clearAllHorseRosterFilters}
         filterButtonAriaLabel="Filter horses roster"
       />
-      {horseFilterOpen && !isMobile ? (
+      {horseFilterOpen && isMdUp ? (
         <div className={workspaceFilterPanelClass}>{horseFilterPanelInner}</div>
       ) : null}
     </div>
@@ -534,7 +533,7 @@ export function HorsesPage() {
                   const photo = row.photoUrl?.trim()
                   const onLog = (e: MouseEvent<HTMLButtonElement>) => {
                     e.stopPropagation()
-                    if (isMobile) setLogSheetHorse(row)
+                    if (!isMdUp) setLogSheetHorse(row)
                     else openLogModal(row)
                   }
                   return (
@@ -644,7 +643,7 @@ export function HorsesPage() {
                 onColumnSort={onHorseColumnSort}
                 onHorseRowNavigate={(row) => navigate(`/horses/${encodeURIComponent(horseRowKey(row))}`)}
                 onHorseLog={(row) => {
-                  if (isMobile) setLogSheetHorse(row)
+                  if (!isMdUp) setLogSheetHorse(row)
                   else openLogModal(row)
                 }}
                 emptyState={
@@ -683,13 +682,13 @@ export function HorsesPage() {
         </div>
       </RanchWorkspaceShell>
       <MobileRosterFilterSheet
-        open={horseFilterOpen && isMobile}
+        open={horseFilterOpen && !isMdUp}
         title="Filters"
         onClose={() => setHorseFilterOpen(false)}
       >
         {horseFilterPanelInner}
       </MobileRosterFilterSheet>
-      {!isMobile ? (
+      {isMdUp ? (
         <AddHorseModal
           open={addHorseOpen}
           pastures={pastureOptions}
@@ -700,7 +699,7 @@ export function HorsesPage() {
           }}
         />
       ) : null}
-      {isMobile && addHorseOpen ? (
+      {!isMdUp && addHorseOpen ? (
         <AddHorseSheet
           pastures={pastureOptions}
           onClose={() => setAddHorseOpen(false)}
@@ -709,7 +708,7 @@ export function HorsesPage() {
           }}
         />
       ) : null}
-      {isMobile && logSheetHorse ? (
+      {!isMdUp && logSheetHorse ? (
         <HorseLogSheet
           key={horseRowKey(logSheetHorse)}
           horse={logSheetHorse}
