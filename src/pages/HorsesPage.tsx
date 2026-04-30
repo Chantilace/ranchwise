@@ -636,7 +636,7 @@ export function HorsesPage() {
               entityName="horses"
               className="mt-3 shrink-0"
             />
-            <div className="mt-2 min-w-0 shrink-0 overflow-x-auto">
+            <div className="mt-2 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               <RanchWiseHorseRoster
                 horseRows={sortedHorseRows}
                 sortColumn={horseSort.column}

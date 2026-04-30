@@ -200,11 +200,7 @@ export function CattleRosterTable({
   const { openCattleLogModal } = useRanchData()
   const colSpan = showPastureColumn ? 12 : 11
   return (
-    <Table
-      tableLayout="intrinsic"
-      className="min-w-[1180px] border-separate border-spacing-0"
-      containerClassName="min-w-0"
-    >
+    <Table className="border-separate border-spacing-0" containerClassName="min-w-0 w-full">
       <TableHeader>
         <TableRow className="border-neutral-200 hover:bg-transparent">
           <CattleRosterSortableColumnHeader

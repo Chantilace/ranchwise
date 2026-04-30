@@ -446,15 +446,13 @@ function CattleDetailSubviewSwitcher({
   useEffect(() => {
     if (cattleIdRef.current === cattle.id) return
     cattleIdRef.current = cattle.id
-    if (slideLogOpenRef.current) {
-      return
-    }
-    const t = window.setTimeout(() => {
+    const timeout = window.setTimeout(() => {
+      if (slideLogOpenRef.current) return
       embeddedLogCommitIdRef.current = null
       setSheetView("detail")
       setEmbeddedLogInitial(null)
     }, 0)
-    return () => window.clearTimeout(t)
+    return () => window.clearTimeout(timeout)
   }, [cattle.id])
 
   useEffect(() => {

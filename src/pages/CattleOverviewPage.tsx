@@ -363,11 +363,7 @@ export function CattleOverviewPage() {
   /** + opens detail panel; edit opens embedded log with that entry. */
   const openCattleSlideToObservationLog = useCallback((row: Cattle, initial: ObservationEntry | null) => {
     setSlideCattleId(row.id)
-    if (initial) {
-      setSlideLogOpen({ nonce: Date.now(), initialObservation: initial })
-    } else {
-      setSlideLogOpen(null)
-    }
+    setSlideLogOpen({ nonce: Date.now(), initialObservation: initial })
   }, [])
   const closeCattleSlide = useCallback(() => {
     setSlideCattleId(null)
@@ -836,8 +832,8 @@ export function CattleOverviewPage() {
           )}
 
           <div className="mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row md:items-start md:gap-4">
-              <div className="flex min-h-0 min-w-0 shrink-0 flex-col overflow-x-auto">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row md:items-stretch md:gap-4">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-auto">
                 <CattleRosterTable
                   rows={allHerdRows}
                   showPastureColumn
@@ -874,20 +870,14 @@ export function CattleOverviewPage() {
                   }
                 />
               </div>
-              {isMdUp ? (
-                <div className="flex min-h-0 min-w-0 flex-1 self-stretch flex-col overflow-hidden">
+              {isMdUp && selectedSlideCattle ? (
+                <div className="flex min-h-0 w-[480px] shrink-0 self-stretch flex-col overflow-hidden">
                   <CattleDetailPanel
                     cattle={selectedSlideCattle}
                     pastureName={
-                      selectedSlideCattle
-                        ? pastureNameById[selectedSlideCattle.pastureId] ?? selectedSlideCattle.pastureId
-                        : ""
+                      pastureNameById[selectedSlideCattle.pastureId] ?? selectedSlideCattle.pastureId
                     }
-                    observations={
-                      selectedSlideCattle
-                        ? observationsByCattleId[selectedSlideCattle.id] ?? []
-                        : []
-                    }
+                    observations={observationsByCattleId[selectedSlideCattle.id] ?? []}
                     onClose={closeCattleSlide}
                     slideLogOpen={slideLogOpen}
                     onSlideLogOpenConsumed={consumeSlideLogOpen}

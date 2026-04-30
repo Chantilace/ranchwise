@@ -1972,19 +1972,15 @@ export function RanchWiseHorseRoster({
   const { openLogModal, observationsByHorse } = useRanchData()
 
   return (
-    <div className="flex min-h-0 min-w-0 shrink-0 flex-col md:min-h-0">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-h-0">
       {filterSlot != null ? (
         <div className="flex w-full shrink-0 flex-wrap items-center gap-4 pt-0 pb-2">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-4">{filterSlot}</div>
         </div>
       ) : null}
 
-      <div className="flex min-h-0 min-w-0 shrink-0 flex-col pb-4 md:pb-0">
-        <Table
-          tableLayout="intrinsic"
-          className="min-w-[1180px] border-separate border-spacing-0"
-          containerClassName="min-w-0"
-        >
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col pb-4 md:pb-0">
+        <Table className="border-separate border-spacing-0" containerClassName="min-w-0">
             <TableHeader>
               <TableRow className="border-neutral-200 hover:bg-transparent">
                 <HorseRosterSortableColumnHeader
