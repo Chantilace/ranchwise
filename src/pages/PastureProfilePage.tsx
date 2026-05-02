@@ -13,8 +13,10 @@ import { EntityFilterPanel, type EntityFilterDimension } from "@/components/work
 import { EntityFilterToolbar } from "@/components/workspace/EntityFilterToolbar"
 import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles"
 import { FilteredCountDisplay } from "@/components/workspace/FilteredCountDisplay"
+import { MobileRosterFilterSheet } from "@/components/workspace/MobileRosterFilterSheet"
 import { useRanchData } from "@/contexts/RanchDataContext"
 import { useCloseOnOutsidePointerDown } from "@/hooks/useCloseOnOutsidePointerDown"
+import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { getCattleEffectiveHealthRisk } from "@/lib/cattleSelectors"
 import { CATEGORY_METADATA_BADGE_CLASS } from "@/lib/categoryBadgeClass"
 import { getPastureDerivedStatus } from "@/lib/pastureDerivedStatus"
@@ -133,9 +135,10 @@ export function PastureProfilePage() {
   const [checkStatusFilters, setCheckStatusFilters] = useState<Set<string>>(() => new Set())
   const [checkTimeRange, setCheckTimeRange] = useState<"all" | "7" | "30">("all")
   const checkLogFilterRef = useRef<HTMLDivElement>(null)
+  const isMdUp = useMediaQuery("(min-width: 768px)")
 
   useCloseOnOutsidePointerDown({
-    open: checkLogFilterOpen,
+    open: checkLogFilterOpen && isMdUp,
     setOpen: setCheckLogFilterOpen,
     ref: checkLogFilterRef,
   })
@@ -245,6 +248,14 @@ export function PastureProfilePage() {
     setCheckTimeRange("all")
   }, [])
 
+  const checkLogFilterPanelInner = (
+    <EntityFilterPanel
+      dimensions={checkLogFilterDimensions}
+      onMultiChange={onCheckLogMultiChange}
+      onRadioChange={onCheckLogRadioChange}
+    />
+  )
+
   const checkLogFilterControl = (
     <div className="relative shrink-0" ref={checkLogFilterRef}>
       <EntityFilterToolbar
@@ -254,14 +265,8 @@ export function PastureProfilePage() {
         onClearAll={clearCheckLogFilters}
         filterButtonAriaLabel="Filter pasture check log"
       />
-      {checkLogFilterOpen ? (
-        <div className={workspaceFilterPanelClass}>
-          <EntityFilterPanel
-            dimensions={checkLogFilterDimensions}
-            onMultiChange={onCheckLogMultiChange}
-            onRadioChange={onCheckLogRadioChange}
-          />
-        </div>
+      {checkLogFilterOpen && isMdUp ? (
+        <div className={workspaceFilterPanelClass}>{checkLogFilterPanelInner}</div>
       ) : null}
     </div>
   )
@@ -359,6 +364,7 @@ export function PastureProfilePage() {
   }
 
   return (
+    <>
     <RanchWorkspaceShell
       showHeaderSearch={false}
       contentClassName={cn(
@@ -562,5 +568,14 @@ export function PastureProfilePage() {
         onSave={(id, patch) => updatePasture(id, patch)}
       />
     </RanchWorkspaceShell>
+
+    <MobileRosterFilterSheet
+      open={checkLogFilterOpen && !isMdUp}
+      title="Filters"
+      onClose={() => setCheckLogFilterOpen(false)}
+    >
+      {checkLogFilterPanelInner}
+    </MobileRosterFilterSheet>
+    </>
   )
 }
