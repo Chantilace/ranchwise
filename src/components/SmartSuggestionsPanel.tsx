@@ -29,6 +29,8 @@ export type SmartSuggestionsPanelProps = {
   className?: string
   /** Overrides default `rounded-lg bg-muted px-3 py-2.5` surface for `mode="modal"` (e.g. flush inside a tinted card). */
   modalContentClassName?: string
+  /** Extra classes for prose `body` paragraph / block (e.g. desktop editorial sizing). */
+  proseBodyClassName?: string
   /** When true, label badge uses white bg for teal / tinted card surfaces. */
   onTint?: boolean
   /** When true, show larger icon + label instead of the badge row. */
@@ -46,6 +48,8 @@ export type SmartSuggestionsPanelProps = {
    * `default`: standard `AiSurfaceMark` sm in the label pill.
    */
   labelGlyphStyle?: "default" | "section"
+  /** Merged onto the label pill span (e.g. `rounded-full py-[3px]` for profile layouts). */
+  labelPillClassName?: string
 }
 
 function SmartSuggestionsLabelRow({
@@ -54,12 +58,14 @@ function SmartSuggestionsLabelRow({
   hero,
   compact,
   glyphStyle = "default",
+  pillClassName,
 }: {
   label: string
   onTint?: boolean
   hero?: boolean
   compact?: boolean
   glyphStyle?: "default" | "section"
+  pillClassName?: string
 }) {
   if (hero) {
     return (
@@ -75,6 +81,7 @@ function SmartSuggestionsLabelRow({
         className={cn(
           "inline-flex items-center gap-1.5 rounded-md px-2 py-1",
           onTint ? "border border-ai-accent/30 bg-white" : "border border-ai-accent bg-ai-accent-bg",
+          pillClassName,
         )}
       >
         {glyphStyle === "section" ? (
@@ -159,6 +166,8 @@ export function SmartSuggestionsPanel({
   profileCompact,
   columnFill,
   labelGlyphStyle = "default",
+  proseBodyClassName,
+  labelPillClassName,
 }: SmartSuggestionsPanelProps) {
   const [expanded, setExpanded] = useState(mode === "modal")
   const contentId = useId()
@@ -183,26 +192,18 @@ export function SmartSuggestionsPanel({
 
   const showLabel = effectiveVariant === "bullets" && (mode === "modal" ? true : expanded)
 
+  const proseBodyBaseClass = proseBodyClassName
+    ? proseBodyClassName
+    : profileCompact
+      ? "text-[13px] leading-[1.4]"
+      : "text-sm leading-relaxed"
+
   const proseBodyNode =
     effectiveBodyVariant === "prose" ? (
       typeof body === "string" ? (
-        <p
-          className={cn(
-            "text-foreground",
-            profileCompact ? "text-[13px] leading-[1.4]" : "text-sm leading-relaxed",
-          )}
-        >
-          {body}
-        </p>
+        <p className={cn("text-foreground", proseBodyBaseClass)}>{body}</p>
       ) : (
-        <div
-          className={cn(
-            "text-foreground",
-            profileCompact ? "text-[13px] leading-[1.4]" : "text-sm leading-relaxed",
-          )}
-        >
-          {body}
-        </div>
+        <div className={cn("text-foreground", proseBodyBaseClass)}>{body}</div>
       )
     ) : null
 
@@ -245,6 +246,7 @@ export function SmartSuggestionsPanel({
                   hero={heroHeader}
                   compact={profileCompact}
                   glyphStyle={labelGlyphStyle}
+                  pillClassName={labelPillClassName}
                 />
               </div>
               <ChevronUp className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -269,6 +271,7 @@ export function SmartSuggestionsPanel({
                 hero={heroHeader}
                 compact={profileCompact}
                 glyphStyle={labelGlyphStyle}
+                pillClassName={labelPillClassName}
               />
             </div>
           ) : null}
@@ -295,6 +298,7 @@ export function SmartSuggestionsPanel({
               hero={heroHeader}
               compact={profileCompact}
               glyphStyle={labelGlyphStyle}
+              pillClassName={labelPillClassName}
             />
           ) : null}
 

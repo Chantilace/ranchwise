@@ -45,6 +45,7 @@ export function RanchCalendarPage() {
 
   return (
     <RanchWorkspaceShell
+      showGlobalFab
       contentClassName="min-w-0 bg-[#FDFDFB] pb-10"
       searchValue={search}
       onSearchChange={setSearch}

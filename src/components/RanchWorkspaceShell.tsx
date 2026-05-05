@@ -201,6 +201,8 @@ type RanchWorkspaceShellProps = {
   searchAriaLabel?: string;
   /** When false, hides the header search field (e.g. pasture roster uses inline toolbar search). */
   showHeaderSearch?: boolean;
+  /** Mobile-only global log FAB; opt in on Home only (see {@link LogObservationFAB}). */
+  showGlobalFab?: boolean;
 };
 
 export function RanchWorkspaceShell({
@@ -212,6 +214,7 @@ export function RanchWorkspaceShell({
   searchPlaceholder = "Search",
   searchAriaLabel = "Search",
   showHeaderSearch = true,
+  showGlobalFab = false,
 }: RanchWorkspaceShellProps) {
   const handleSearchChange = onSearchChange ?? (() => {});
   const { sidebarOpen, setSidebarOpen, cattle, herdRows, pastures } = useRanchData();
@@ -233,10 +236,6 @@ export function RanchWorkspaceShell({
   const openMobileNav = useCallback(() => {
     setMobileNavOpen(true);
   }, []);
-
-  const showLogObservationFab = !["/account", "/settings", "/help"].some(
-    (p) => location.pathname === p || location.pathname.startsWith(`${p}/`),
-  );
 
   /** Close on route change — avoids manual pushState (conflicts with React Router history). */
   useEffect(() => {
@@ -562,7 +561,7 @@ export function RanchWorkspaceShell({
             document.body,
           )
         : null}
-      {showLogObservationFab ? <LogObservationFAB /> : null}
+      {showGlobalFab ? <LogObservationFAB /> : null}
     </div>
   );
 }

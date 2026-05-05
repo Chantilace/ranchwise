@@ -12,6 +12,7 @@ import {
 } from "@/lib/calvingStatus"
 import { getComplicationVariant } from "@/lib/calvingRichTextVariants"
 import { useRanchData } from "@/contexts/RanchDataContext"
+import { formatCattleTagDisplay } from "@/lib/cattleUi"
 import type { Cattle } from "@/types/cattle"
 import { cn } from "@/lib/utils"
 
@@ -41,6 +42,8 @@ export function CattleLoggingStatusSection({
 }: CattleLoggingStatusSectionProps) {
   const { markCattleInLabor } = useRanchData()
   const effective = getCalvingStatus(cattle)
+  const cattlePageLogLabel = `Log ${formatCattleTagDisplay(cattle.tagNumber)}`
+  const cattlePageLogAriaLabel = `Log observation for ${formatCattleTagDisplay(cattle.tagNumber)}`
 
   const inLaborRelative =
     cattle.calvingStatus === "in-labor" && cattle.inLaborTimestamp
@@ -89,9 +92,15 @@ export function CattleLoggingStatusSection({
               <Button type="button" variant="primary" className="w-full" onClick={onRecordCalving}>
                 Record calving
               </Button>
-              <Button type="button" variant="secondary" className="w-full gap-1.5" onClick={onLogObservation}>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full gap-1.5"
+                aria-label={cattlePageLogAriaLabel}
+                onClick={onLogObservation}
+              >
                 <NotebookPen className="size-4 shrink-0" aria-hidden />
-                Log observation
+                {cattlePageLogLabel}
               </Button>
               {showMarkInLabor ? (
                 <button
@@ -106,9 +115,15 @@ export function CattleLoggingStatusSection({
           ) : null}
 
           {effective === "calved" ? (
-            <Button type="button" variant="primary" className="w-full gap-1.5" onClick={onLogObservation}>
+            <Button
+              type="button"
+              variant="primary"
+              className="w-full gap-1.5"
+              aria-label={cattlePageLogAriaLabel}
+              onClick={onLogObservation}
+            >
               <NotebookPen className="size-4 shrink-0" aria-hidden />
-              Log observation
+              {cattlePageLogLabel}
             </Button>
           ) : null}
 
@@ -117,16 +132,28 @@ export function CattleLoggingStatusSection({
               <Button type="button" variant="primary" className="w-full" onClick={onRecordCalving}>
                 Record calving outcome
               </Button>
-              <Button type="button" variant="secondary" className="w-full gap-1.5" onClick={onLogObservation}>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full gap-1.5"
+                aria-label={cattlePageLogAriaLabel}
+                onClick={onLogObservation}
+              >
                 <NotebookPen className="size-4 shrink-0" aria-hidden />
-                Log observation
+                {cattlePageLogLabel}
               </Button>
             </>
           ) : null}
           {effective === "none" ? (
-            <Button type="button" variant="primary" className="w-full gap-1.5" onClick={onLogObservation}>
+            <Button
+              type="button"
+              variant="primary"
+              className="w-full gap-1.5"
+              aria-label={cattlePageLogAriaLabel}
+              onClick={onLogObservation}
+            >
               <NotebookPen className="size-4 shrink-0" aria-hidden />
-              Log observation
+              {cattlePageLogLabel}
             </Button>
           ) : null}
         </div>

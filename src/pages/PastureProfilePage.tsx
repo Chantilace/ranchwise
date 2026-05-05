@@ -1,8 +1,12 @@
 import { format, formatDistanceToNow } from "date-fns"
-import { ChevronLeft, NotebookPen } from "lucide-react"
-import { useCallback, useMemo, useRef, useState } from "react"
+import { ArrowRight, ChevronLeft, NotebookPen, Pencil } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { Link, useParams } from "react-router-dom"
 import { EditPastureModal } from "@/components/EditPastureModal"
+import {
+  ProfileDetailsCard,
+  type ProfileDetailsSection,
+} from "@/components/ProfileDetailsCard"
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell"
 import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
 import { StatusBadge } from "@/components/StatusBadge"
@@ -38,7 +42,7 @@ import { cn } from "@/lib/utils"
 import type { Pasture } from "@/types/cattle"
 import type { AIResult } from "@/types/observation"
 
-type ProfileTab = "checks" | "maintenance" | "notes"
+type ProfileTab = "checks" | "details" | "maintenance" | "notes"
 
 const CHECK_LOG_STATUS_IDS = ["stable", "concern", "action_needed"] as const
 
@@ -136,6 +140,11 @@ export function PastureProfilePage() {
   const [checkTimeRange, setCheckTimeRange] = useState<"all" | "7" | "30">("all")
   const checkLogFilterRef = useRef<HTMLDivElement>(null)
   const isMdUp = useMediaQuery("(min-width: 768px)")
+  const mobileProfileRootRef = useRef<HTMLDivElement>(null)
+  const mobileHeroExpandSectionRef = useRef<HTMLDivElement>(null)
+  const mobileHeroCollapsedRef = useRef(false)
+  const [mobileHeroCollapsed, setMobileHeroCollapsed] = useState(false)
+  const prevPastureIdForMobileHeroRef = useRef<string | undefined>(undefined)
 
   useCloseOnOutsidePointerDown({
     open: checkLogFilterOpen && isMdUp,
@@ -248,6 +257,86 @@ export function PastureProfilePage() {
     setCheckTimeRange("all")
   }, [])
 
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setEditOpen(false)
+      setCheckCategoryFilters(new Set())
+      setCheckStatusFilters(new Set())
+      setCheckTimeRange("all")
+      setCheckLogFilterOpen(false)
+      mobileHeroCollapsedRef.current = false
+      setMobileHeroCollapsed(false)
+      setActiveTab("checks")
+    }, 0)
+    return () => window.clearTimeout(t)
+  }, [pastureId])
+
+  useEffect(() => {
+    if (prevPastureIdForMobileHeroRef.current !== pastureId) {
+      prevPastureIdForMobileHeroRef.current = pastureId
+      mobileHeroCollapsedRef.current = false
+      setMobileHeroCollapsed(false)
+    }
+    if (!pastureId || !pasture) return
+    if (isMdUp) {
+      mobileHeroCollapsedRef.current = false
+      setMobileHeroCollapsed(false)
+      return
+    }
+
+    const findScrollParent = (from: HTMLElement): HTMLElement | null => {
+      let p: HTMLElement | null = from.parentElement
+      while (p) {
+        const { overflowY } = getComputedStyle(p)
+        if (overflowY === "auto" || overflowY === "scroll") return p
+        p = p.parentElement
+      }
+      return null
+    }
+
+    const rootEl = mobileProfileRootRef.current
+    if (!rootEl) return
+    const scrollRoot = findScrollParent(rootEl)
+    if (!scrollRoot) return
+
+    let io: IntersectionObserver | undefined
+
+    const onScrollExpand = () => {
+      if (!mobileHeroCollapsedRef.current) return
+      if (scrollRoot.scrollTop < 48) {
+        mobileHeroCollapsedRef.current = false
+        setMobileHeroCollapsed(false)
+      }
+    }
+
+    scrollRoot.addEventListener("scroll", onScrollExpand, { passive: true })
+
+    const attachIo = () => {
+      const section = mobileHeroExpandSectionRef.current
+      if (!section) return
+      io?.disconnect()
+      io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry) return
+          if (!entry.isIntersecting) {
+            mobileHeroCollapsedRef.current = true
+            setMobileHeroCollapsed(true)
+          }
+        },
+        { root: scrollRoot, threshold: 0 },
+      )
+      io.observe(section)
+    }
+
+    const t = window.setTimeout(attachIo, 0)
+
+    return () => {
+      window.clearTimeout(t)
+      io?.disconnect()
+      scrollRoot.removeEventListener("scroll", onScrollExpand)
+    }
+  }, [isMdUp, pastureId, pasture, mobileHeroCollapsed])
+
   const checkLogFilterPanelInner = (
     <EntityFilterPanel
       dimensions={checkLogFilterDimensions}
@@ -292,12 +381,6 @@ export function PastureProfilePage() {
     return n
   }, [cattleOnPasture, observationsByCattleId])
 
-  const stockedValue = useMemo(() => {
-    const n = cattleOnPasture.length
-    const suffix = flagged > 0 ? ` · ${flagged} flagged` : ""
-    return `${n} cattle${suffix}`
-  }, [cattleOnPasture.length, flagged])
-
   const densityLabel = useMemo(() => {
     if (!pasture || cattleOnPasture.length === 0) return "—"
     const v = pasture.acreage / cattleOnPasture.length
@@ -332,25 +415,231 @@ export function PastureProfilePage() {
       ? "Pasture summary copy is not seeded for this pasture yet. Logging additional checks will refine the narrative once summaries are wired."
       : null)
 
-  const detailRows = useMemo(() => {
-    if (!pasture) return []
-    return [
-      { label: "Stocked", value: stockedValue },
-      { label: "Density", value: densityLabel },
-      { label: "Last check", value: lastCheckLabel },
-      { label: "Water", value: pasture.waterSource },
-      { label: "Fence", value: pasture.fenceStatus },
-    ]
-  }, [pasture, stockedValue, densityLabel, lastCheckLabel])
+  const hasPastureDetailsData = useMemo(() => {
+    if (!pasture) return false
+    if (cattleOnPasture.length > 0) return true
+    if (checksSorted.length > 0) return true
+    const w = pasture.waterSource?.trim() ?? ""
+    const f = pasture.fenceStatus?.trim() ?? ""
+    if (w.length > 0 && w !== "—") return true
+    if (f.length > 0 && f !== "—") return true
+    return false
+  }, [pasture, cattleOnPasture.length, checksSorted.length])
 
   const tabItems = useMemo(
     (): TabItem[] => [
       { id: "checks", label: "Pasture checks", count: checksSorted.length },
+      { id: "details", label: "Details" },
       { id: "maintenance", label: "Maintenance" },
       { id: "notes", label: "Notes" },
     ],
-    [checksSorted.length]
+    [checksSorted.length],
   )
+
+  const metadataOneLine = useMemo(() => {
+    if (!pasture) return ""
+    return `${pasture.terrain} · ${pasture.acreage} acres`
+  }, [pasture])
+
+  const pasturePageLogLabel = useMemo(
+    () => (pasture ? `Log ${pasture.name}` : "Log"),
+    [pasture],
+  )
+  const pasturePageLogAriaLabel = useMemo(
+    () => (pasture ? `Log observation for ${pasture.name}` : "Log observation"),
+    [pasture],
+  )
+  const herdHref = useMemo(() => (pasture ? `/cattle?pasture=${pasture.id}` : "/cattle"), [pasture])
+
+  const grazingDisplay = useMemo((): ReactNode => {
+    const n = cattleOnPasture.length
+    return (
+      <span className="inline-flex flex-wrap items-baseline justify-end">
+        <span>{`${n} cattle`}</span>
+        {flagged > 0 ? (
+          <span className="text-[12px] font-normal text-[var(--status-monitor-text)]">
+            {" "}
+            · {flagged} flagged
+          </span>
+        ) : null}
+      </span>
+    )
+  }, [cattleOnPasture.length, flagged])
+
+  const pastureDetailsSections = useMemo((): ProfileDetailsSection[] => {
+    if (!pasture) return []
+    return [
+      {
+        title: "Stocking",
+        headerRight: (
+          <Link
+            to={herdHref}
+            className="inline-flex shrink-0 items-center gap-[5px] rounded-full border border-action bg-transparent px-[14px] py-1.5 text-[13px] font-medium text-action outline-none transition-colors hover:bg-action/5 focus-visible:ring-2 focus-visible:ring-ring/40"
+          >
+            View herd
+            <ArrowRight className="size-3 shrink-0" aria-hidden />
+          </Link>
+        ),
+        rows: [
+          { label: "Currently grazing", value: grazingDisplay },
+          { label: "Density", value: densityLabel },
+        ],
+      },
+      {
+        title: "Maintenance",
+        rows: [
+          { label: "Last check", value: lastCheckLabel },
+          { label: "Water", value: pasture.waterSource?.trim() || "—" },
+          { label: "Fence", value: pasture.fenceStatus?.trim() || "—" },
+        ],
+      },
+    ]
+  }, [pasture, herdHref, grazingDisplay, densityLabel, lastCheckLabel])
+
+  const pastureSummaryEl = aiSummaryProse ? (
+    <SmartSuggestionsPanel
+      mode="modal"
+      className="mt-0 min-w-0"
+      modalContentClassName="rounded-[16px] px-5 py-[18px]"
+      proseBodyClassName="text-[14px] leading-[1.45]"
+      label="Pasture summary"
+      labelGlyphStyle="section"
+      bodyVariant="prose"
+      body={aiSummaryProse}
+      contextNote={aiContextNote ?? undefined}
+    />
+  ) : null
+
+  const pastureSummaryElTablet = aiSummaryProse ? (
+    <SmartSuggestionsPanel
+      mode="modal"
+      columnFill
+      className="mt-0 flex h-full min-h-0 min-w-0 flex-1 flex-col"
+      modalContentClassName="rounded-[16px] px-5 py-[18px]"
+      proseBodyClassName="text-[14px] leading-[1.45]"
+      labelPillClassName="rounded-full px-2 py-[3px]"
+      label="Pasture summary"
+      labelGlyphStyle="section"
+      bodyVariant="prose"
+      body={aiSummaryProse}
+      contextNote={aiContextNote ?? undefined}
+    />
+  ) : null
+
+  const pastureSummaryElDesktop = aiSummaryProse ? (
+    <SmartSuggestionsPanel
+      mode="modal"
+      columnFill
+      className="mt-0 flex h-full min-h-0 min-w-0 flex-1 flex-col"
+      modalContentClassName="rounded-[16px] px-5 py-[18px]"
+      proseBodyClassName="text-[16px] leading-[1.45]"
+      label="Pasture summary"
+      labelGlyphStyle="section"
+      bodyVariant="prose"
+      body={aiSummaryProse}
+      contextNote={aiContextNote ?? undefined}
+    />
+  ) : null
+
+  const defaultPastureTabClassName = "-mb-px px-4 py-2 text-base font-medium"
+
+  function renderPastureTabs(tabClassName: string = defaultPastureTabClassName) {
+    return (
+      <Tabs
+        items={tabItems}
+        activeTab={activeTab}
+        onChange={(id) => setActiveTab(id as ProfileTab)}
+        ariaLabel="Pasture profile sections"
+        className="flex min-w-0 max-w-full gap-0 border-b border-border"
+        tabClassName={tabClassName}
+      />
+    )
+  }
+
+  function renderPastureTabPanel() {
+    return (
+      <div className="min-w-0 pt-4">
+        {activeTab === "checks" ? (
+          checksSorted.length === 0 ? (
+            <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
+              No pasture checks logged yet. Tap &quot;{pasturePageLogLabel}&quot; above to record your first
+              inspection.
+            </p>
+          ) : (
+            <>
+              <div className="mb-3 flex flex-wrap items-center gap-2">{checkLogFilterControl}</div>
+              <FilteredCountDisplay
+                visible={checkLogActiveFilterCount > 0}
+                filteredCount={checksFiltered.length}
+                totalCount={checksSorted.length}
+                entityName="checks"
+                className="mb-3"
+              />
+              {checksFiltered.length === 0 ? (
+                <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
+                  No checks match your filters.
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-3 pb-9">
+                  {checksFiltered.map((entry) => (
+                    <PastureCheckCard
+                      key={entry.id}
+                      entry={entry}
+                      showStatusBadge={entry.id === latestCheckId}
+                    />
+                  ))}
+                </ul>
+              )}
+            </>
+          )
+        ) : null}
+
+        {activeTab === "details" ? (
+          hasPastureDetailsData ? (
+            <div className="pb-9">
+              <ProfileDetailsCard sections={pastureDetailsSections} className="min-w-0 max-w-xl" />
+            </div>
+          ) : (
+            <div className="flex max-w-lg flex-col gap-4 pb-9">
+              <p className="text-[13px] leading-relaxed text-muted-foreground">
+                No pasture details added yet. Edit the pasture to add stocking, density, water, or fence
+                information.
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-fit shrink-0"
+                onClick={() => setEditOpen(true)}
+              >
+                Edit pasture
+              </Button>
+            </div>
+          )
+        ) : null}
+
+        {activeTab === "maintenance" ? (
+          <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
+            No maintenance records yet — start tracking fence repairs, water systems, and supplementation here.
+          </p>
+        ) : null}
+
+        {activeTab === "notes" ? (
+          <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
+            No notes yet — keep general observations about this pasture here.
+          </p>
+        ) : null}
+      </div>
+    )
+  }
+
+  function renderProfileTabsAndContent(options?: { tabClassName?: string }) {
+    return (
+      <div className="min-w-0">
+        {renderPastureTabs(options?.tabClassName ?? defaultPastureTabClassName)}
+        {renderPastureTabPanel()}
+      </div>
+    )
+  }
 
   if (!pastureId || !pasture) {
     return (
@@ -376,7 +665,7 @@ export function PastureProfilePage() {
       onSearchChange={() => {}}
     >
       <div className="flex min-w-0 flex-col gap-4">
-        <header className="flex flex-wrap items-center justify-between gap-3 bg-background py-3 md:py-5 max-md:sticky max-md:top-0 max-md:z-30 max-md:-mx-4 max-md:border-b max-md:border-border max-md:px-4 sm:max-md:-mx-6 sm:max-md:px-6">
+        <header className="hidden md:flex flex-wrap items-center justify-between gap-3 bg-background py-3 md:py-5">
           <nav
             className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground"
             aria-label="Breadcrumb"
@@ -407,156 +696,235 @@ export function PastureProfilePage() {
             <Button
               type="button"
               variant="default"
-              className="h-9 min-h-9 gap-1.5 rounded-full px-4"
-              aria-label="Log pasture check"
+              className="h-9 min-h-9 max-w-full gap-1.5 rounded-full px-4"
+              aria-label={pasturePageLogAriaLabel}
               onClick={() => openPastureCheckModal({ pastureId: pasture.id, pastureName: pasture.name })}
             >
               <NotebookPen className="size-4 shrink-0" aria-hidden />
-              <span className="hidden md:inline">Log pasture check</span>
-              <span className="md:hidden">Log</span>
+              <span className="min-w-0 truncate">{pasturePageLogLabel}</span>
             </Button>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 gap-8 md:min-h-0 md:flex-1 md:grid-cols-[300px_minmax(0,1fr)] md:gap-5 md:overflow-hidden lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-6">
-          <aside className="flex flex-col gap-4 md:sticky md:top-0 md:self-start">
-            <div>
-              <div className="md:hidden">
-                {profileImageSrc ? (
-                  <div className="overflow-hidden rounded-xl">
+        <div
+          ref={mobileProfileRootRef}
+          data-mobile-profile-root
+          className="flex min-w-0 flex-col md:hidden"
+        >
+          {mobileHeroCollapsed ? (
+            <div className="sticky top-0 z-40 border-b-[0.5px] border-[rgba(0,0,0,0.08)] bg-[rgba(253,253,253,0.96)] backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
+              <div className="flex min-w-0 items-center gap-2 px-1 py-2">
+                <Link
+                  to="/pastures"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40"
+                  aria-label="Back to pastures"
+                >
+                  <ChevronLeft className="size-5 shrink-0" strokeWidth={2} aria-hidden />
+                </Link>
+                <div className="size-9 shrink-0 overflow-hidden rounded-[8px] border-[0.5px] border-border bg-muted">
+                  {profileImageSrc ? (
                     <img
                       src={profileImageSrc}
                       alt={pasture.name}
-                      className="block h-auto w-full"
+                      className="size-full object-cover"
                       loading="lazy"
                     />
+                  ) : (
+                    <div className="flex size-full items-center justify-center text-[13px] font-semibold leading-none text-muted-foreground">
+                      {pasture.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="min-w-0 truncate text-[13px] font-medium text-foreground">
+                      {pasture.name}
+                    </span>
+                    <StatusBadge
+                      status={derivedStatus}
+                      size="md"
+                      emphasis="secondary"
+                      className="shrink-0"
+                    />
                   </div>
+                  <p className="mt-0.5 min-w-0 truncate text-[13px] leading-snug text-muted-foreground">
+                    {metadataOneLine}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="size-9 min-h-9 min-w-9 shrink-0 gap-0 rounded-full p-0 transition-transform active:scale-95"
+                  aria-label="Edit pasture"
+                  onClick={() => setEditOpen(true)}
+                >
+                  <Pencil className="size-4 shrink-0" aria-hidden />
+                </Button>
+              </div>
+              {renderPastureTabs()}
+            </div>
+          ) : null}
+
+          {!mobileHeroCollapsed ? (
+            <div ref={mobileHeroExpandSectionRef} className="shrink-0">
+              <div className="flex min-w-0 items-center justify-between gap-3 bg-background px-[14px] py-[10px]">
+                <Link
+                  to="/pastures"
+                  className="inline-flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+                >
+                  <ChevronLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                  <span>Pastures</span>
+                </Link>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-9 min-h-9 shrink-0 rounded-full px-4 text-[13px]"
+                    onClick={() => setEditOpen(true)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    className="h-9 min-h-9 max-w-[min(100%,11rem)] gap-1.5 rounded-full px-3 text-[13px] sm:max-w-none sm:px-4"
+                    aria-label={pasturePageLogAriaLabel}
+                    onClick={() => openPastureCheckModal({ pastureId: pasture.id, pastureName: pasture.name })}
+                  >
+                    <NotebookPen className="size-4 shrink-0" aria-hidden />
+                    <span className="min-w-0 truncate">{pasturePageLogLabel}</span>
+                  </Button>
+                </div>
+              </div>
+              <div className="relative -mx-4 h-[280px] w-[calc(100%+2rem)] max-w-none shrink-0 overflow-hidden sm:-mx-6 sm:w-[calc(100%+3rem)]">
+                {profileImageSrc ? (
+                  <img
+                    src={profileImageSrc}
+                    alt={pasture.name}
+                    className="absolute inset-0 size-full object-cover"
+                    loading="eager"
+                  />
                 ) : (
-                  <div className="flex h-40 w-full items-center justify-center rounded-xl bg-muted text-2xl font-semibold text-muted-foreground sm:h-48">
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted text-2xl font-semibold text-muted-foreground">
+                    {pasture.name.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div
+                  className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[65%] bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.4)_40%,rgba(0,0,0,0.7)_100%)]"
+                  aria-hidden
+                />
+                <div className="absolute bottom-0 left-0 z-10 flex w-full min-w-0 flex-col items-start gap-1.5 p-3.5">
+                  <StatusBadge status={derivedStatus} size="md" emphasis="secondary" className="shrink-0" />
+                  <h2 className="min-w-0 text-[22px] font-medium leading-[1.1] text-white">{pasture.name}</h2>
+                  <p className="min-w-0 text-[13px] leading-snug text-[rgba(255,255,255,0.92)]">
+                    {metadataOneLine}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div
+            className={cn(
+              "flex min-w-0 flex-col gap-3",
+              pastureSummaryEl && "mb-8",
+              mobileHeroCollapsed ? "mt-0 pt-2" : "mt-4",
+            )}
+          >
+            {pastureSummaryEl}
+          </div>
+
+          {!mobileHeroCollapsed ? (
+            <div className="min-w-0">
+              {renderPastureTabs()}
+              {renderPastureTabPanel()}
+            </div>
+          ) : (
+            renderPastureTabPanel()
+          )}
+        </div>
+
+        <div className="hidden min-w-0 md:block">
+          <div className="min-w-0 lg:hidden">
+            <div className="mb-4 grid min-h-0 min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch gap-6">
+              <div className="relative aspect-square h-full min-h-0 max-h-[240px] min-w-[180px] max-w-[240px] shrink-0 self-end overflow-hidden rounded-[var(--radius-2xl)]">
+                {profileImageSrc ? (
+                  <img
+                    src={profileImageSrc}
+                    alt={pasture.name}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted text-xl font-semibold text-muted-foreground">
                     {pasture.name.slice(0, 2).toUpperCase()}
                   </div>
                 )}
               </div>
-              {profileImageSrc ? (
-                <img
-                  src={profileImageSrc}
-                  alt=""
-                  className="hidden h-40 w-full rounded-xl object-cover sm:h-48 md:block md:aspect-square md:h-auto md:min-h-0"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="hidden h-40 w-full items-center justify-center rounded-xl bg-muted text-2xl font-semibold text-muted-foreground sm:h-48 md:flex md:aspect-square md:h-auto md:min-h-0">
-                  {pasture.name.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-              <div className="mt-4 flex flex-wrap items-center gap-2.5">
-                <h1 className="text-xl font-medium tracking-[-0.01em] text-foreground">{pasture.name}</h1>
-                <StatusBadge status={derivedStatus} size="md" emphasis="secondary" />
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {pasture.terrain} · {pasture.acreage} acres
-              </p>
-            </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-1">
-              {checksSorted.length > 0 && aiSummaryProse ? (
-                <SmartSuggestionsPanel
-                  mode="modal"
-                  className="mt-0"
-                  label="Pasture summary"
-                  labelGlyphStyle="section"
-                  bodyVariant="prose"
-                  body={aiSummaryProse}
-                  contextNote={aiContextNote}
-                />
-              ) : null}
-
-              <div className="rounded-lg border-[0.5px] border-border bg-card px-4 py-3.5">
-                <div className="mb-2.5 flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-foreground">Details</p>
-                  <Link
-                    to={`/cattle?pasture=${pasture.id}`}
-                    className="shrink-0 text-[13px] font-medium text-action hover:underline"
-                  >
-                    View herd →
-                  </Link>
-                </div>
-                <div>
-                  {detailRows.map((row, i) => (
-                    <div
-                      key={row.label}
-                      className={cn(
-                        "flex items-center justify-between gap-3 py-1.5 text-sm",
-                        i < detailRows.length - 1 && "border-b-[0.5px] border-border",
-                      )}
-                    >
-                      <span className="shrink-0 text-muted-foreground">{row.label}</span>
-                      <span className="min-w-0 text-right font-medium text-foreground">{row.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          <div className="min-w-0 md:min-h-0 md:overflow-y-auto">
-            <Tabs
-              items={tabItems}
-              activeTab={activeTab}
-              onChange={(id) => setActiveTab(id as ProfileTab)}
-              ariaLabel="Pasture profile sections"
-              className="flex min-w-0 max-w-full gap-0 border-b border-border"
-              tabClassName="-mb-px px-4 py-2 text-base font-medium"
-            />
-            <div className="min-w-0 pt-4">
-              {activeTab === "checks" ? (
-                checksSorted.length === 0 ? (
-                  <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-                    No pasture checks logged yet. Tap &quot;Log pasture check&quot; above to record your first
-                    inspection.
-                  </p>
-                ) : (
-                  <>
-                    <div className="mb-3 flex flex-wrap items-center gap-2">{checkLogFilterControl}</div>
-                    <FilteredCountDisplay
-                      visible={checkLogActiveFilterCount > 0}
-                      filteredCount={checksFiltered.length}
-                      totalCount={checksSorted.length}
-                      entityName="checks"
-                      className="mb-3"
+              <div className="flex h-full min-h-0 min-w-0 flex-col gap-4 pt-[2px]">
+                <div className="min-w-0 shrink-0">
+                  <div className="mb-1.5 flex min-w-0 items-center gap-2.5">
+                    <h2 className="min-w-0 truncate text-[28px] font-medium leading-[1.1] tracking-[-0.01em] text-foreground">
+                      {pasture.name}
+                    </h2>
+                    <StatusBadge
+                      status={derivedStatus}
+                      size="md"
+                      emphasis="secondary"
+                      className="!shrink-0 !rounded-full !border-0 !px-2 !py-[3px] !text-[13px]"
                     />
-                    {checksFiltered.length === 0 ? (
-                      <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
-                        No checks match your filters.
-                      </p>
-                    ) : (
-                      <ul className="flex flex-col gap-3 pb-9">
-                        {checksFiltered.map((entry) => (
-                          <PastureCheckCard
-                            key={entry.id}
-                            entry={entry}
-                            showStatusBadge={entry.id === latestCheckId}
-                          />
-                        ))}
-                      </ul>
-                    )}
-                  </>
-                )
-              ) : null}
-
-              {activeTab === "maintenance" ? (
-                <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
-                  No maintenance records yet — start tracking fence repairs, water systems, and supplementation
-                  here.
-                </p>
-              ) : null}
-
-              {activeTab === "notes" ? (
-                <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
-                  No notes yet — keep general observations about this pasture here.
-                </p>
-              ) : null}
+                  </div>
+                  <p className="min-w-0 text-[13px] leading-snug text-muted-foreground">{metadataOneLine}</p>
+                </div>
+                {pastureSummaryElTablet ? (
+                  <div className="flex min-h-0 min-w-0 flex-1 flex-col">{pastureSummaryElTablet}</div>
+                ) : null}
+              </div>
             </div>
+
+            {renderProfileTabsAndContent({
+              tabClassName: "-mb-px px-4 py-2 text-[13px] font-medium leading-snug",
+            })}
+          </div>
+
+          <div className="hidden min-w-0 flex-col lg:flex">
+            <div className="mb-6 grid min-h-0 min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch gap-8">
+              <div className="relative aspect-square h-full min-h-0 max-h-[360px] min-w-[280px] max-w-[360px] shrink-0 self-end overflow-hidden rounded-[var(--radius-3xl)]">
+                {profileImageSrc ? (
+                  <img
+                    src={profileImageSrc}
+                    alt={pasture.name}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted text-2xl font-semibold text-muted-foreground">
+                    {pasture.name.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="flex h-full min-h-[240px] min-w-0 flex-col gap-4 pt-[4px]">
+                <div className="min-w-0 shrink-0">
+                  <div className="mb-1.5 flex min-w-0 flex-wrap items-center gap-3">
+                    <h1 className="min-w-0 truncate text-[30px] font-medium leading-[1.1] tracking-[-0.01em] text-foreground">
+                      {pasture.name}
+                    </h1>
+                    <StatusBadge
+                      status={derivedStatus}
+                      size="md"
+                      emphasis="secondary"
+                      className="!shrink-0 !rounded-full !border-0 !px-[10px] !py-1 !text-[13px]"
+                    />
+                  </div>
+                  <p className="min-w-0 truncate text-[16px] text-muted-foreground">{metadataOneLine}</p>
+                </div>
+                {pastureSummaryElDesktop ? (
+                  <div className="flex min-h-0 min-w-0 flex-1 flex-col">{pastureSummaryElDesktop}</div>
+                ) : null}
+              </div>
+            </div>
+            <div className="min-w-0">{renderProfileTabsAndContent()}</div>
           </div>
         </div>
       </div>
@@ -567,7 +935,18 @@ export function PastureProfilePage() {
         onClose={() => setEditOpen(false)}
         onSave={(id, patch) => updatePasture(id, patch)}
       />
-    </RanchWorkspaceShell>
+      </RanchWorkspaceShell>
+
+      {mobileHeroCollapsed && !isMdUp ? (
+        <button
+          type="button"
+          className="fixed bottom-[calc(24px+env(safe-area-inset-bottom,0px))] right-[calc(24px+env(safe-area-inset-right,0px))] z-[60] flex size-14 shrink-0 items-center justify-center rounded-full bg-action text-action-foreground shadow-[0_8px_20px_rgba(91,76,174,0.45),0_2px_6px_rgba(91,76,174,0.3)] outline-none transition-all hover:bg-action-hover active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          aria-label={pasturePageLogAriaLabel}
+          onClick={() => openPastureCheckModal({ pastureId: pasture.id, pastureName: pasture.name })}
+        >
+          <NotebookPen className="size-6 shrink-0 text-action-foreground" aria-hidden />
+        </button>
+      ) : null}
 
     <MobileRosterFilterSheet
       open={checkLogFilterOpen && !isMdUp}

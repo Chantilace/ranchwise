@@ -88,18 +88,15 @@ export function LogObservationFAB({ className }: LogObservationFABProps) {
       type="button"
       onClick={handleClick}
       className={cn(
-        "fixed right-6 z-[60] md:hidden",
+        "fixed bottom-[calc(24px+env(safe-area-inset-bottom,0px))] right-[calc(24px+env(safe-area-inset-right,0px))] z-[60] md:hidden",
         "flex size-14 shrink-0 items-center justify-center rounded-full",
-        "bg-ai-accent text-white shadow-[0_8px_24px_rgba(123,111,222,0.4)] transition-all",
-        "hover:bg-ai-accent-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-accent/35",
+        "bg-action text-action-foreground shadow-[0_8px_20px_rgba(91,76,174,0.45),0_2px_6px_rgba(91,76,174,0.3)] transition-all",
+        "hover:bg-action-hover active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
         className,
       )}
-      style={{
-        bottom: "max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))",
-      }}
       aria-label="Log observation"
     >
-      <NotebookPen className="size-6 shrink-0 text-white" aria-hidden />
+      <NotebookPen className="size-6 shrink-0 text-action-foreground" aria-hidden />
     </button>
   )
 }

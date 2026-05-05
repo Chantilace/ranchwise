@@ -1,7 +1,15 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
-import { ArrowDownWideNarrow, ChevronLeft, NotebookPen, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { ArrowDownWideNarrow, ChevronLeft, NotebookPen, Pencil, X } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ADD_HORSE_MAX_PHOTO_BYTES,
@@ -12,9 +20,11 @@ import type { HorseTableRow } from "@/components/RanchWiseHorseRoster";
 import { horseRowKey } from "@/components/RanchWiseHorseRoster";
 import { HorseshoeMark } from "@/components/icons/HorseshoeMark";
 import { HorseLogSheet } from "@/components/HorseLogSheet";
+import {
+  ProfileDetailsCard,
+  type ProfileDetailsSection,
+} from "@/components/ProfileDetailsCard";
 import { ObservationTimelineEntryCard } from "@/components/ObservationTimelineEntryCard";
-import { ProfilePhotoLetterbox } from "@/components/ProfilePhotoLetterbox";
-import { horseProfileLetterboxColor } from "@/data/seedHorses";
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell";
 import { useRanchData } from "@/contexts/RanchDataContext";
 import { useCloseOnOutsidePointerDown } from "@/hooks/useCloseOnOutsidePointerDown";
@@ -76,6 +86,7 @@ function parseAgeYears(ageDisplay: string): string {
 
 const HORSE_PROFILE_TAB_IDS = [
   "observations",
+  "details",
   "vet",
   "breeding",
   "photos",
@@ -123,6 +134,24 @@ function formatCareDateShort(iso: string | null): string {
   }
 }
 
+function horseCareDateWithHint(iso: string | null): ReactNode {
+  if (!iso?.trim()) return "—";
+  try {
+    const d = parseISO(iso);
+    if (!isValid(d)) return "—";
+    return (
+      <span className="inline-flex max-w-full flex-wrap items-baseline justify-end gap-2">
+        <span>{format(d, "MMM d, yyyy")}</span>
+        <span className="text-[12px] font-normal leading-none text-muted-foreground">
+          {formatDistanceToNow(d, { addSuffix: true })}
+        </span>
+      </span>
+    );
+  } catch {
+    return "—";
+  }
+}
+
 function horseTableStatusToBadge(
   status: HorseTableRow["healthStatus"],
 ): StatusBadgeStatus {
@@ -142,52 +171,6 @@ function horseProfileOverallBadgeStatus(horse: HorseTableRow): StatusBadgeStatus
   const b = order[horse.behaviorStatus];
   const worst = h <= b ? horse.healthStatus : horse.behaviorStatus;
   return horseTableStatusToBadge(worst);
-}
-
-function HorseProfileCareCard({
-  careRows,
-  compact,
-  className,
-}: {
-  careRows: { label: string; value: string }[];
-  compact: boolean;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col rounded-lg border-[0.5px] border-border bg-card",
-        compact ? "p-3" : "px-4 py-3.5",
-        className,
-      )}
-    >
-      <p className={cn("mb-2.5 font-medium text-foreground", compact ? "text-[13px]" : "text-sm")}>Care</p>
-      <div>
-        {careRows.map((row, i) => (
-          <div
-            key={row.label}
-            className={cn(
-              "flex py-1.5",
-              compact ? "items-start justify-between gap-2" : "items-center justify-between gap-3",
-              i < careRows.length - 1 && "border-b-[0.5px] border-border",
-            )}
-          >
-            <span className={cn("shrink-0 text-muted-foreground", compact ? "text-[13px]" : "text-sm")}>
-              {row.label}
-            </span>
-            <span
-              className={cn(
-                "min-w-0 break-words text-right font-medium text-foreground",
-                compact ? "text-[13px]" : "text-sm",
-              )}
-            >
-              {row.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export function HorseProfile() {
@@ -229,6 +212,11 @@ export function HorseProfile() {
   const [obsTimeRange, setObsTimeRange] = useState<"all" | "7" | "30">("all");
   const [horseObsFilterOpen, setHorseObsFilterOpen] = useState(false);
   const horseObsFilterRef = useRef<HTMLDivElement>(null);
+  const mobileProfileRootRef = useRef<HTMLDivElement>(null);
+  const mobileHeroExpandSectionRef = useRef<HTMLDivElement>(null);
+  const mobileHeroCollapsedRef = useRef(false);
+  const [mobileHeroCollapsed, setMobileHeroCollapsed] = useState(false);
+  const prevHorseIdForMobileHeroRef = useRef<string | undefined>(undefined);
 
   useCloseOnOutsidePointerDown({
     open: horseObsFilterOpen && isMdUp,
@@ -245,6 +233,8 @@ export function HorseProfile() {
       setObsTimeRange("all");
       setHorseObsFilterOpen(false);
       setLogSheetOpen(false);
+      mobileHeroCollapsedRef.current = false;
+      setMobileHeroCollapsed(false);
       setActiveTab("observations");
     }, 0);
     return () => window.clearTimeout(t);
@@ -370,6 +360,72 @@ export function HorseProfile() {
     () => computeLatestObservationEntryIdsByCategory(allObservationsForHorse),
     [allObservationsForHorse],
   );
+
+  useEffect(() => {
+    if (prevHorseIdForMobileHeroRef.current !== horseId) {
+      prevHorseIdForMobileHeroRef.current = horseId;
+      mobileHeroCollapsedRef.current = false;
+      setMobileHeroCollapsed(false);
+    }
+    if (!horseId || !horse) return;
+    if (isMdUp) {
+      mobileHeroCollapsedRef.current = false;
+      setMobileHeroCollapsed(false);
+      return;
+    }
+
+    const findScrollParent = (from: HTMLElement): HTMLElement | null => {
+      let p: HTMLElement | null = from.parentElement;
+      while (p) {
+        const { overflowY } = getComputedStyle(p);
+        if (overflowY === "auto" || overflowY === "scroll") return p;
+        p = p.parentElement;
+      }
+      return null;
+    };
+
+    const rootEl = mobileProfileRootRef.current;
+    if (!rootEl) return;
+    const scrollRoot = findScrollParent(rootEl);
+    if (!scrollRoot) return;
+
+    let io: IntersectionObserver | undefined;
+
+    const onScrollExpand = () => {
+      if (!mobileHeroCollapsedRef.current) return;
+      if (scrollRoot.scrollTop < 48) {
+        mobileHeroCollapsedRef.current = false;
+        setMobileHeroCollapsed(false);
+      }
+    };
+
+    scrollRoot.addEventListener("scroll", onScrollExpand, { passive: true });
+
+    const attachIo = () => {
+      const section = mobileHeroExpandSectionRef.current;
+      if (!section) return;
+      io?.disconnect();
+      io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry) return;
+          if (!entry.isIntersecting) {
+            mobileHeroCollapsedRef.current = true;
+            setMobileHeroCollapsed(true);
+          }
+        },
+        { root: scrollRoot, threshold: 0 },
+      );
+      io.observe(section);
+    };
+
+    const t = window.setTimeout(attachIo, 0);
+
+    return () => {
+      window.clearTimeout(t);
+      io?.disconnect();
+      scrollRoot.removeEventListener("scroll", onScrollExpand);
+    };
+  }, [isMdUp, horseId, horse, mobileHeroCollapsed]);
 
   if (!horseId || !horse) {
     return (
@@ -555,6 +611,7 @@ export function HorseProfile() {
   const profileTabItems: TabItem[] = useMemo(
     () => [
       { id: "observations", label: "Observations" },
+      { id: "details", label: "Details" },
       { id: "vet", label: "Vet records" },
       { id: "breeding", label: "Breeding" },
       { id: "photos", label: "Photos" },
@@ -562,18 +619,32 @@ export function HorseProfile() {
     [],
   );
 
-  const careRows = useMemo(() => {
-    const rows: { label: string; value: string }[] = [];
+  const hasCareDetailsData = useMemo(() => {
     const feedText = profileHorse.feed.filter(Boolean).join(", ");
-    if (feedText) rows.push({ label: "Feed", value: feedText });
-    rows.push({ label: "Last farrier", value: formatCareDateShort(farrierDateIso) });
-    rows.push({ label: "Last dental", value: formatCareDateShort(dentalDateIso) });
+    if (feedText.trim().length > 0) return true;
+    const farrierVal = formatCareDateShort(farrierDateIso);
+    const dentalVal = formatCareDateShort(dentalDateIso);
+    if (farrierVal.trim() !== "" && farrierVal !== "—") return true;
+    if (dentalVal.trim() !== "" && dentalVal !== "—") return true;
+    const bcs = profileHorse.bodyConditionScore;
+    return bcs != null && bcs >= 1 && bcs <= 9;
+  }, [profileHorse, farrierDateIso, dentalDateIso]);
+
+  const horseDetailsSections = useMemo((): ProfileDetailsSection[] => {
+    const feedText = profileHorse.feed.filter(Boolean).join(", ");
+    const healthRows: ProfileDetailsSection["rows"] = [
+      { label: "Last farrier", value: horseCareDateWithHint(farrierDateIso) },
+      { label: "Last dental", value: horseCareDateWithHint(dentalDateIso) },
+    ];
     const bcs = profileHorse.bodyConditionScore;
     if (bcs != null && bcs >= 1 && bcs <= 9) {
-      rows.push({ label: "Body condition", value: `${bcs} / 9` });
+      healthRows.push({ label: "Body condition", value: `${bcs} / 9` });
     }
-    return rows;
-  }, [profileHorse, farrierDateIso, dentalDateIso, observationsByHorse, profileHorseId]);
+    return [
+      { title: "Nutrition", rows: [{ label: "Feed", value: feedText || "—" }] },
+      { title: "Health care", rows: healthRows },
+    ];
+  }, [profileHorse, farrierDateIso, dentalDateIso]);
 
   const horseObsFilterPanelInner = (
     <EntityFilterPanel
@@ -598,11 +669,14 @@ export function HorseProfile() {
     </div>
   );
 
+  const horsePageLogLabel = `Log ${profileHorse.name}`;
+  const horsePageLogAriaLabel = `Log observation for ${profileHorse.name}`;
+
   const observationListSection = (
     <div>
       {allObservationsForHorse.length === 0 ? (
         <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-          No observations logged yet. Tap &quot;Log observation&quot; above to add the first entry.
+          No observations logged yet. Tap &quot;{horsePageLogLabel}&quot; above to add the first entry.
         </p>
       ) : (
         <>
@@ -649,10 +723,13 @@ export function HorseProfile() {
 
   const metadataOneLine = `${subtitleAge} · ${profileHorse.sex} · ${(profileHorse.role ?? "").trim() || "—"} · ${profileHorse.pasture}`;
 
+  const desktopHorseSummaryBadgeStatus = horseProfileOverallBadgeStatus(profileHorse);
+
   const healthSummaryEl = healthSummaryProse ? (
     <SmartSuggestionsPanel
       mode="modal"
-      className="mt-0"
+      className="mt-0 min-w-0"
+      modalContentClassName="rounded-[16px] px-5 py-[18px]"
       label="Health summary"
       labelGlyphStyle="section"
       bodyVariant="prose"
@@ -664,8 +741,11 @@ export function HorseProfile() {
   const healthSummaryElTablet = healthSummaryProse ? (
     <SmartSuggestionsPanel
       mode="modal"
-      className="mt-0 flex h-full min-h-0 min-w-0 flex-col"
       columnFill
+      className="mt-0 flex h-full min-h-0 min-w-0 flex-1 flex-col"
+      modalContentClassName="rounded-[16px] px-5 py-[18px]"
+      proseBodyClassName="text-[14px] leading-[1.45]"
+      labelPillClassName="rounded-full px-2 py-[3px]"
       label="Health summary"
       labelGlyphStyle="section"
       bodyVariant="prose"
@@ -674,34 +754,94 @@ export function HorseProfile() {
     />
   ) : null;
 
-  function renderProfileTabsAndContent() {
+  const healthSummaryElDesktop = healthSummaryProse ? (
+    <SmartSuggestionsPanel
+      mode="modal"
+      columnFill
+      className="mt-0 flex h-full min-h-0 min-w-0 flex-1 flex-col"
+      modalContentClassName="rounded-[16px] px-5 py-[18px]"
+      proseBodyClassName="text-[16px] leading-[1.45]"
+      label="Health summary"
+      labelGlyphStyle="section"
+      bodyVariant="prose"
+      body={healthSummaryProse}
+      contextNote={healthSummaryContextNote ?? undefined}
+    />
+  ) : null;
+
+  const defaultHorseProfileTabClassName =
+    "-mb-px px-4 py-2 text-base font-medium";
+
+  function renderHorseProfileTabs(
+    tabClassName: string = defaultHorseProfileTabClassName,
+  ) {
+    return (
+      <Tabs
+        items={profileTabItems}
+        activeTab={activeTab}
+        onChange={(id) => setActiveTab(id as HorseProfileTabId)}
+        ariaLabel="Horse profile sections"
+        className="flex min-w-0 max-w-full gap-0 border-b border-border"
+        tabClassName={tabClassName}
+      />
+    );
+  }
+
+  function renderHorseProfileTabPanel() {
+    return (
+      <div className="min-w-0 pt-4">
+        {activeTab === "observations" ? (
+          observationListSection
+        ) : activeTab === "details" ? (
+          hasCareDetailsData ? (
+            <div className="pb-9">
+              <ProfileDetailsCard
+                sections={horseDetailsSections}
+                className="min-w-0 max-w-xl"
+              />
+            </div>
+          ) : (
+            <div className="flex max-w-lg flex-col gap-4 pb-9">
+              <p className="text-[13px] leading-relaxed text-muted-foreground">
+                No care details added yet. Edit profile to add feed, farrier, or dental
+                information.
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-fit shrink-0"
+                onClick={openEditProfile}
+              >
+                Edit profile
+              </Button>
+            </div>
+          )
+        ) : activeTab === "vet" ? (
+          <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
+            Vet records coming soon.
+          </p>
+        ) : activeTab === "breeding" ? (
+          <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
+            Breeding coming soon.
+          </p>
+        ) : activeTab === "photos" ? (
+          <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
+            Photos coming soon.
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderProfileTabsAndContent(options?: {
+    tabClassName?: string;
+  }) {
     return (
       <div className="min-w-0">
-        <Tabs
-          items={profileTabItems}
-          activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as HorseProfileTabId)}
-          ariaLabel="Horse profile sections"
-          className="flex min-w-0 max-w-full gap-0 border-b border-border"
-          tabClassName="-mb-px px-4 py-2 text-base font-medium"
-        />
-        <div className="min-w-0 pt-4">
-          {activeTab === "observations" ? (
-            observationListSection
-          ) : activeTab === "vet" ? (
-            <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
-              Vet records coming soon.
-            </p>
-          ) : activeTab === "breeding" ? (
-            <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
-              Breeding coming soon.
-            </p>
-          ) : activeTab === "photos" ? (
-            <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
-              Photos coming soon.
-            </p>
-          ) : null}
-        </div>
+        {renderHorseProfileTabs(
+          options?.tabClassName ?? defaultHorseProfileTabClassName,
+        )}
+        {renderHorseProfileTabPanel()}
       </div>
     );
   }
@@ -720,9 +860,7 @@ export function HorseProfile() {
         )}
       >
         <div className="flex min-w-0 flex-col gap-4">
-          <header
-            className="flex flex-wrap items-center justify-between gap-3 bg-background py-3 md:py-5 max-md:sticky max-md:top-0 max-md:z-30 max-md:-mx-4 max-md:border-b max-md:border-border max-md:px-4 sm:max-md:-mx-6 sm:max-md:px-6"
-          >
+          <header className="hidden md:flex flex-wrap items-center justify-between gap-3 bg-background py-3 md:py-5">
             <nav
               className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground"
               aria-label="Breadcrumb"
@@ -751,156 +889,265 @@ export function HorseProfile() {
               <Button
                 type="button"
                 variant="default"
-                className="h-9 min-h-9 gap-1.5 rounded-full px-4"
-                aria-label="Log observation"
+                className="h-9 min-h-9 max-w-full gap-1.5 rounded-full px-4"
+                aria-label={horsePageLogAriaLabel}
                 onClick={openHorseLog}
               >
                 <NotebookPen className="size-4 shrink-0" aria-hidden />
-                <span className="hidden md:inline">Log observation</span>
-                <span className="md:hidden">Log</span>
+                <span className="min-w-0 truncate">{horsePageLogLabel}</span>
               </Button>
             </div>
           </header>
 
-          {/* Mode B: &lt; md — letterbox hero + floating name card; Health summary + Care; tabs */}
-          <div className="flex min-w-0 flex-col md:hidden">
-            <div className="mb-4 w-full min-w-0">
-              <div className="relative w-full min-w-0">
-                <ProfilePhotoLetterbox
-                  src={profileImageSrc}
-                  alt={profileHorse.name}
-                  ambientColor={horseProfileLetterboxColor(profileHorseId)}
-                  outerAspectRatio="16 / 9"
-                  placeholder={
-                    <HorseshoeMark
-                      className="size-16 shrink-0 text-[var(--color-text-tertiary)] opacity-50"
-                      aria-hidden
-                    />
-                  }
-                />
-                <div className="absolute -bottom-8 left-3 right-3 z-10 rounded-[var(--border-radius-md)] bg-white p-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
-                  <div className="flex items-start justify-between gap-2.5">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-[22px] font-medium leading-tight tracking-[-0.01em] text-foreground">
+          {/* Mobile &lt; md — top bar + hero; collapsed sticky header + tabs + FAB */}
+          <div
+            ref={mobileProfileRootRef}
+            data-mobile-profile-root
+            className="flex min-w-0 flex-col md:hidden"
+          >
+            {mobileHeroCollapsed ? (
+              <div className="sticky top-0 z-40 border-b-[0.5px] border-[rgba(0,0,0,0.08)] bg-[rgba(253,253,253,0.96)] backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
+                <div className="flex min-w-0 items-center gap-2 px-1 py-2">
+                  <Link
+                    to="/horses"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40"
+                    aria-label="Back to horses"
+                  >
+                    <ChevronLeft className="size-5 shrink-0" strokeWidth={2} aria-hidden />
+                  </Link>
+                  <div className="size-9 shrink-0 overflow-hidden rounded-[8px] border-[0.5px] border-border bg-muted">
+                    {profileImageSrc ? (
+                      <img
+                        src={profileImageSrc}
+                        alt={profileHorse.name}
+                        className="size-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex size-full items-center justify-center text-[13px] font-semibold leading-none text-muted-foreground">
+                        {initials(profileHorse.name)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="min-w-0 truncate text-[13px] font-medium text-foreground">
                         {profileHorse.name}
-                      </h2>
-                      <p className="mt-0.5 text-[13px] leading-snug text-[var(--color-text-tertiary)]">
-                        {metadataOneLine}
-                      </p>
+                      </span>
+                      <StatusBadge
+                        status={horseProfileOverallBadgeStatus(profileHorse)}
+                        size="md"
+                        emphasis="secondary"
+                        className="shrink-0"
+                      />
                     </div>
+                    <p className="mt-0.5 min-w-0 truncate text-[13px] leading-snug text-muted-foreground">
+                      {metadataOneLine}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="size-9 min-h-9 min-w-9 shrink-0 gap-0 rounded-full p-0 transition-transform active:scale-95"
+                    aria-label="Edit profile"
+                    onClick={openEditProfile}
+                  >
+                    <Pencil className="size-4 shrink-0" aria-hidden />
+                  </Button>
+                </div>
+                {renderHorseProfileTabs()}
+              </div>
+            ) : null}
+
+            {!mobileHeroCollapsed ? (
+              <div ref={mobileHeroExpandSectionRef} className="shrink-0">
+                <div className="flex min-w-0 items-center justify-between gap-3 bg-background px-[14px] py-[10px]">
+                  <Link
+                    to="/horses"
+                    className="inline-flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+                  >
+                    <ChevronLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                    <span>Horses</span>
+                  </Link>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="h-9 min-h-9 shrink-0 rounded-full px-4 text-[13px]"
+                      onClick={openEditProfile}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      className="h-9 min-h-9 max-w-[min(100%,11rem)] gap-1.5 rounded-full px-3 text-[13px] sm:max-w-none sm:px-4"
+                      aria-label={horsePageLogAriaLabel}
+                      onClick={openHorseLog}
+                    >
+                      <NotebookPen className="size-4 shrink-0" aria-hidden />
+                      <span className="min-w-0 truncate">{horsePageLogLabel}</span>
+                    </Button>
+                  </div>
+                </div>
+                <div className="relative -mx-4 h-[280px] w-[calc(100%+2rem)] max-w-none shrink-0 overflow-hidden sm:-mx-6 sm:w-[calc(100%+3rem)]">
+                  {profileImageSrc ? (
+                    <img
+                      src={profileImageSrc}
+                      alt={profileHorse.name}
+                      className="absolute inset-0 size-full object-cover"
+                      loading="eager"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                      <HorseshoeMark
+                        className="size-16 shrink-0 text-[var(--color-text-tertiary)] opacity-50"
+                        aria-hidden
+                      />
+                    </div>
+                  )}
+                  <div
+                    className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[65%] bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.4)_40%,rgba(0,0,0,0.7)_100%)]"
+                    aria-hidden
+                  />
+                  <div className="absolute bottom-0 left-0 z-10 flex w-full min-w-0 flex-col items-start gap-1.5 p-3.5">
                     <StatusBadge
                       status={horseProfileOverallBadgeStatus(profileHorse)}
                       size="md"
                       emphasis="secondary"
                       className="shrink-0"
                     />
+                    <h2 className="min-w-0 text-[22px] font-medium leading-[1.1] text-white">{profileHorse.name}</h2>
+                    <p className="min-w-0 text-[13px] leading-snug text-[rgba(255,255,255,0.92)]">
+                      {metadataOneLine}
+                    </p>
                   </div>
                 </div>
               </div>
-              {/* Clears the card sitting ~32px below the letterbox bottom */}
-              <div className="h-10 shrink-0" aria-hidden />
-            </div>
+            ) : null}
 
-            <div className="mb-4 flex min-w-0 flex-col gap-3">
+            <div
+              className={cn(
+                "flex min-w-0 flex-col gap-3",
+                healthSummaryEl && "mb-8",
+                mobileHeroCollapsed ? "mt-0 pt-2" : "mt-4",
+              )}
+            >
               {healthSummaryEl}
-              <HorseProfileCareCard careRows={careRows} compact={false} />
             </div>
 
-            {renderProfileTabsAndContent()}
+            {!mobileHeroCollapsed ? (
+              <div className="min-w-0">
+                {renderHorseProfileTabs()}
+                {renderHorseProfileTabPanel()}
+              </div>
+            ) : (
+              renderHorseProfileTabPanel()
+            )}
           </div>
 
-          {/* Mode A: ≥ md — tablet (md–lg) + desktop (lg+) unchanged inside */}
+          {/* Mode A: ≥ md — tablet (md–lg) vs desktop (lg+) */}
           <div className="hidden min-w-0 md:block">
             {/* Tablet: md–lg — fixed-width square photo column + HS / Care */}
             <div className="min-w-0 lg:hidden">
-            <div className="mb-4 grid min-h-0 min-w-0 grid-cols-1 items-stretch gap-4 md:grid-cols-[280px_minmax(0,1fr)] md:gap-5">
-              <div className="relative aspect-square min-h-0 w-full min-w-0 overflow-hidden rounded-xl">
-                {profileImageSrc ? (
-                  <img
-                    src={profileImageSrc}
-                    alt={profileHorse.name}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-muted">
-                    <HorseshoeMark
-                      className="size-12 shrink-0 text-[var(--color-text-tertiary)] opacity-50"
-                      aria-hidden
+              <div className="mb-4 grid min-h-0 min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch gap-6">
+                <div className="relative aspect-square h-full min-h-0 max-h-[240px] min-w-[180px] max-w-[240px] shrink-0 self-end overflow-hidden rounded-[var(--radius-2xl)]">
+                  {profileImageSrc ? (
+                    <img
+                      src={profileImageSrc}
+                      alt={profileHorse.name}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      loading="lazy"
                     />
-                  </div>
-                )}
-                <div className="absolute bottom-3 left-3 right-3 z-10 rounded-[var(--border-radius-md)] bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
-                  <div className="flex items-start justify-between gap-2.5">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-[22px] font-medium leading-tight tracking-[-0.01em] text-foreground">
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted text-xl font-semibold text-muted-foreground">
+                      {initials(profileHorse.name)}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex h-full min-h-0 min-w-0 flex-col gap-4 pt-[2px]">
+                  <div className="min-w-0 shrink-0">
+                    <div className="mb-1.5 flex min-w-0 items-center gap-2.5">
+                      <h2 className="min-w-0 truncate text-[28px] font-medium leading-[1.1] tracking-[-0.01em] text-foreground">
                         {profileHorse.name}
                       </h2>
-                      <p className="mt-0.5 text-[13px] leading-snug text-[var(--color-text-tertiary)]">
-                        {metadataOneLine}
-                      </p>
+                      <StatusBadge
+                        status={desktopHorseSummaryBadgeStatus}
+                        size="md"
+                        emphasis="secondary"
+                        className="!shrink-0 !rounded-full !border-0 !px-2 !py-[3px] !text-[13px]"
+                      />
                     </div>
-                    <StatusBadge
-                      status={horseProfileOverallBadgeStatus(profileHorse)}
-                      size="md"
-                      emphasis="secondary"
-                      className="shrink-0"
+                    <p className="min-w-0 text-[13px] leading-snug text-muted-foreground">
+                      {metadataOneLine}
+                    </p>
+                  </div>
+                  {healthSummaryElTablet ? (
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col">{healthSummaryElTablet}</div>
+                  ) : null}
+                </div>
+              </div>
+
+              {renderProfileTabsAndContent({
+                tabClassName:
+                  "-mb-px px-4 py-2 text-[13px] font-medium leading-snug",
+              })}
+            </div>
+
+            {/* Desktop: lg+ — magazine: identity + inline Care, full-width Health Summary, tabs */}
+            <div className="hidden min-w-0 flex-col lg:flex">
+              <div className="mb-6 grid min-h-0 min-w-0 grid-cols-[auto_minmax(0,1fr)] items-stretch gap-8">
+                <div className="relative aspect-square h-full min-h-0 max-h-[360px] min-w-[200px] max-w-[360px] shrink-0 self-end overflow-hidden rounded-[var(--radius-3xl)]">
+                  {profileImageSrc ? (
+                    <img
+                      src={profileImageSrc}
+                      alt={profileHorse.name}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      loading="lazy"
                     />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted text-2xl font-semibold text-muted-foreground">
+                      {initials(profileHorse.name)}
+                    </div>
+                  )}
+                </div>
+                <div className="flex h-full min-h-[240px] min-w-0 flex-col gap-4 pt-[4px]">
+                  <div className="min-w-0 shrink-0">
+                    <div className="mb-1.5 flex min-w-0 flex-wrap items-center gap-3">
+                      <h1 className="min-w-0 truncate text-[30px] font-medium leading-[1.1] tracking-[-0.01em] text-foreground">
+                        {profileHorse.name}
+                      </h1>
+                      <StatusBadge
+                        status={desktopHorseSummaryBadgeStatus}
+                        size="md"
+                        emphasis="secondary"
+                        className="!shrink-0 !rounded-full !border-0 !px-[10px] !py-1 !text-[13px]"
+                      />
+                    </div>
+                    <p className="min-w-0 truncate text-[16px] text-muted-foreground">{metadataOneLine}</p>
                   </div>
+                  {healthSummaryElDesktop ? (
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col">{healthSummaryElDesktop}</div>
+                  ) : null}
                 </div>
               </div>
-
-              <div className="flex h-full min-h-0 min-w-0 flex-col gap-3">
-                {healthSummaryElTablet ? (
-                  <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col">{healthSummaryElTablet}</div>
-                ) : null}
-                <HorseProfileCareCard
-                  careRows={careRows}
-                  compact={false}
-                  className="h-full min-h-0 flex-1 basis-0 flex-col"
-                />
-              </div>
-            </div>
-
-            {renderProfileTabsAndContent()}
-            </div>
-
-            {/* Desktop: lg+ — pasture-style two column */}
-            <div className="hidden min-w-0 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-5 lg:min-h-0 lg:flex-1 lg:overflow-hidden xl:grid-cols-[360px_minmax(0,1fr)] xl:gap-6">
-            <aside className="flex flex-col gap-3 lg:sticky lg:top-0 lg:self-start">
-              <div className="aspect-square min-h-0 w-full overflow-hidden rounded-xl">
-                {profileImageSrc ? (
-                  <img
-                    src={profileImageSrc}
-                    alt={profileHorse.name}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex h-full min-h-0 w-full items-center justify-center bg-muted text-2xl font-semibold text-muted-foreground">
-                    {initials(profileHorse.name)}
-                  </div>
-                )}
-              </div>
-              <div>
-                <div className="mb-1 flex flex-wrap items-center gap-2">
-                  <h2 className="text-[24px] font-medium tracking-[-0.01em] text-foreground">{profileHorse.name}</h2>
-                  <StatusBadge
-                    status={horseProfileOverallBadgeStatus(profileHorse)}
-                    size="md"
-                    emphasis="secondary"
-                  />
-                </div>
-                <p className="text-[13px] text-[var(--color-text-tertiary)]">{metadataOneLine}</p>
-              </div>
-              {healthSummaryEl}
-              <HorseProfileCareCard careRows={careRows} compact={false} />
-            </aside>
-            <div className="min-w-0 lg:min-h-0 lg:overflow-y-auto">{renderProfileTabsAndContent()}</div>
+              <div className="min-w-0">{renderProfileTabsAndContent()}</div>
             </div>
           </div>
         </div>
       </RanchWorkspaceShell>
+
+      {mobileHeroCollapsed && !isMdUp ? (
+        <button
+          type="button"
+          className="fixed bottom-[calc(24px+env(safe-area-inset-bottom,0px))] right-[calc(24px+env(safe-area-inset-right,0px))] z-[60] flex size-14 shrink-0 items-center justify-center rounded-full bg-action text-action-foreground shadow-[0_8px_20px_rgba(91,76,174,0.45),0_2px_6px_rgba(91,76,174,0.3)] outline-none transition-all hover:bg-action-hover active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          aria-label={horsePageLogAriaLabel}
+          onClick={openHorseLog}
+        >
+          <NotebookPen className="size-6 shrink-0 text-action-foreground" aria-hidden />
+        </button>
+      ) : null}
 
       <Dialog.Root
         open={editProfileOpen}

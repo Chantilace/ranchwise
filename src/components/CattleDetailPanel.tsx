@@ -298,7 +298,9 @@ function CattleEmbeddedLogObservationSubview({
               <ChevronLeft className="size-3 shrink-0" aria-hidden />
               Back
             </button>
-            <p className="px-14 text-center text-base font-medium text-foreground">Log observation</p>
+            <p className="px-14 text-center text-base font-medium text-foreground">
+              {`Log ${formatCattleTagDisplay(cattle.tagNumber)}`}
+            </p>
           </div>
         </div>
         <div className={LOG_OBSERVATION_IDENTITY_ROW}>
