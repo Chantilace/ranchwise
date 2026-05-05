@@ -1,6 +1,6 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
-import { ArrowDownWideNarrow, ChevronLeft, NotebookPen, Pencil, X } from "lucide-react";
+import { ArrowDownWideNarrow, ChevronLeft, NotebookPen, X } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -36,6 +36,7 @@ import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelSty
 import { FilteredCountDisplay } from "@/components/workspace/FilteredCountDisplay";
 import { MobileRosterFilterSheet } from "@/components/workspace/MobileRosterFilterSheet";
 import { StatusBadge, type StatusBadgeStatus } from "@/components/StatusBadge";
+import { profileIdentityStatusEmphasis } from "@/lib/statusUtils";
 import {
   getHorseEffectiveLastDentalIso,
   getHorseEffectiveLastFarrierIso,
@@ -723,7 +724,7 @@ export function HorseProfile() {
 
   const metadataOneLine = `${subtitleAge} · ${profileHorse.sex} · ${(profileHorse.role ?? "").trim() || "—"} · ${profileHorse.pasture}`;
 
-  const desktopHorseSummaryBadgeStatus = horseProfileOverallBadgeStatus(profileHorse);
+  const profileHeroBadgeStatus = horseProfileOverallBadgeStatus(profileHorse);
 
   const healthSummaryEl = healthSummaryProse ? (
     <SmartSuggestionsPanel
@@ -770,7 +771,7 @@ export function HorseProfile() {
   ) : null;
 
   const defaultHorseProfileTabClassName =
-    "-mb-px px-4 py-2 text-base font-medium";
+    "-mb-px px-4 py-2 text-[13px] font-normal leading-snug md:text-[14px]";
 
   function renderHorseProfileTabs(
     tabClassName: string = defaultHorseProfileTabClassName,
@@ -906,88 +907,93 @@ export function HorseProfile() {
             className="flex min-w-0 flex-col md:hidden"
           >
             {mobileHeroCollapsed ? (
-              <div className="sticky top-0 z-40 border-b-[0.5px] border-[rgba(0,0,0,0.08)] bg-[rgba(253,253,253,0.96)] backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
-                <div className="flex min-w-0 items-center gap-2 px-1 py-2">
-                  <Link
-                    to="/horses"
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40"
-                    aria-label="Back to horses"
-                  >
-                    <ChevronLeft className="size-5 shrink-0" strokeWidth={2} aria-hidden />
-                  </Link>
-                  <div className="size-9 shrink-0 overflow-hidden rounded-[8px] border-[0.5px] border-border bg-muted">
-                    {profileImageSrc ? (
-                      <img
-                        src={profileImageSrc}
-                        alt={profileHorse.name}
-                        className="size-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex size-full items-center justify-center text-[13px] font-semibold leading-none text-muted-foreground">
-                        {initials(profileHorse.name)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className="min-w-0 truncate text-[13px] font-medium text-foreground">
-                        {profileHorse.name}
-                      </span>
-                      <StatusBadge
-                        status={horseProfileOverallBadgeStatus(profileHorse)}
-                        size="md"
-                        emphasis="secondary"
-                        className="shrink-0"
-                      />
+              <div className="sticky top-0 z-40 -mx-4 w-[calc(100%+2rem)] max-w-none shrink-0 sm:-mx-6 sm:w-[calc(100%+3rem)]">
+                <div className="border-b-[0.5px] border-[rgba(0,0,0,0.08)] bg-[rgba(253,253,253,0.96)] shadow-[var(--shadow-sticky-scroll)] backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
+                  <div className="flex min-w-0 items-center gap-2 px-4 py-3 sm:px-6">
+                    <Link
+                      to="/horses"
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40"
+                      aria-label="Back to horses"
+                    >
+                      <ChevronLeft className="size-5 shrink-0" strokeWidth={2} aria-hidden />
+                    </Link>
+                    <div className="size-11 shrink-0 overflow-hidden rounded-[10px] border-[0.5px] border-border bg-muted">
+                      {profileImageSrc ? (
+                        <img
+                          src={profileImageSrc}
+                          alt={profileHorse.name}
+                          className="size-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex size-full items-center justify-center text-[13px] font-semibold leading-none text-muted-foreground">
+                          {initials(profileHorse.name)}
+                        </div>
+                      )}
                     </div>
-                    <p className="mt-0.5 min-w-0 truncate text-[13px] leading-snug text-muted-foreground">
-                      {metadataOneLine}
-                    </p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="min-w-0 truncate text-[16px] font-medium text-foreground">
+                          {profileHorse.name}
+                        </span>
+                        <StatusBadge
+                          status={profileHeroBadgeStatus}
+                          size="md"
+                          emphasis={profileIdentityStatusEmphasis(profileHeroBadgeStatus)}
+                          className="shrink-0 !px-2 !py-[3px] !text-[13px]"
+                        />
+                      </div>
+                      <p className="mt-0.5 min-w-0 truncate text-[13px] leading-snug text-muted-foreground">
+                        {metadataOneLine}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="h-9 min-h-9 shrink-0 rounded-full px-4 text-[13px] transition-transform active:scale-95"
+                      onClick={openEditProfile}
+                    >
+                      Edit
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="size-9 min-h-9 min-w-9 shrink-0 gap-0 rounded-full p-0 transition-transform active:scale-95"
-                    aria-label="Edit profile"
-                    onClick={openEditProfile}
-                  >
-                    <Pencil className="size-4 shrink-0" aria-hidden />
-                  </Button>
+                  <div className="px-4 sm:px-6">{renderHorseProfileTabs()}</div>
                 </div>
-                {renderHorseProfileTabs()}
               </div>
             ) : null}
 
             {!mobileHeroCollapsed ? (
               <div ref={mobileHeroExpandSectionRef} className="shrink-0">
-                <div className="flex min-w-0 items-center justify-between gap-3 bg-background px-[14px] py-[10px]">
-                  <Link
-                    to="/horses"
-                    className="inline-flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
-                  >
-                    <ChevronLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-                    <span>Horses</span>
-                  </Link>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="h-9 min-h-9 shrink-0 rounded-full px-4 text-[13px]"
-                      onClick={openEditProfile}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="primary"
-                      className="h-9 min-h-9 max-w-[min(100%,11rem)] gap-1.5 rounded-full px-3 text-[13px] sm:max-w-none sm:px-4"
-                      aria-label={horsePageLogAriaLabel}
-                      onClick={openHorseLog}
-                    >
-                      <NotebookPen className="size-4 shrink-0" aria-hidden />
-                      <span className="min-w-0 truncate">{horsePageLogLabel}</span>
-                    </Button>
+                <div className="-mx-4 w-[calc(100%+2rem)] max-w-none shrink-0 sm:-mx-6 sm:w-[calc(100%+3rem)]">
+                  <div className="border-b-[0.5px] border-[rgba(0,0,0,0.08)] bg-background">
+                    <div className="flex min-w-0 items-center justify-between gap-3 px-4 py-[10px] sm:px-6">
+                      <Link
+                        to="/horses"
+                        className="inline-flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+                      >
+                        <ChevronLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                        <span>Horses</span>
+                      </Link>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="h-9 min-h-9 shrink-0 rounded-full px-4 text-[13px]"
+                          onClick={openEditProfile}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="primary"
+                          className="h-9 min-h-9 max-w-[min(100%,11rem)] gap-1.5 rounded-full px-3 text-[13px] sm:max-w-none sm:px-4"
+                          aria-label={horsePageLogAriaLabel}
+                          onClick={openHorseLog}
+                        >
+                          <NotebookPen className="size-4 shrink-0" aria-hidden />
+                          <span className="min-w-0 truncate">{horsePageLogLabel}</span>
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="relative -mx-4 h-[280px] w-[calc(100%+2rem)] max-w-none shrink-0 overflow-hidden sm:-mx-6 sm:w-[calc(100%+3rem)]">
@@ -1010,11 +1016,11 @@ export function HorseProfile() {
                     className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[65%] bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.4)_40%,rgba(0,0,0,0.7)_100%)]"
                     aria-hidden
                   />
-                  <div className="absolute bottom-0 left-0 z-10 flex w-full min-w-0 flex-col items-start gap-1.5 p-3.5">
+                  <div className="absolute bottom-0 left-0 z-10 flex w-full min-w-0 flex-col items-start gap-1.5 px-4 pb-3.5 sm:px-6">
                     <StatusBadge
-                      status={horseProfileOverallBadgeStatus(profileHorse)}
+                      status={profileHeroBadgeStatus}
                       size="md"
-                      emphasis="secondary"
+                      emphasis={profileIdentityStatusEmphasis(profileHeroBadgeStatus)}
                       className="shrink-0"
                     />
                     <h2 className="min-w-0 text-[22px] font-medium leading-[1.1] text-white">{profileHorse.name}</h2>
@@ -1073,10 +1079,10 @@ export function HorseProfile() {
                         {profileHorse.name}
                       </h2>
                       <StatusBadge
-                        status={desktopHorseSummaryBadgeStatus}
+                        status={profileHeroBadgeStatus}
                         size="md"
-                        emphasis="secondary"
-                        className="!shrink-0 !rounded-full !border-0 !px-2 !py-[3px] !text-[13px]"
+                        emphasis={profileIdentityStatusEmphasis(profileHeroBadgeStatus)}
+                        className="shrink-0"
                       />
                     </div>
                     <p className="min-w-0 text-[13px] leading-snug text-muted-foreground">
@@ -1091,7 +1097,7 @@ export function HorseProfile() {
 
               {renderProfileTabsAndContent({
                 tabClassName:
-                  "-mb-px px-4 py-2 text-[13px] font-medium leading-snug",
+                  "-mb-px px-4 py-2 text-[14px] font-normal leading-snug",
               })}
             </div>
 
@@ -1119,10 +1125,10 @@ export function HorseProfile() {
                         {profileHorse.name}
                       </h1>
                       <StatusBadge
-                        status={desktopHorseSummaryBadgeStatus}
+                        status={profileHeroBadgeStatus}
                         size="md"
-                        emphasis="secondary"
-                        className="!shrink-0 !rounded-full !border-0 !px-[10px] !py-1 !text-[13px]"
+                        emphasis={profileIdentityStatusEmphasis(profileHeroBadgeStatus)}
+                        className="shrink-0"
                       />
                     </div>
                     <p className="min-w-0 truncate text-[16px] text-muted-foreground">{metadataOneLine}</p>
@@ -1154,10 +1160,19 @@ export function HorseProfile() {
         onOpenChange={(open) => !open && setEditProfileOpen(false)}
       >
         <Dialog.Portal>
-          <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/55 backdrop-blur-[1px] transition-opacity data-[ending-style]:opacity-0" />
-          <Dialog.Viewport className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <Dialog.Popup className="flex max-h-[min(90dvh,680px)] w-full max-w-[480px] flex-col overflow-hidden rounded-[14px] border-[0.5px] border-border bg-background p-6 shadow-xl outline-none">
-              <div className="mb-6 flex items-start justify-between gap-3">
+          <Dialog.Backdrop className="fixed inset-0 z-[120] bg-black/55 backdrop-blur-[1px] transition-opacity data-[ending-style]:opacity-0" />
+          <Dialog.Viewport className="fixed inset-0 z-[120] flex items-end justify-center p-0 md:items-center md:p-4">
+            <Dialog.Popup
+              className={cn(
+                "flex w-full max-w-full min-h-0 flex-col overflow-hidden border-[0.5px] border-border bg-background text-foreground shadow-xl outline-none",
+                "max-h-[90dvh] rounded-t-2xl md:max-h-[min(90dvh,680px)] md:max-w-[480px] md:rounded-[14px]",
+                "translate-y-0 transition-transform duration-200 ease-out data-[starting-style]:translate-y-full md:data-[starting-style]:translate-y-0 md:data-[starting-style]:scale-95",
+              )}
+            >
+              <div className="flex shrink-0 flex-col md:hidden">
+                <div className="mx-auto mt-3 h-1 w-8 shrink-0 rounded-full bg-muted" aria-hidden />
+              </div>
+              <div className="flex shrink-0 items-start justify-between gap-3 px-6 pb-4 pt-2 md:pb-6 md:pt-6">
                 <Dialog.Title className="text-base font-medium text-foreground">
                   Edit profile
                 </Dialog.Title>
@@ -1172,7 +1187,7 @@ export function HorseProfile() {
                   <X className="size-4" />
                 </Dialog.Close>
               </div>
-              <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="min-h-0 flex-1 overflow-y-auto px-6 pr-5">
                 <AddHorseFormFields
                   variant="modal"
                   appearance="profileEdit"
@@ -1206,7 +1221,7 @@ export function HorseProfile() {
                   onLastDentalIsoChange={setDentalDraft}
                 />
               </div>
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
+              <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border px-6 py-6">
                 <Button type="button" variant="destructive" className="text-sm" onClick={handleDeleteHorse}>
                   Delete horse
                 </Button>

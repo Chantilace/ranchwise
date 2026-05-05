@@ -1,7 +1,7 @@
 import { format, formatDistanceToNow } from "date-fns"
-import { ArrowRight, ChevronLeft, NotebookPen, Pencil } from "lucide-react"
+import { ArrowRight, ChevronLeft, NotebookPen } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { Link, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { EditPastureModal } from "@/components/EditPastureModal"
 import {
   ProfileDetailsCard,
@@ -33,6 +33,7 @@ import {
 import { PASTURE_PROFILE_AI_SUMMARY } from "@/lib/pastureProfileSummarySeed"
 import { PASTURE_SEED_MEDIA } from "@/lib/pastureSeedMedia"
 import { getPastureShortName } from "@/lib/pastureUtils"
+import { profileIdentityStatusEmphasis } from "@/lib/statusUtils"
 import {
   WORKSPACE_PAGE_SCROLL_CLASS,
   WORKSPACE_PAGE_SHELL_FLUSH_TOP_CLASS,
@@ -123,12 +124,14 @@ function PastureCheckCard({
 
 export function PastureProfilePage() {
   const { pastureId } = useParams<{ pastureId: string }>()
+  const navigate = useNavigate()
   const {
     pastures,
     cattle,
     pastureChecksByPastureId,
     openPastureCheckModal,
     updatePasture,
+    removePasture,
     observationsByCattleId,
   } = useRanchData()
 
@@ -156,6 +159,12 @@ export function PastureProfilePage() {
     () => (pastureId ? pastures.find((p) => p.id === pastureId) ?? null : null),
     [pastures, pastureId]
   )
+
+  const handleDeletePasture = useCallback(() => {
+    if (!pasture) return
+    removePasture(pasture.id)
+    navigate("/pastures")
+  }, [pasture, navigate, removePasture])
 
   const checksSorted = useMemo(() => {
     if (!pastureId) return []
@@ -541,7 +550,8 @@ export function PastureProfilePage() {
     />
   ) : null
 
-  const defaultPastureTabClassName = "-mb-px px-4 py-2 text-base font-medium"
+  const defaultPastureTabClassName =
+    "-mb-px px-4 py-2 text-[13px] font-normal leading-snug md:text-[14px]"
 
   function renderPastureTabs(tabClassName: string = defaultPastureTabClassName) {
     return (
@@ -712,88 +722,93 @@ export function PastureProfilePage() {
           className="flex min-w-0 flex-col md:hidden"
         >
           {mobileHeroCollapsed ? (
-            <div className="sticky top-0 z-40 border-b-[0.5px] border-[rgba(0,0,0,0.08)] bg-[rgba(253,253,253,0.96)] backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
-              <div className="flex min-w-0 items-center gap-2 px-1 py-2">
-                <Link
-                  to="/pastures"
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40"
-                  aria-label="Back to pastures"
-                >
-                  <ChevronLeft className="size-5 shrink-0" strokeWidth={2} aria-hidden />
-                </Link>
-                <div className="size-9 shrink-0 overflow-hidden rounded-[8px] border-[0.5px] border-border bg-muted">
-                  {profileImageSrc ? (
-                    <img
-                      src={profileImageSrc}
-                      alt={pasture.name}
-                      className="size-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex size-full items-center justify-center text-[13px] font-semibold leading-none text-muted-foreground">
-                      {pasture.name.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className="min-w-0 truncate text-[13px] font-medium text-foreground">
-                      {pasture.name}
-                    </span>
-                    <StatusBadge
-                      status={derivedStatus}
-                      size="md"
-                      emphasis="secondary"
-                      className="shrink-0"
-                    />
+            <div className="sticky top-0 z-40 -mx-4 w-[calc(100%+2rem)] max-w-none shrink-0 sm:-mx-6 sm:w-[calc(100%+3rem)]">
+              <div className="border-b-[0.5px] border-[rgba(0,0,0,0.08)] bg-[rgba(253,253,253,0.96)] shadow-[var(--shadow-sticky-scroll)] backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
+                <div className="flex min-w-0 items-center gap-2 px-4 py-3 sm:px-6">
+                  <Link
+                    to="/pastures"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40"
+                    aria-label="Back to pastures"
+                  >
+                    <ChevronLeft className="size-5 shrink-0" strokeWidth={2} aria-hidden />
+                  </Link>
+                  <div className="size-11 shrink-0 overflow-hidden rounded-[10px] border-[0.5px] border-border bg-muted">
+                    {profileImageSrc ? (
+                      <img
+                        src={profileImageSrc}
+                        alt={pasture.name}
+                        className="size-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex size-full items-center justify-center text-[13px] font-semibold leading-none text-muted-foreground">
+                        {pasture.name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
                   </div>
-                  <p className="mt-0.5 min-w-0 truncate text-[13px] leading-snug text-muted-foreground">
-                    {metadataOneLine}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="min-w-0 truncate text-[16px] font-medium text-foreground">
+                        {pasture.name}
+                      </span>
+                      <StatusBadge
+                        status={derivedStatus}
+                        size="md"
+                        emphasis={profileIdentityStatusEmphasis(derivedStatus)}
+                        className="shrink-0 !px-2 !py-[3px] !text-[13px]"
+                      />
+                    </div>
+                    <p className="mt-0.5 min-w-0 truncate text-[13px] leading-snug text-muted-foreground">
+                      {metadataOneLine}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-9 min-h-9 shrink-0 rounded-full px-4 text-[13px] transition-transform active:scale-95"
+                    onClick={() => setEditOpen(true)}
+                  >
+                    Edit
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="size-9 min-h-9 min-w-9 shrink-0 gap-0 rounded-full p-0 transition-transform active:scale-95"
-                  aria-label="Edit pasture"
-                  onClick={() => setEditOpen(true)}
-                >
-                  <Pencil className="size-4 shrink-0" aria-hidden />
-                </Button>
+                <div className="px-4 sm:px-6">{renderPastureTabs()}</div>
               </div>
-              {renderPastureTabs()}
             </div>
           ) : null}
 
           {!mobileHeroCollapsed ? (
             <div ref={mobileHeroExpandSectionRef} className="shrink-0">
-              <div className="flex min-w-0 items-center justify-between gap-3 bg-background px-[14px] py-[10px]">
-                <Link
-                  to="/pastures"
-                  className="inline-flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
-                >
-                  <ChevronLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-                  <span>Pastures</span>
-                </Link>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="h-9 min-h-9 shrink-0 rounded-full px-4 text-[13px]"
-                    onClick={() => setEditOpen(true)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="primary"
-                    className="h-9 min-h-9 max-w-[min(100%,11rem)] gap-1.5 rounded-full px-3 text-[13px] sm:max-w-none sm:px-4"
-                    aria-label={pasturePageLogAriaLabel}
-                    onClick={() => openPastureCheckModal({ pastureId: pasture.id, pastureName: pasture.name })}
-                  >
-                    <NotebookPen className="size-4 shrink-0" aria-hidden />
-                    <span className="min-w-0 truncate">{pasturePageLogLabel}</span>
-                  </Button>
+              <div className="-mx-4 w-[calc(100%+2rem)] max-w-none shrink-0 sm:-mx-6 sm:w-[calc(100%+3rem)]">
+                <div className="border-b-[0.5px] border-[rgba(0,0,0,0.08)] bg-background">
+                  <div className="flex min-w-0 items-center justify-between gap-3 px-4 py-[10px] sm:px-6">
+                    <Link
+                      to="/pastures"
+                      className="inline-flex min-w-0 items-center gap-1 text-[13px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
+                    >
+                      <ChevronLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                      <span>Pastures</span>
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="h-9 min-h-9 shrink-0 rounded-full px-4 text-[13px]"
+                        onClick={() => setEditOpen(true)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        className="h-9 min-h-9 max-w-[min(100%,11rem)] gap-1.5 rounded-full px-3 text-[13px] sm:max-w-none sm:px-4"
+                        aria-label={pasturePageLogAriaLabel}
+                        onClick={() => openPastureCheckModal({ pastureId: pasture.id, pastureName: pasture.name })}
+                      >
+                        <NotebookPen className="size-4 shrink-0" aria-hidden />
+                        <span className="min-w-0 truncate">{pasturePageLogLabel}</span>
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="relative -mx-4 h-[280px] w-[calc(100%+2rem)] max-w-none shrink-0 overflow-hidden sm:-mx-6 sm:w-[calc(100%+3rem)]">
@@ -813,8 +828,13 @@ export function PastureProfilePage() {
                   className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[65%] bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.4)_40%,rgba(0,0,0,0.7)_100%)]"
                   aria-hidden
                 />
-                <div className="absolute bottom-0 left-0 z-10 flex w-full min-w-0 flex-col items-start gap-1.5 p-3.5">
-                  <StatusBadge status={derivedStatus} size="md" emphasis="secondary" className="shrink-0" />
+                <div className="absolute bottom-0 left-0 z-10 flex w-full min-w-0 flex-col items-start gap-1.5 px-4 pb-3.5 sm:px-6">
+                  <StatusBadge
+                    status={derivedStatus}
+                    size="md"
+                    emphasis={profileIdentityStatusEmphasis(derivedStatus)}
+                    className="shrink-0"
+                  />
                   <h2 className="min-w-0 text-[22px] font-medium leading-[1.1] text-white">{pasture.name}</h2>
                   <p className="min-w-0 text-[13px] leading-snug text-[rgba(255,255,255,0.92)]">
                     {metadataOneLine}
@@ -871,8 +891,8 @@ export function PastureProfilePage() {
                     <StatusBadge
                       status={derivedStatus}
                       size="md"
-                      emphasis="secondary"
-                      className="!shrink-0 !rounded-full !border-0 !px-2 !py-[3px] !text-[13px]"
+                      emphasis={profileIdentityStatusEmphasis(derivedStatus)}
+                      className="shrink-0"
                     />
                   </div>
                   <p className="min-w-0 text-[13px] leading-snug text-muted-foreground">{metadataOneLine}</p>
@@ -884,7 +904,7 @@ export function PastureProfilePage() {
             </div>
 
             {renderProfileTabsAndContent({
-              tabClassName: "-mb-px px-4 py-2 text-[13px] font-medium leading-snug",
+              tabClassName: "-mb-px px-4 py-2 text-[14px] font-normal leading-snug",
             })}
           </div>
 
@@ -913,8 +933,8 @@ export function PastureProfilePage() {
                     <StatusBadge
                       status={derivedStatus}
                       size="md"
-                      emphasis="secondary"
-                      className="!shrink-0 !rounded-full !border-0 !px-[10px] !py-1 !text-[13px]"
+                      emphasis={profileIdentityStatusEmphasis(derivedStatus)}
+                      className="shrink-0"
                     />
                   </div>
                   <p className="min-w-0 truncate text-[16px] text-muted-foreground">{metadataOneLine}</p>
@@ -934,6 +954,7 @@ export function PastureProfilePage() {
         pasture={pasture as Pasture}
         onClose={() => setEditOpen(false)}
         onSave={(id, patch) => updatePasture(id, patch)}
+        onDelete={handleDeletePasture}
       />
       </RanchWorkspaceShell>
 

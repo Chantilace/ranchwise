@@ -65,6 +65,16 @@ const PASTURE_TO_CANONICAL: Record<PastureStatus, StatusCanonical> = {
   action_needed: "flag",
 }
 
+/** Profile hero / identity row: Good and Stable stay secondary (soft tint); Monitor, Concern, Flag, and Action needed use primary solid ramp (Policy B). */
+export type ProfileIdentityBadgeStatus = StatusCanonical | PastureStatus
+
+export function profileIdentityStatusEmphasis(
+  status: ProfileIdentityBadgeStatus,
+): StatusEmphasis {
+  if (status === "good" || status === "stable") return "secondary"
+  return "primary"
+}
+
 function badgeVariantClass(canonical: StatusCanonical, emphasis: StatusEmphasis): string {
   const variantKey =
     emphasis === "primary" ? "badgePrimary" :

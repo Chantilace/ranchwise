@@ -142,6 +142,8 @@ type RanchDataContextValue = {
   pastures: Pasture[]
   /** Merge demo edits from the profile Edit modal (in-memory). */
   updatePasture: (pastureId: string, patch: Partial<Pasture>) => void
+  /** Remove a pasture (demo): reassigns cattle and horses to another seed pasture. */
+  removePasture: (pastureId: string) => void
   cattle: Cattle[]
   pastureChecks: PastureCheckEntry[]
   pastureChecksByPastureId: Record<string, PastureCheckEntry[]>
@@ -213,6 +215,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
 
   const [cattle, setCattle] = useState<Cattle[]>(SAMPLE_CATTLE)
   const [pastureFieldOverrides, setPastureFieldOverrides] = useState<Record<string, Partial<Pasture>>>({})
+  const [removedPastureIds, setRemovedPastureIds] = useState<Set<string>>(() => new Set())
   const [pastureChecksByPastureId, setPastureChecksByPastureId] = useState<
     Record<string, PastureCheckEntry[]>
   >(() => buildInitialPastureChecksByPastureId())
@@ -276,7 +279,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const pastures = useMemo((): Pasture[] => {
-    return PASTURES_SEED.map((p) => {
+    return PASTURES_SEED.filter((p) => !removedPastureIds.has(p.id)).map((p) => {
       const merged = { ...p, ...(pastureFieldOverrides[p.id] ?? {}) }
       const count = cattle.filter((c) => c.pastureId === merged.id).length
       const checks = (pastureChecksByPastureId[merged.id] ?? [])
@@ -293,7 +296,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
         lastCheckDate: last ? formatISO(last.date) : undefined,
       }
     })
-  }, [cattle, pastureChecksByPastureId, pastureFieldOverrides])
+  }, [cattle, pastureChecksByPastureId, pastureFieldOverrides, removedPastureIds])
 
   const appendHerdHorse = useCallback((row: HorseTableRow) => {
     setAddedHorses((prev) => [...prev, row])
@@ -305,6 +308,55 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       [horseKey]: { ...prev[horseKey], ...patch },
     }))
   }, [])
+
+  const removePasture = useCallback(
+    (pastureId: string) => {
+      let nextRemoved = new Set<string>()
+      setRemovedPastureIds((prev) => {
+        nextRemoved = new Set(prev)
+        nextRemoved.add(pastureId)
+        return nextRemoved
+      })
+      const fallback = PASTURES_SEED.find((p) => !nextRemoved.has(p.id))
+      if (!fallback) {
+        setRemovedPastureIds((prev) => {
+          const r = new Set(prev)
+          r.delete(pastureId)
+          return r
+        })
+        return
+      }
+
+      const seedPasture = PASTURES_SEED.find((p) => p.id === pastureId)
+      const deletedName =
+        (pastureFieldOverrides[pastureId]?.name ?? seedPasture?.name) ?? ""
+
+      setCattle((prev) =>
+        prev.map((c) => (c.pastureId === pastureId ? { ...c, pastureId: fallback.id } : c)),
+      )
+
+      setPastureChecksByPastureId((prev) => {
+        const { [pastureId]: _, ...rest } = prev
+        return rest
+      })
+
+      setPastureFieldOverrides((prev) => {
+        const { [pastureId]: _, ...rest } = prev
+        return rest
+      })
+
+      setLogObservationTarget((t) =>
+        t?.kind === "pasture" && t.pastureId === pastureId ? null : t,
+      )
+
+      for (const row of herdRows) {
+        if (row.pasture === deletedName) {
+          updateHerdHorse(horseRowKey(row), { pasture: fallback.name })
+        }
+      }
+    },
+    [herdRows, pastureFieldOverrides, updateHerdHorse],
+  )
 
   /** Seed `aiSummary` / status from demo observations (same path as post-save sync). */
   const didHydrateHorseAiFromSeedObsRef = useRef(false)
@@ -965,6 +1017,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       logObservationTarget,
       pastures,
       updatePasture,
+      removePasture,
       cattle,
       pastureChecks,
       pastureChecksByPastureId,
@@ -1007,6 +1060,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
       logObservationTarget,
       pastures,
       updatePasture,
+      removePasture,
       cattle,
       pastureChecks,
       pastureChecksByPastureId,
