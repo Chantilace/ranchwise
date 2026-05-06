@@ -66,8 +66,6 @@ export function RanchCalendarPage() {
           <HomeWeatherQuotePill weather={weather} quoteText={currentQuote.text} className="min-w-0 w-full md:w-auto md:min-w-0 md:max-w-[min(100%,600px)] md:shrink" />
         </div>
 
-        <HomeSmartSuggestionsSection />
-
         <div className="grid min-h-0 grid-cols-1 gap-3 md:grid-cols-[1fr_1.4fr]">
           <div className="min-h-0 min-w-0 h-full">
             <HomeCattleSummaryCard />
@@ -76,6 +74,8 @@ export function RanchCalendarPage() {
             <HomeHorseSummaryCard />
           </div>
         </div>
+
+        <HomeSmartSuggestionsSection />
 
         <HomeRecentObservationsCard />
       </div>
