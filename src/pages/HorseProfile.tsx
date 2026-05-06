@@ -36,7 +36,6 @@ import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelSty
 import { FilteredCountDisplay } from "@/components/workspace/FilteredCountDisplay";
 import { MobileRosterFilterSheet } from "@/components/workspace/MobileRosterFilterSheet";
 import { StatusBadge, type StatusBadgeStatus } from "@/components/StatusBadge";
-import { profileIdentityStatusEmphasis } from "@/lib/statusUtils";
 import {
   getHorseEffectiveLastDentalIso,
   getHorseEffectiveLastFarrierIso,
@@ -939,7 +938,7 @@ export function HorseProfile() {
                         <StatusBadge
                           status={profileHeroBadgeStatus}
                           size="md"
-                          emphasis={profileIdentityStatusEmphasis(profileHeroBadgeStatus)}
+                          emphasis="primary"
                           className="shrink-0 !px-2 !py-[3px] !text-[13px]"
                         />
                       </div>
@@ -1020,7 +1019,7 @@ export function HorseProfile() {
                     <StatusBadge
                       status={profileHeroBadgeStatus}
                       size="md"
-                      emphasis={profileIdentityStatusEmphasis(profileHeroBadgeStatus)}
+                      emphasis="primary"
                       className="shrink-0"
                     />
                     <h2 className="min-w-0 text-[22px] font-medium leading-[1.1] text-white">{profileHorse.name}</h2>
@@ -1081,7 +1080,7 @@ export function HorseProfile() {
                       <StatusBadge
                         status={profileHeroBadgeStatus}
                         size="md"
-                        emphasis={profileIdentityStatusEmphasis(profileHeroBadgeStatus)}
+                        emphasis="primary"
                         className="shrink-0"
                       />
                     </div>
@@ -1127,7 +1126,7 @@ export function HorseProfile() {
                       <StatusBadge
                         status={profileHeroBadgeStatus}
                         size="md"
-                        emphasis={profileIdentityStatusEmphasis(profileHeroBadgeStatus)}
+                        emphasis="primary"
                         className="shrink-0"
                       />
                     </div>

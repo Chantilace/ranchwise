@@ -33,7 +33,6 @@ import {
 import { PASTURE_PROFILE_AI_SUMMARY } from "@/lib/pastureProfileSummarySeed"
 import { PASTURE_SEED_MEDIA } from "@/lib/pastureSeedMedia"
 import { getPastureShortName } from "@/lib/pastureUtils"
-import { profileIdentityStatusEmphasis } from "@/lib/statusUtils"
 import {
   WORKSPACE_PAGE_SCROLL_CLASS,
   WORKSPACE_PAGE_SHELL_FLUSH_TOP_CLASS,
@@ -754,7 +753,7 @@ export function PastureProfilePage() {
                       <StatusBadge
                         status={derivedStatus}
                         size="md"
-                        emphasis={profileIdentityStatusEmphasis(derivedStatus)}
+                        emphasis="primary"
                         className="shrink-0 !px-2 !py-[3px] !text-[13px]"
                       />
                     </div>
@@ -832,7 +831,7 @@ export function PastureProfilePage() {
                   <StatusBadge
                     status={derivedStatus}
                     size="md"
-                    emphasis={profileIdentityStatusEmphasis(derivedStatus)}
+                    emphasis="primary"
                     className="shrink-0"
                   />
                   <h2 className="min-w-0 text-[22px] font-medium leading-[1.1] text-white">{pasture.name}</h2>
@@ -891,7 +890,7 @@ export function PastureProfilePage() {
                     <StatusBadge
                       status={derivedStatus}
                       size="md"
-                      emphasis={profileIdentityStatusEmphasis(derivedStatus)}
+                      emphasis="primary"
                       className="shrink-0"
                     />
                   </div>
@@ -933,7 +932,7 @@ export function PastureProfilePage() {
                     <StatusBadge
                       status={derivedStatus}
                       size="md"
-                      emphasis={profileIdentityStatusEmphasis(derivedStatus)}
+                      emphasis="primary"
                       className="shrink-0"
                     />
                   </div>
