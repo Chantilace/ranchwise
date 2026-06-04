@@ -1,19 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ArrowUpRight, RefreshCw } from "lucide-react"
 import { Link } from "react-router-dom"
-import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
+import { AiSurfaceMark } from "@/components/ai/ai-surface-mark"
 import { useRanchData } from "@/contexts/RanchDataContext"
 import {
   buildHomeSmartSuggestionCardsModel,
   type SmartSuggestionCardPriority,
 } from "@/lib/homeSmartSuggestionCards"
-import { homepageSoftShadowClass } from "@/lib/homePageCardChrome"
+import { homepageCardChromeClass } from "@/lib/homePageCardChrome"
 import { cn } from "@/lib/utils"
 
 function priorityLabel(p: SmartSuggestionCardPriority): string {
   if (p === "high") return "High priority"
   if (p === "watch") return "Watch"
   return "Routine"
+}
+
+function priorityPillClass(p: SmartSuggestionCardPriority): string {
+  if (p === "high") return "bg-status-flag-bg text-status-flag-text"
+  if (p === "watch") return "bg-status-monitor-bg text-status-monitor-text"
+  return "bg-muted text-muted-foreground"
 }
 
 const SUGGESTION_SLIDE_COUNT = 3
@@ -24,15 +30,14 @@ const suggestionsTrackClass = cn(
 )
 
 const smartSuggestionCardLinkClass = cn(
-  "group flex min-h-[140px] min-w-0 flex-col rounded-[var(--radius)] bg-[var(--ai-accent-deep)] p-4 text-[var(--ai-accent-soft)]",
+  "group flex min-h-[140px] min-w-0 flex-col rounded-[var(--radius)] p-4",
   "touch-manipulation no-underline outline-none transition-colors duration-150 ease-out",
-  // Hover needs to be perceptible; brighten toward periwinkle.
-  "hover:bg-[var(--ai-hover)] active:scale-[0.99]",
+  "hover:bg-muted/40 active:scale-[0.99]",
   "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   "w-[80%] max-w-[320px] shrink-0 snap-start",
   "lg:w-[420px] lg:max-w-none",
   "xl:w-auto xl:min-w-0 xl:shrink",
-  homepageSoftShadowClass,
+  homepageCardChromeClass,
 )
 
 type HomeSmartSuggestionCardProps = {
@@ -52,29 +57,22 @@ function HomeSmartSuggestionCard({
 }: HomeSmartSuggestionCardProps) {
   return (
     <Link to={to} className={smartSuggestionCardLinkClass} aria-label={ariaLabel}>
-      <div className="mb-2.5 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <div
-            className="flex size-[22px] shrink-0 items-center justify-center rounded-md"
-            style={{ background: "var(--ai-accent-mid)" }}
-          >
-            <AiAnnotationMark className="text-[13px] text-white" />
-          </div>
-          <span className="min-w-0 truncate text-[13px] font-medium uppercase tracking-[0.6px] text-[var(--ai-accent-muted)] group-hover:text-white">
-            {categoryLabel}
-          </span>
-        </div>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-[13px] font-semibold text-foreground">{categoryLabel}</span>
         <ArrowUpRight
-          className="h-4 w-4 shrink-0 text-white transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+          className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-action"
           strokeWidth={2.25}
           aria-hidden
         />
       </div>
 
-      <p className="mb-3 min-w-0 flex-1 text-[14px] leading-snug text-white">{statement}</p>
+      <p className="mb-3 min-w-0 flex-1 text-[14px] leading-snug text-foreground">{statement}</p>
 
       <span
-        className="self-start rounded-full bg-transparent px-2 py-[1px] text-[13px] font-medium text-[var(--ai-accent-soft)] border border-[rgba(207,203,246,0.35)] group-hover:text-white"
+        className={cn(
+          "self-start rounded-full px-2 py-[1px] text-[13px] font-medium",
+          priorityPillClass(priority)
+        )}
       >
         {priorityLabel(priority)}
       </span>
@@ -145,10 +143,12 @@ export function HomeSmartSuggestionsSection() {
   return (
     <section className="flex min-w-0 flex-col gap-3" aria-label="Smart suggestions">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <AiAnnotationMark className="text-[18px] leading-none text-ai-accent" />
-          <span className="text-[15px] font-medium leading-none text-foreground">Smart Suggestions</span>
-        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-ai-accent bg-ai-accent-bg px-2 py-1">
+          <AiSurfaceMark size="sm" />
+          <span className="text-[13px] font-semibold uppercase tracking-wide text-ai-accent">
+            Smart suggestions
+          </span>
+        </span>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <span className="text-[13px] text-muted-foreground">Updated 6 min ago</span>
           <button
@@ -181,7 +181,7 @@ export function HomeSmartSuggestionsSection() {
           to={horseInsight.ctaHref}
           ariaLabel={`${horseInsight.categoryLabel}: ${horseInsight.statement}`}
           priority={horseInsight.priority}
-          categoryLabel={horseInsight.categoryLabel}
+          categoryLabel="Horse"
           statement={horseInsight.statement}
         />
 
@@ -189,7 +189,7 @@ export function HomeSmartSuggestionsSection() {
           to={pastureInsight.ctaHref}
           ariaLabel={`Pastures: ${pastureInsight.statement}`}
           priority={pastureInsight.priority}
-          categoryLabel="Pastures"
+          categoryLabel="Pasture"
           statement={pastureInsight.statement}
         />
       </div>
