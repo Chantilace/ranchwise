@@ -72,7 +72,6 @@ export function PastureLogFormFields({
             onChange={(e) => onNotesChange(e.target.value)}
             readOnly={readOnlyText}
             disabled={disabled && !readOnlyText}
-            className={cn(readOnlyText && "border-transparent bg-transparent px-0")}
           />
         </label>
       )}
@@ -86,7 +85,6 @@ export function PastureLogFormFields({
             placeholder="Your name"
             disabled={disabled && !readOnlyText}
             readOnly={readOnlyText}
-            className={cn(readOnlyText && "border-transparent bg-transparent px-0")}
           />
         </label>
       )}

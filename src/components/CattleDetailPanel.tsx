@@ -299,7 +299,7 @@ function CattleEmbeddedLogObservationSubview({
               Back
             </button>
             <p className="px-14 text-center text-base font-medium text-foreground">
-              {`Log ${formatCattleTagDisplay(cattle.tagNumber)}`}
+              Log observation
             </p>
           </div>
         </div>

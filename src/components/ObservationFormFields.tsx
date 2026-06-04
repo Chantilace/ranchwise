@@ -100,7 +100,7 @@ export function ObservationFormFields({
       {hideNotes ? null : (
         <label className="flex flex-col gap-1.5">
           <FormLabel variant="default">
-            {variant === "pills" ? "Notes" : "Observation"}
+            {variant === "pills" ? "Notes" : "Your observation"}
           </FormLabel>
           <Textarea
             rows={variant === "pills" ? 4 : 4}
@@ -123,9 +123,7 @@ export function ObservationFormFields({
 
       {hideLoggedBy ? null : (
         <label className="flex flex-col gap-1.5">
-          <FormLabel variant="default">
-            {variant === "pills" ? "Logged by" : "Your name"}
-          </FormLabel>
+          <FormLabel variant="default">Logged by</FormLabel>
           <Input
             placeholder="Your name"
             value={loggedBy}
