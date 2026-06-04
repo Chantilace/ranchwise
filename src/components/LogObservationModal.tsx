@@ -1,9 +1,8 @@
 import { Dialog } from "@base-ui/react/dialog"
-import { Sparkle, X } from "lucide-react"
+import { Check, Sparkle, X } from "lucide-react"
 import { useMemo, useState, type ReactNode } from "react"
 import { useScrollShadow } from "@/hooks/useScrollShadow"
 import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
-import { LogReviewFilledField } from "@/components/LogReviewFilledField"
 import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
 import { ObservationFormFields } from "@/components/ObservationFormFields"
 import { StatusBadge } from "@/components/StatusBadge"
@@ -223,7 +222,7 @@ export function useLogObservationFormController({
 }: UseLogObservationFormControllerArgs): LogObservationFormController {
   const [phase, setPhase] = useState<Phase>("input")
   const [category, setCategory] = useState<Category>(() => initialObservation?.category ?? "Health")
-  const [pastureCategory, setPastureCategory] = useState<PastureCheckCategory>("walk_through")
+  const [pastureCategory, setPastureCategory] = useState<PastureCheckCategory>("drive_by")
   const [notes, setNotes] = useState(() => initialObservation?.notes ?? "")
   const [loggedBy, setLoggedBy] = useState(() => initialObservation?.loggedBy ?? "")
   const [riskLevel, setRiskLevel] = useState<RiskLevel>(
@@ -349,14 +348,9 @@ export function useLogObservationFormController({
   }
 
   const sectionTitle = useMemo(() => {
-    const isPasture = logMode === "pasture"
-    if (phase === "saving") return null
-    if (phase === "result") {
-      if (initialObservation) return "Review changes"
-      return isPasture ? "Pasture check logged" : "Observation logged"
-    }
+    if (phase === "saving" || phase === "result") return null
     return initialObservation ? "Edit observation" : null
-  }, [initialObservation, logMode, phase])
+  }, [initialObservation, phase])
 
   const body = (
     <div className="flex flex-col gap-4">
@@ -382,8 +376,6 @@ export function useLogObservationFormController({
             onLoggedByChange={setLoggedBy}
             disabled={fieldsLocked}
             readOnlyText={textLocked}
-            hideNotes={Boolean(showResultBlock)}
-            hideLoggedBy={Boolean(showResultBlock)}
           />
         ) : (
           <ObservationFormFields
@@ -398,14 +390,20 @@ export function useLogObservationFormController({
             disabled={fieldsLocked}
             readOnlyText={textLocked}
             categories={categories}
-            hideNotes={Boolean(showResultBlock)}
-            hideLoggedBy={Boolean(showResultBlock)}
             hideCategory={hideCategoryField}
           />
         )}
       </div>
 
       {phase === "saving" ? <AnalyzingSkeleton /> : null}
+
+      {phase === "result" ? (
+        <div className="flex items-center gap-2 rounded-lg bg-status-good-bg px-3 py-2">
+          <Check className="size-3.5 shrink-0 text-status-good-text" aria-hidden />
+          <span className="text-[13px] font-medium text-status-good-text">Observation successfully logged</span>
+        </div>
+      ) : null}
+
       {showResultBlock && aiResult ? (
         <>
           <SmartSuggestionsPanel
@@ -427,41 +425,23 @@ export function useLogObservationFormController({
             </div>
             <div className="flex gap-2">
               {(
-                logMode === "pasture"
-                  ? ([
-                      {
-                        id: "good" as const,
-                        label: "Stable",
-                        active: "bg-status-good-bg border-status-good-bg text-status-good-text",
-                      },
-                      {
-                        id: "monitor" as const,
-                        label: "Concern",
-                        active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
-                      },
-                      {
-                        id: "flag" as const,
-                        label: "Action needed",
-                        active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
-                      },
-                    ] as const)
-                  : ([
-                      {
-                        id: "good" as const,
-                        label: "Good",
-                        active: "bg-status-good-bg border-status-good-bg text-status-good-text",
-                      },
-                      {
-                        id: "monitor" as const,
-                        label: "Monitor",
-                        active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
-                      },
-                      {
-                        id: "flag" as const,
-                        label: "Flag",
-                        active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
-                      },
-                    ] as const)
+                [
+                  {
+                    id: "good" as const,
+                    label: "Good",
+                    active: "bg-status-good-bg border-status-good-bg text-status-good-text",
+                  },
+                  {
+                    id: "monitor" as const,
+                    label: "Monitor",
+                    active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
+                  },
+                  {
+                    id: "flag" as const,
+                    label: "Flag",
+                    active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
+                  },
+                ] as const
               ).map((opt) => {
                 const isSelected = confirmedRiskLevel === opt.id
                 return (
@@ -478,12 +458,6 @@ export function useLogObservationFormController({
                   </button>
                 )
               })}
-            </div>
-            <div className="mt-5 flex flex-col gap-2">
-              <LogReviewFilledField label={logMode === "pasture" ? "Your check notes" : "Your observation"}>
-                {notes.trim() || "—"}
-              </LogReviewFilledField>
-              <LogReviewFilledField label="Logged by">{loggedBy.trim() || "—"}</LogReviewFilledField>
             </div>
           </div>
         </>

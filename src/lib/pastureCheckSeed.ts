@@ -35,7 +35,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-east-1",
       5,
-      "walk_through",
+      "horseback",
       "stable",
       "Walked full perimeter — hot wire singing, no shorts. East troughs full, float on north tank quiet. Herd spread from gate to mid-slope, calves on clean green strip.",
       "Juniper"
@@ -51,7 +51,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-east-3",
       9,
-      "targeted_check",
+      "maintenance",
       "concern",
       "Targeted look at low gate corner after rain — rutting 6 inches deep, water not ponding yet but getting soft.",
       "Lou"
@@ -59,7 +59,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-east-4",
       14,
-      "walk_through",
+      "horseback",
       "stable",
       "Fence brush cleared off bottom wire for 200 yards. Creek branch running clear, no cattle belly-deep.",
       "Wes"
@@ -75,7 +75,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-east-6",
       28,
-      "walk_through",
+      "horseback",
       "concern",
       "Wild rose runners grabbing bottom wire in draw — trimmed by hand, flagged east end for mower when dry.",
       "Wyatt"
@@ -85,7 +85,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-ne-1",
       6,
-      "walk_through",
+      "horseback",
       "concern",
       "Full walk — pond ring firm but cattle have carved a deep path on north bank. Salt low in second tub.",
       "Lou"
@@ -101,7 +101,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-ne-3",
       18,
-      "targeted_check",
+      "maintenance",
       "action_needed",
       "Checked pond overflow — pipe mouth partly blocked with debris after wind. Cleared by hand; want gravel on spill path.",
       "Juniper"
@@ -109,7 +109,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-ne-4",
       22,
-      "walk_through",
+      "horseback",
       "stable",
       "Counted waterers at dusk, all four cycling. Heifers calm, no buller activity noted.",
       "Wes"
@@ -136,7 +136,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-se-2",
       4,
-      "walk_through",
+      "horseback",
       "stable",
       "Creek crossing boards solid, gravel apron holding. Fence tension even both sides of dip.",
       "Juniper"
@@ -144,7 +144,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-se-3",
       8,
-      "targeted_check",
+      "maintenance",
       "stable",
       "Investigated south gate creep — latch was backing off; tightened bolts, added second pin.",
       "Lou"
@@ -152,7 +152,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-se-4",
       13,
-      "walk_through",
+      "horseback",
       "concern",
       "Muddy pull-up at gate deeper after truck traffic — want 2 yards gravel on schedule.",
       "Wes"
@@ -176,7 +176,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-se-7",
       27,
-      "walk_through",
+      "horseback",
       "stable",
       "Salt blocks at two stations, both half gone — normal use for group size.",
       "Lou"
@@ -186,7 +186,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-w-1",
       6,
-      "walk_through",
+      "horseback",
       "concern",
       "Bull pasture walk — dominant bull visible, fence hot OK, but tank float chattering — valve may be worn.",
       "Lou"
@@ -202,7 +202,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-w-3",
       21,
-      "targeted_check",
+      "maintenance",
       "action_needed",
       "Opened solar pump box — connection tight, but pressure switch cycling fast; temp bypass until parts.",
       "Juniper"
@@ -210,7 +210,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-w-4",
       24,
-      "walk_through",
+      "horseback",
       "stable",
       "H-brace temp wire still holding; marked post for permanent brace kit next haul.",
       "Wes"
@@ -226,7 +226,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-w-6",
       30,
-      "walk_through",
+      "horseback",
       "stable",
       "Water tank level good after repair; no algae film on walls.",
       "Juniper"
@@ -236,7 +236,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-nw-demo-1",
       18,
-      "walk_through",
+      "horseback",
       "stable",
       "Good cover overall on sage flats. Minimal bare patches. Fence intact, water levels strong. Cattle distributed evenly.",
       "Juniper",
@@ -250,7 +250,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
     row(
       "pc-nw-demo-2",
       11,
-      "walk_through",
+      "horseback",
       "concern",
       "Sage flats grazed evenly. Scattered bare patches starting at south end. Water levels good, fence intact.",
       "Lou",

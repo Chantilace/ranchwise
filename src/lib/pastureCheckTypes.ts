@@ -2,19 +2,17 @@ import type { PastureStatus } from "@/lib/statusUtils"
 import { PASTURE_STATUS_LABELS } from "@/lib/statusUtils"
 import type { AIResult, RiskLevel } from "@/types/observation"
 
-export type PastureCheckCategory = "walk_through" | "drive_by" | "targeted_check" | "maintenance"
+export type PastureCheckCategory = "drive_by" | "horseback" | "maintenance"
 
 export const PASTURE_CHECK_CATEGORY_LABELS: Record<PastureCheckCategory, string> = {
-  walk_through: "Walk-through",
   drive_by: "Drive-by",
-  targeted_check: "Targeted check",
+  horseback: "Horseback",
   maintenance: "Maintenance",
 }
 
 export const PASTURE_CHECK_CATEGORIES: PastureCheckCategory[] = [
-  "walk_through",
   "drive_by",
-  "targeted_check",
+  "horseback",
   "maintenance",
 ]
 

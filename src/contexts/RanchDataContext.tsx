@@ -1115,7 +1115,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
         }
         hideCategoryField={logObservationTarget?.kind === "cattle"}
         logMode={logObservationTarget?.kind === "pasture" ? "pasture" : "animal"}
-        modalHeading={logObservationTarget?.kind === "pasture" ? "Log pasture check" : "Log observation"}
+        modalHeading="Log observation"
         stableKey={logObservationTarget?.kind === "pasture" ? logObservationTarget.pastureId : undefined}
         onClose={closeLogModal}
         onSave={handleLogSave}

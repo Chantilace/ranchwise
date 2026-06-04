@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { FormLabel } from "@/components/ui/form-label"
-import type { PastureCheckCategory } from "@/lib/pastureCheckTypes"
+import { PASTURE_CHECK_CATEGORIES, PASTURE_CHECK_CATEGORY_LABELS, type PastureCheckCategory } from "@/lib/pastureCheckTypes"
 import { cn } from "@/lib/utils"
 
 export type PastureLogFormFieldsProps = {
@@ -20,8 +20,8 @@ export type PastureLogFormFieldsProps = {
 }
 
 export function PastureLogFormFields({
-  category: _category,
-  onCategoryChange: _onCategoryChange,
+  category,
+  onCategoryChange,
   notes,
   onNotesChange,
   loggedBy,
@@ -40,9 +40,31 @@ export function PastureLogFormFields({
         className
       )}
     >
+      <div className="flex flex-col gap-1.5">
+        <FormLabel variant="default">Category</FormLabel>
+        <div className="flex flex-wrap gap-2">
+          {PASTURE_CHECK_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              disabled={disabled || readOnlyText}
+              onClick={() => onCategoryChange(cat)}
+              className={cn(
+                "rounded-full border px-4 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
+                category === cat
+                  ? "border-action bg-action text-action-foreground"
+                  : "border-border bg-background text-foreground hover:bg-muted/60"
+              )}
+            >
+              {PASTURE_CHECK_CATEGORY_LABELS[cat]}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {hideNotes ? null : (
         <label className="flex flex-col gap-1.5">
-          <FormLabel variant="default">Check details</FormLabel>
+          <FormLabel variant="default">Your observation</FormLabel>
           <Textarea
             rows={4}
             placeholder="Fencing, water, footing, erosion, herd distribution…"
