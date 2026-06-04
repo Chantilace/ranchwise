@@ -63,7 +63,7 @@ export function RanchCalendarPage() {
               <span className="hidden xl:inline">{format(today, "EEEE, MMMM d, yyyy")}</span>
             </p>
           </div>
-          <HomeWeatherQuotePill weather={weather} quoteText={currentQuote.text} className="min-w-0 w-full md:flex-1 md:min-w-0 md:max-w-none" />
+          <HomeWeatherQuotePill weather={weather} quoteText={currentQuote.text} className="min-w-0 w-full md:min-w-0 md:max-w-[min(100%,700px)]" />
         </div>
 
         <div className="grid min-h-0 grid-cols-1 gap-3 md:grid-cols-[1fr_1.4fr]">
