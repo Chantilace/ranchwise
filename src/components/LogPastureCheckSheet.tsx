@@ -1,7 +1,8 @@
 import { Dialog } from "@base-ui/react/dialog"
 import { X } from "lucide-react"
-
+import { useRef } from "react"
 import { LogObservationFormFooter, useLogObservationFormController } from "@/components/LogObservationModal"
+import { useResultPhaseScroll } from "@/hooks/useResultPhaseScroll"
 import { buttonVariants } from "@/components/ui/button"
 import { PASTURE_SEED_MEDIA } from "@/lib/pastureSeedMedia"
 import { cn } from "@/lib/utils"
@@ -21,6 +22,7 @@ export function LogPastureCheckSheet({
   onClose: () => void
   onSave: Parameters<typeof useLogObservationFormController>[0]["onSave"]
 }) {
+  const scrollBodyElRef = useRef<HTMLDivElement | null>(null)
   const { body, footerApi } = useLogObservationFormController({
     mode: "sheet",
     animalName: pastureName,
@@ -28,6 +30,7 @@ export function LogPastureCheckSheet({
     onDismiss: onClose,
     onSave,
   })
+  useResultPhaseScroll(footerApi.phase, scrollBodyElRef)
 
   return (
     <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
@@ -89,7 +92,7 @@ export function LogPastureCheckSheet({
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-visible">
+            <div ref={scrollBodyElRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-visible">
               <div className="px-5 pt-0 pb-[var(--scroll-area-bottom-pad)] md:px-7 md:pt-0">{body}</div>
             </div>
 

@@ -1,7 +1,8 @@
 import { Dialog } from "@base-ui/react/dialog"
 import { Check, Sparkle, X } from "lucide-react"
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useRef, useState, type ReactNode } from "react"
 import { useScrollShadow } from "@/hooks/useScrollShadow"
+import { useResultPhaseScroll } from "@/hooks/useResultPhaseScroll"
 import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
 import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
 import { ObservationFormFields } from "@/components/ObservationFormFields"
@@ -503,6 +504,7 @@ function LogObservationModalInner({
   const identityPhoto = animalPhoto ?? pastureSeedPhoto ?? undefined
 
   const { scrollRef, isScrolled } = useScrollShadow()
+  const scrollBodyElRef = useRef<HTMLDivElement | null>(null)
   const { body, footerApi } = useLogObservationFormController({
     mode: "modal",
     animalName,
@@ -513,6 +515,7 @@ function LogObservationModalInner({
     onSave,
     onDismiss: onClose,
   })
+  useResultPhaseScroll(footerApi.phase, scrollBodyElRef)
 
   return (
     <>
@@ -569,7 +572,7 @@ function LogObservationModalInner({
       </div>
 
       <div
-        ref={scrollRef}
+        ref={(node) => { scrollRef(node); scrollBodyElRef.current = node }}
         className="min-h-0 flex-1 overflow-y-auto overflow-x-visible"
       >
         <div className="px-5 pt-0 pb-[var(--scroll-area-bottom-pad)] md:px-7 md:pt-0">{body}</div>

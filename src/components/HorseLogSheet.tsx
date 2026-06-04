@@ -1,5 +1,6 @@
 import { Sparkle, X } from "lucide-react"
 import { useRef, useState, type Dispatch, type SetStateAction } from "react"
+import { useResultPhaseScroll } from "@/hooks/useResultPhaseScroll"
 import { Drawer } from "vaul"
 import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
 import type { HorseTableRow } from "@/components/RanchWiseHorseRoster"
@@ -100,6 +101,8 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
   const horseKey = horseRowKey(horse)
 
   const { scrollRef, isScrolled } = useScrollShadow()
+  const scrollBodyElRef = useRef<HTMLDivElement | null>(null)
+  useResultPhaseScroll(view, scrollBodyElRef)
 
   const canAnalyze = notes.trim().length > 0 && loggedBy.trim().length > 0
 
@@ -469,7 +472,7 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
       >
         {header}
       </div>
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <div ref={(node) => { scrollRef(node); scrollBodyElRef.current = node }} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {scrollBody}
       </div>
       {footer}

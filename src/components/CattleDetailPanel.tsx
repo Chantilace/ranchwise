@@ -2,6 +2,7 @@ import { ChevronLeft, Sparkle, X } from "lucide-react"
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react"
 import { Drawer } from "vaul"
 import { useLogObservationFormController } from "@/components/LogObservationModal"
+import { useResultPhaseScroll } from "@/hooks/useResultPhaseScroll"
 import { ObservationTimeline } from "@/components/ObservationTimeline"
 import { StatusBadge } from "@/components/StatusBadge"
 import { RecordCalvingEditor } from "@/components/RecordCalvingModal"
@@ -186,6 +187,7 @@ function CattleEmbeddedLogObservationSubview({
   const { saveCattleObservationLog, removeCattleObservation, appendCattleObservation, updateCattle } =
     useRanchData()
   const { scrollRef, isScrolled } = useScrollShadow()
+  const scrollBodyElRef = useRef<HTMLDivElement | null>(null)
   const { body, footerApi } = useLogObservationFormController({
     mode: "modal",
     animalName: formatCattleTagDisplay(cattle.tagNumber),
@@ -281,6 +283,7 @@ function CattleEmbeddedLogObservationSubview({
       return true
     },
   })
+  useResultPhaseScroll(footerApi.phase, scrollBodyElRef)
 
   return (
     <>
@@ -333,7 +336,7 @@ function CattleEmbeddedLogObservationSubview({
         </div>
       </div>
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-0">
+      <div ref={(node) => { scrollRef(node); scrollBodyElRef.current = node }} className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-0">
         {body}
       </div>
 
