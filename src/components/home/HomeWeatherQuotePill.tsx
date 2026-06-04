@@ -29,9 +29,9 @@ export function HomeWeatherQuotePill({ weather, quoteText, className }: HomeWeat
           </span>
         </div>
       </div>
-      <div className="hidden min-w-0 shrink md:flex md:min-w-0 md:shrink md:items-center md:gap-2.5">
+      <div className="hidden min-w-0 md:flex md:flex-1 md:min-w-0 md:items-center md:gap-2.5">
         <div className="h-3 w-px shrink-0 bg-[var(--color-border-tertiary)]" aria-hidden />
-        <span className="min-w-0 shrink text-[13px] leading-snug italic text-[var(--color-text-tertiary)]">
+        <span className="min-w-0 flex-1 text-right text-[13px] leading-snug italic text-[var(--color-text-tertiary)]">
           {quoteText}
         </span>
       </div>
