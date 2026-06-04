@@ -35,7 +35,7 @@ import { calvingOutcomeConfirmationLabel } from "@/lib/calvingAnalyze"
 import { buildCalvingObservationNotes } from "@/lib/calvingStatus"
 import { showObservationDiscardedToast } from "@/lib/observationDiscardToast"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
-import type { CalvingRecord, Cattle, Pasture, StoredCalvingStatus } from "@/types/cattle"
+import type { CalvingRecord, Cattle, Pasture } from "@/types/cattle"
 import type { AIResult, Category, ObservationEntry, RiskLevel } from "@/types/observation"
 
 function horseStatusFromAiRiskLevel(level: RiskLevel | null): HorseTableRow["healthStatus"] {
@@ -477,11 +477,9 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
   const commitCattleCalvingRecord = useCallback(
     (record: CalvingRecord): string => {
       const realComps = record.complications.filter((c) => c !== "none")
-      const nextStatus =
-        record.forceComplicationsOutcome || realComps.length > 0 ? "complications" : "calved"
       const dateOnly = formatISO(parseISO(record.date), { representation: "date" })
       updateCattle(record.cattleId, {
-        calvingStatus: nextStatus,
+        calvingStatus: "calved",
         calvingDate: dateOnly,
         dueDate: null,
         deliveryType: record.deliveryType,
@@ -512,11 +510,9 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
   const updateCattleCalvingRecord = useCallback(
     (record: CalvingRecord, observationId: string) => {
       const realComps = record.complications.filter((c) => c !== "none")
-      const nextStatus =
-        record.forceComplicationsOutcome || realComps.length > 0 ? "complications" : "calved"
       const dateOnly = formatISO(parseISO(record.date), { representation: "date" })
       updateCattle(record.cattleId, {
-        calvingStatus: nextStatus,
+        calvingStatus: "calved",
         calvingDate: dateOnly,
         dueDate: null,
         deliveryType: record.deliveryType,
@@ -594,12 +590,9 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
         ),
       }))
 
-      const nextCalvingStatus: StoredCalvingStatus =
-        record.forceComplicationsOutcome || confirmedRisk === "flag" ? "complications" : "calved"
-
       updateCattle(cattleId, {
         calvingAiResult: finalAi,
-        calvingStatus: nextCalvingStatus,
+        calvingStatus: "calved",
         healthStatus: cattleHealthStatusFromRiskLevel(confirmedRisk),
       })
     },
