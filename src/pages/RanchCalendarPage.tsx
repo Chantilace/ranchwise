@@ -53,7 +53,7 @@ export function RanchCalendarPage() {
       searchAriaLabel="Search"
     >
       <div className="flex min-w-0 w-full max-w-full flex-col gap-4">
-        <div className="mb-4 flex min-w-0 flex-nowrap items-start gap-4">
+        <div className="mb-4 flex min-w-0 flex-nowrap items-start gap-10">
           <div className="min-w-0 shrink-0">
             <p className="mb-0.5 whitespace-nowrap text-[18px] font-medium leading-tight text-foreground xl:text-[22px]">
               Howdy, {firstName}
