@@ -53,8 +53,8 @@ export function RanchCalendarPage() {
       searchAriaLabel="Search"
     >
       <div className="flex min-w-0 w-full max-w-full flex-col gap-4">
-        <div className="mb-4 flex min-w-0 flex-col flex-nowrap gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0 shrink-0 md:min-w-0 md:shrink">
+        <div className="mb-4 flex min-w-0 flex-col flex-nowrap gap-4 md:flex-row md:items-start">
+          <div className="min-w-0 shrink-0">
             <p className="mb-0.5 whitespace-nowrap text-[18px] font-medium leading-tight text-foreground xl:text-[22px]">
               Howdy, {firstName}
             </p>
@@ -63,7 +63,7 @@ export function RanchCalendarPage() {
               <span className="hidden xl:inline">{format(today, "EEEE, MMMM d, yyyy")}</span>
             </p>
           </div>
-          <HomeWeatherQuotePill weather={weather} quoteText={currentQuote.text} className="min-w-0 w-full md:w-auto md:min-w-0 md:max-w-[min(100%,600px)] md:shrink" />
+          <HomeWeatherQuotePill weather={weather} quoteText={currentQuote.text} className="min-w-0 w-full md:flex-1 md:min-w-0 md:max-w-none" />
         </div>
 
         <div className="grid min-h-0 grid-cols-1 gap-3 md:grid-cols-[1fr_1.4fr]">
