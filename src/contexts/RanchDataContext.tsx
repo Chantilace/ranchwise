@@ -578,7 +578,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
 
   const finalizeCalvingObservation = useCallback(
     (payload: FinalizeCalvingObservationPayload) => {
-      const { cattleId, observationId, record, confirmedRisk } = payload
+      const { cattleId, observationId, confirmedRisk } = payload
       const list = observationsByCattleId[cattleId] ?? []
       const o = list.find((x) => x.id === observationId)
       const finalAi = buildFinalCalvingObservationAi(o?.aiResult, confirmedRisk)
