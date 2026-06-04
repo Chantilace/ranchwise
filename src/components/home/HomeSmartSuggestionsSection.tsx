@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ArrowUpRight, RefreshCw } from "lucide-react"
 import { Link } from "react-router-dom"
-import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
 import { AiSurfaceMark } from "@/components/ai/ai-surface-mark"
 import { useRanchData } from "@/contexts/RanchDataContext"
 import {
@@ -53,17 +52,7 @@ function HomeSmartSuggestionCard({
   return (
     <Link to={to} className={smartSuggestionCardLinkClass} aria-label={ariaLabel}>
       <div className="mb-2.5 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <div
-            className="flex size-[22px] shrink-0 items-center justify-center rounded-md"
-            style={{ background: "var(--ai-accent-mid)" }}
-          >
-            <AiAnnotationMark className="text-[13px] text-white" />
-          </div>
-          <span className="min-w-0 truncate text-[13px] font-medium uppercase tracking-[0.6px] text-[var(--ai-accent-muted)] group-hover:text-white">
-            {categoryLabel}
-          </span>
-        </div>
+        <span className="text-[13px] font-semibold text-white">{categoryLabel}</span>
         <ArrowUpRight
           className="h-4 w-4 shrink-0 text-white transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
           strokeWidth={2.25}
@@ -187,9 +176,9 @@ export function HomeSmartSuggestionsSection() {
 
         <HomeSmartSuggestionCard
           to={horseInsight.ctaHref}
-          ariaLabel={`${horseInsight.categoryLabel}: ${horseInsight.statement}`}
+          ariaLabel={`Horse: ${horseInsight.statement}`}
           priority={horseInsight.priority}
-          categoryLabel={horseInsight.categoryLabel}
+          categoryLabel="Horse"
           statement={horseInsight.statement}
         />
 
