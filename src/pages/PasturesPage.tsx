@@ -642,7 +642,7 @@ export function PasturesPage() {
             <div className="mt-2 min-w-0 shrink-0">
               <Table
                 tableLayout="intrinsic"
-                className="min-w-[1072px] border-separate border-spacing-0"
+                className="min-w-[800px] border-separate border-spacing-0"
               >
               <TableHeader>
                 <TableRow className="border-neutral-200 hover:bg-transparent">
@@ -662,7 +662,7 @@ export function PasturesPage() {
                     sortDir={sortDir}
                     lastActivityDir={lastActivityPrimarySort}
                     onColumnSort={onPastureColumnSort}
-                    className="w-auto"
+                    className="w-[120px] min-w-[100px]"
                   >
                     Status
                   </PastureRosterSortableHeader>
@@ -767,7 +767,7 @@ export function PasturesPage() {
                       <TableCell
                         className={cn(
                           cellBg,
-                          "w-auto whitespace-nowrap align-middle pl-4 pr-3",
+                          "w-[120px] whitespace-nowrap align-middle pl-4 pr-3",
                         )}
                       >
                         <StatusBadge
