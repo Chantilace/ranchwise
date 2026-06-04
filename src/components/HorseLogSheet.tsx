@@ -1,11 +1,10 @@
-import { Sparkle, X } from "lucide-react"
+import { Check, Sparkle, X } from "lucide-react"
 import { useRef, useState, type Dispatch, type SetStateAction } from "react"
 import { useResultPhaseScroll } from "@/hooks/useResultPhaseScroll"
 import { Drawer } from "vaul"
 import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
 import type { HorseTableRow } from "@/components/RanchWiseHorseRoster"
 import { horseRowKey } from "@/components/RanchWiseHorseRoster"
-import { LogReviewFilledField } from "@/components/LogReviewFilledField"
 import { ObservationFormFields } from "@/components/ObservationFormFields"
 import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
 import { StatusBadge } from "@/components/StatusBadge"
@@ -323,8 +322,11 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
       </>
     ) : null
 
-  const scrollBody =
-    view === "input" ? (
+  const fieldsLocked = view !== "input"
+  const textLocked = view === "result"
+
+  const scrollBody = (
+    <div className="flex flex-col gap-4">
       <ObservationFormFields
         variant="pills"
         animalName={horse.name}
@@ -334,86 +336,74 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
         onNotesChange={setNotes}
         loggedBy={loggedBy}
         onLoggedByChange={setLoggedBy}
+        disabled={fieldsLocked}
+        readOnlyText={textLocked}
       />
-    ) : view === "analyzing" ? (
-      <div className="flex flex-col gap-3">
-        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-full animate-pulse rounded bg-muted" />
-        <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-        <div className="mt-2 h-16 animate-pulse rounded-lg bg-muted" />
-        <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-      </div>
-    ) : view === "result" && aiResult ? (
-      <>
-        <SmartSuggestionsPanel
-          mode="modal"
-          labelGlyphStyle="section"
-          suggestions={aiResult.recommendations}
-          contextNote={aiResult.patternNote}
-          className="mb-4"
-        />
-        <div className="flex flex-col gap-2">
-          <div>
-            <p className="text-[13px] font-medium uppercase tracking-wide text-muted-foreground opacity-70">
-              Confirm status
-            </p>
-            <p className="mt-0.5 text-[13px] text-foreground">
-              <AiAnnotationMark /> AI assessed:{" "}
-              <span className="text-foreground">
-                {aiResult.riskLevel === "flag"
-                  ? "Flag"
-                  : aiResult.riskLevel === "monitor"
-                    ? "Monitor"
-                    : "Good"}
-              </span>
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {(
-              [
-                {
-                  id: "good" as const,
-                  label: "Good",
-                  active: "bg-status-good-bg border-status-good-bg text-status-good-text",
-                },
-                {
-                  id: "monitor" as const,
-                  label: "Monitor",
-                  active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text",
-                },
-                {
-                  id: "flag" as const,
-                  label: "Flag",
-                  active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text",
-                },
-              ] as const
-            ).map((opt) => {
-              const isSelected = confirmedRiskLevel === opt.id
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setConfirmedRiskLevel(opt.id)}
-                  className={cn(
-                    "inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
-                    isSelected
-                      ? opt.active
-                      : "border-border bg-background text-foreground hover:bg-muted/60"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              )
-            })}
-          </div>
+
+      {view === "analyzing" ? (
+        <div className="flex flex-col gap-3">
+          <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-full animate-pulse rounded bg-muted" />
+          <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-16 animate-pulse rounded-lg bg-muted" />
+          <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
         </div>
-        <div className="mt-5 flex flex-col gap-2">
-          <LogReviewFilledField label="Your observation">{notes.trim() || "—"}</LogReviewFilledField>
-          <LogReviewFilledField label="Logged by">{loggedBy.trim() || "—"}</LogReviewFilledField>
-        </div>
-      </>
-    ) : null
+      ) : null}
+
+      {view === "result" && aiResult ? (
+        <>
+          <div className="flex items-center gap-2 rounded-lg bg-status-good-bg px-3 py-2">
+            <Check className="size-3.5 shrink-0 text-status-good-text" aria-hidden />
+            <span className="text-[13px] font-medium text-status-good-text">Observation successfully logged</span>
+          </div>
+          <SmartSuggestionsPanel
+            mode="modal"
+            labelGlyphStyle="section"
+            suggestions={aiResult.recommendations}
+            contextNote={aiResult.patternNote}
+          />
+          <div className="flex flex-col gap-2">
+            <div>
+              <p className="text-[13px] font-medium uppercase tracking-wide text-muted-foreground opacity-70">
+                Confirm status
+              </p>
+              <p className="mt-0.5 text-[13px] text-foreground">
+                <AiAnnotationMark /> AI assessed:{" "}
+                <span className="text-foreground">
+                  {aiResult.riskLevel === "flag" ? "Flag" : aiResult.riskLevel === "monitor" ? "Monitor" : "Good"}
+                </span>
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {(
+                [
+                  { id: "good" as const, label: "Good", active: "bg-status-good-bg border-status-good-bg text-status-good-text" },
+                  { id: "monitor" as const, label: "Monitor", active: "bg-status-monitor-bg border-status-monitor-bg text-status-monitor-text" },
+                  { id: "flag" as const, label: "Flag", active: "bg-status-flag-bg border-status-flag-bg text-status-flag-text" },
+                ] as const
+              ).map((opt) => {
+                const isSelected = confirmedRiskLevel === opt.id
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setConfirmedRiskLevel(opt.id)}
+                    className={cn(
+                      "inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
+                      isSelected ? opt.active : "border-border bg-background text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
+  )
 
   const footer =
     view === "input" ? (

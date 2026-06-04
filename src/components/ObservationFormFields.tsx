@@ -99,9 +99,7 @@ export function ObservationFormFields({
 
       {hideNotes ? null : (
         <label className="flex flex-col gap-1.5">
-          <FormLabel variant="default">
-            {variant === "pills" ? "Notes" : "Your observation"}
-          </FormLabel>
+          <FormLabel variant="default">Your observation</FormLabel>
           <Textarea
             rows={variant === "pills" ? 4 : 4}
             placeholder={

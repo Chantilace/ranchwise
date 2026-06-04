@@ -179,6 +179,7 @@ export function HorseProfile() {
   const {
     observationsByHorse,
     openLogModal,
+    closeLogModal,
     herdRows,
     updateHerdHorse,
     removeHerdHorse,
@@ -187,6 +188,14 @@ export function HorseProfile() {
   /** Log observation + observation filters: bottom sheet below `md`, modal / popover at `md+`. */
   const isMdUp = useMediaQuery("(min-width: 768px)");
   const [logSheetOpen, setLogSheetOpen] = useState(false);
+
+  const prevIsMdUpRef = useRef(isMdUp);
+  useEffect(() => {
+    if (prevIsMdUpRef.current === isMdUp) return;
+    prevIsMdUpRef.current = isMdUp;
+    if (!isMdUp) closeLogModal();
+    else setLogSheetOpen(false);
+  }, [isMdUp, closeLogModal]);
   const [activeTab, setActiveTab] = useState<HorseProfileTabId>("observations");
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editDetailsExpanded, setEditDetailsExpanded] = useState(true);
