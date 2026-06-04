@@ -180,6 +180,7 @@ export function HorseProfile() {
     observationsByHorse,
     openLogModal,
     closeLogModal,
+    logObservationTarget,
     herdRows,
     updateHerdHorse,
     removeHerdHorse,
@@ -188,14 +189,6 @@ export function HorseProfile() {
   /** Log observation + observation filters: bottom sheet below `md`, modal / popover at `md+`. */
   const isMdUp = useMediaQuery("(min-width: 768px)");
   const [logSheetOpen, setLogSheetOpen] = useState(false);
-
-  const prevIsMdUpRef = useRef(isMdUp);
-  useEffect(() => {
-    if (prevIsMdUpRef.current === isMdUp) return;
-    prevIsMdUpRef.current = isMdUp;
-    if (!isMdUp) closeLogModal();
-    else setLogSheetOpen(false);
-  }, [isMdUp, closeLogModal]);
   const [activeTab, setActiveTab] = useState<HorseProfileTabId>("observations");
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editDetailsExpanded, setEditDetailsExpanded] = useState(true);
@@ -478,6 +471,25 @@ export function HorseProfile() {
     if (!Number.isFinite(best) || best < 0) return "recently";
     return formatDistanceToNow(new Date(best), { addSuffix: true });
   }, [healthObservationsForHorse]);
+
+  const prevIsMdUpRef = useRef(isMdUp);
+  useEffect(() => {
+    if (prevIsMdUpRef.current === isMdUp) return;
+    prevIsMdUpRef.current = isMdUp;
+    if (!isMdUp) {
+      // Viewport shrunk to mobile — swap modal → sheet if modal is open
+      if (logObservationTarget?.kind === "horse") {
+        closeLogModal();
+        setLogSheetOpen(true);
+      }
+    } else {
+      // Viewport grew to desktop — swap sheet → modal if sheet is open
+      if (logSheetOpen) {
+        setLogSheetOpen(false);
+        openLogModal(profileHorse);
+      }
+    }
+  }, [isMdUp, closeLogModal, logObservationTarget, logSheetOpen, openLogModal, profileHorse]);
 
   const healthSummaryProse = useMemo(() => {
     if (allObservationsForHorse.length === 0) return null;
