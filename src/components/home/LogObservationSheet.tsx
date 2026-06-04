@@ -29,13 +29,13 @@ import { useRanchData } from "@/contexts/RanchDataContext"
 import { getCattleEffectiveHealthRisk } from "@/lib/cattleSelectors"
 import { cattleTagBare, formatCattleTagDisplay } from "@/lib/cattleUi"
 import { useScrollShadow } from "@/hooks/useScrollShadow"
-import type { Cattle } from "@/types/cattle"
+import type { Cattle, Pasture } from "@/types/cattle"
 import type { ObservationEntry, RiskLevel } from "@/types/observation"
 import { cn } from "@/lib/utils"
 import { useOverlayRegistration } from "@/contexts/OverlayRegistryContext"
 
 type SheetState = "search" | "cattle-prep" | "form"
-type Species = "cattle" | "horse"
+type Species = "cattle" | "horse" | "pasture"
 type ConfirmStatus = "good" | "monitor" | "flag"
 
 type UnifiedAnimal =
@@ -54,6 +54,12 @@ type UnifiedAnimal =
       ageDisplay: string
       pastureLabel: string
     })
+
+type UnifiedPasture = Pick<Pasture, "id" | "name" | "terrain" | "profileImageUrl"> & {
+  species: "pasture"
+}
+
+type SheetItem = UnifiedAnimal | UnifiedPasture
 
 function horseStatusFromAiRiskLevel(level: RiskLevel | null): HorseTableRow["healthStatus"] {
   if (level === "flag") return "flag"
@@ -217,6 +223,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
     openRecordCalvingModal,
     closeRecordCalvingModal,
     recordCalvingModal,
+    openPastureCheckModal,
   } = useRanchData()
 
   const [sheetState, setSheetState] = useState<SheetState>("search")
@@ -248,24 +255,33 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
     return m
   }, [pastures])
 
-  const searchResults = useMemo(() => {
-    if (!query.trim()) return [] as UnifiedAnimal[]
+  const searchResults = useMemo((): SheetItem[] => {
+    if (!query.trim()) return []
     const q = cattleTagBare(query).toLowerCase()
-    const cattleResults = cattle
+    const cattleResults: SheetItem[] = cattle
       .filter(
         (c) =>
           cattleTagBare(c.tagNumber).toLowerCase().includes(q) ||
           (c.displayName?.toLowerCase().includes(q) ?? false)
       )
       .map((c) => buildUnifiedCattle(c, pastureNameById.get(c.pastureId) ?? "Pasture"))
-    const horseResults = herdRows
+    const horseResults: SheetItem[] = herdRows
       .filter((h) => {
         const idStr = h.id != null ? String(h.id).toLowerCase() : ""
         return idStr.includes(q) || h.name.toLowerCase().includes(q)
       })
       .map((h) => buildUnifiedHorse(h))
-    return [...cattleResults, ...horseResults].slice(0, 12)
-  }, [query, cattle, herdRows, pastureNameById])
+    const pastureResults: SheetItem[] = pastures
+      .filter((p) => p.name.toLowerCase().includes(q))
+      .map((p) => ({
+        species: "pasture" as const,
+        id: p.id,
+        name: p.name,
+        terrain: p.terrain,
+        profileImageUrl: p.profileImageUrl,
+      }))
+    return [...cattleResults, ...horseResults, ...pastureResults].slice(0, 12)
+  }, [query, cattle, herdRows, pastures, pastureNameById])
 
   const sheetObservationEntries = useMemo((): ObservationEntry[] => {
     if (!selectedAnimal || sheetState === "search") return []
@@ -366,10 +382,15 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
     return [{ id: "log", label: "Log" }, history]
   }, [observationCount])
 
-  const selectAnimal = (animal: UnifiedAnimal) => {
-    setSelectedAnimal(animal)
+  const selectItem = (item: SheetItem) => {
+    if (item.species === "pasture") {
+      openPastureCheckModal({ pastureId: item.id, pastureName: item.name })
+      onOpenChange(false)
+      return
+    }
+    setSelectedAnimal(item)
     setActiveTab("log")
-    if (animal.species === "cattle") {
+    if (item.species === "cattle") {
       setSheetState("cattle-prep")
     } else {
       setSheetState("form")
@@ -582,7 +603,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                       onClick={goChangeAnimal}
                       className="cursor-pointer text-left text-[13px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
                     >
-                      ← Change animal
+                      ← Back
                     </button>
                   ) : null}
                 </div>
@@ -663,8 +684,8 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                       size="md"
                       value={query}
                       onChange={setQuery}
-                      placeholder="Search by tag # or name..."
-                      ariaLabel="Search animals by tag number or name"
+                      placeholder="Search by tag #, name, or pasture..."
+                      ariaLabel="Search animals by tag number or name, or search pastures"
                       className="w-full"
                       autoComplete="off"
                       fullWidth
@@ -677,13 +698,41 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                         role="listbox"
                         aria-label="Search results"
                       >
-                        {searchResults.map((animal) => {
+                        {searchResults.map((item) => {
+                          if (item.species === "pasture") {
+                            return (
+                              <li key={`pasture-${item.id}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => selectItem(item)}
+                                  className="flex min-h-[52px] w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                                >
+                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+                                    {item.profileImageUrl ? (
+                                      <img src={item.profileImageUrl} alt="" className="size-full object-cover object-center" />
+                                    ) : (
+                                      <span className="text-[13px] font-semibold text-muted-foreground" aria-hidden>
+                                        {item.name.slice(0, 2).toUpperCase()}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <span className="truncate text-sm font-medium text-foreground">{item.name}</span>
+                                    <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
+                                      Pasture · {item.terrain}
+                                    </p>
+                                  </div>
+                                </button>
+                              </li>
+                            )
+                          }
+                          const animal = item
                           const isCattle = animal.species === "cattle"
                           return (
                             <li key={`${animal.species}-${isCattle ? animal.id : horseRowKey(animal)}`}>
                               <button
                                 type="button"
-                                onClick={() => selectAnimal(animal)}
+                                onClick={() => selectItem(animal)}
                                 className="flex min-h-[52px] w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                               >
                                 {!isCattle ? (
@@ -749,7 +798,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                       </ul>
                     ) : (
                       <p className="py-10 text-center text-sm text-muted-foreground">
-                        No animals found for &quot;{query.trim()}&quot;
+                        No animals or pastures found for &quot;{query.trim()}&quot;
                       </p>
                     )
                   ) : null}
