@@ -161,6 +161,25 @@ function initialsFromName(name: string) {
     .toUpperCase()
 }
 
+function ResultScrollTrigger({
+  phase,
+  scrollRef,
+}: {
+  phase: string
+  scrollRef: React.MutableRefObject<HTMLDivElement | null>
+}) {
+  useEffect(() => {
+    if (phase !== "result") return
+    const el = scrollRef.current
+    if (!el) return
+    const raf = requestAnimationFrame(() => {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" })
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [phase, scrollRef])
+  return null
+}
+
 function LogSheetObservationLogBridge({
   children,
   ...hookArgs
@@ -248,6 +267,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
   const tabContentRef = useRef<HTMLDivElement>(null)
   const logTabMeasureRef = useRef<HTMLDivElement>(null)
   const [lockedTabHeight, setLockedTabHeight] = useState<number | null>(null)
+  const scrollBodyElRef = useRef<HTMLDivElement | null>(null)
 
   const pastureNameById = useMemo(() => {
     const m = new Map<string, string>()
@@ -856,7 +876,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                 {({ body, footerApi }) => (
                   <>
                     <div
-                      ref={sheetBodyScrollRef}
+                      ref={(node) => { sheetBodyScrollRef(node); scrollBodyElRef.current = node }}
                       className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-visible"
                     >
                       <div className="px-5 pb-[var(--scroll-area-bottom-pad)] md:px-7">
@@ -879,6 +899,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                         </div>
                       </div>
                     </div>
+                    <ResultScrollTrigger phase={footerApi.phase} scrollRef={scrollBodyElRef} />
                     <LogObservationFormFooter variant="sheet" api={footerApi} />
                   </>
                 )}
