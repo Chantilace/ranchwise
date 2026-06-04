@@ -593,7 +593,7 @@ export function CattleOverviewPage() {
             addCta={<RosterPageAddButton onClick={() => setAddAnimalOpen(true)}>Add cattle</RosterPageAddButton>}
           />
           <div className="mb-3 flex w-full min-w-0 flex-nowrap items-center gap-2">
-            <div className="min-w-0 max-w-full flex-1">
+            <div className="min-w-0 max-w-full flex-1 sm:max-w-[320px]">
               <SearchField
                 variant="inline"
                 size="md"
@@ -797,7 +797,7 @@ export function CattleOverviewPage() {
             <>
               <div className="mt-3 flex shrink-0 flex-col gap-3">
                 <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-                  <div className="min-w-0 max-w-full flex-1 lg:max-w-md">
+                  <div className="min-w-0 max-w-full flex-1 sm:max-w-[320px]">
                     <SearchField
                       variant="inline"
                       size="md"

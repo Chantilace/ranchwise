@@ -662,7 +662,7 @@ export function PasturesPage() {
                     sortDir={sortDir}
                     lastActivityDir={lastActivityPrimarySort}
                     onColumnSort={onPastureColumnSort}
-                    className="min-w-[132px] shrink-0"
+                    className="w-auto"
                   >
                     Status
                   </PastureRosterSortableHeader>
@@ -767,7 +767,7 @@ export function PasturesPage() {
                       <TableCell
                         className={cn(
                           cellBg,
-                          "min-w-[132px] whitespace-nowrap align-middle pl-4 pr-3",
+                          "w-auto whitespace-nowrap align-middle pl-4 pr-3",
                         )}
                       >
                         <StatusBadge
