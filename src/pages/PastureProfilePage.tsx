@@ -510,7 +510,7 @@ export function PastureProfilePage() {
       className="mt-0 min-w-0"
       modalContentClassName="rounded-[16px] px-5 py-[18px]"
       proseBodyClassName="text-[14px] leading-[1.45]"
-      label="Pasture summary"
+      label="Smart summary"
       labelGlyphStyle="section"
       bodyVariant="prose"
       body={aiSummaryProse}
@@ -526,7 +526,7 @@ export function PastureProfilePage() {
       modalContentClassName="rounded-[16px] px-5 py-[18px]"
       proseBodyClassName="text-[14px] leading-[1.45]"
       labelPillClassName="rounded-full px-2 py-[3px]"
-      label="Pasture summary"
+      label="Smart summary"
       labelGlyphStyle="section"
       bodyVariant="prose"
       body={aiSummaryProse}
@@ -541,7 +541,7 @@ export function PastureProfilePage() {
       className="mt-0 flex h-full min-h-0 min-w-0 flex-1 flex-col"
       modalContentClassName="rounded-[16px] px-5 py-[18px]"
       proseBodyClassName="text-[16px] leading-[1.45]"
-      label="Pasture summary"
+      label="Smart summary"
       labelGlyphStyle="section"
       bodyVariant="prose"
       body={aiSummaryProse}
