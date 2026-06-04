@@ -472,24 +472,16 @@ export function HorseProfile() {
     return formatDistanceToNow(new Date(best), { addSuffix: true });
   }, [healthObservationsForHorse]);
 
-  const prevIsMdUpRef = useRef(isMdUp);
+  /** Tracks which surface the horse log is open on so the breakpoint swap
+   *  doesn't depend on external context state timing. */
+  const horseLogSurfaceRef = useRef<"modal" | "sheet" | null>(null);
+
+  // Clear the ref when the modal is dismissed externally (Finalize, Discard, X)
   useEffect(() => {
-    if (prevIsMdUpRef.current === isMdUp) return;
-    prevIsMdUpRef.current = isMdUp;
-    if (!isMdUp) {
-      // Viewport shrunk to mobile — swap modal → sheet if modal is open
-      if (logObservationTarget?.kind === "horse") {
-        closeLogModal();
-        setLogSheetOpen(true);
-      }
-    } else {
-      // Viewport grew to desktop — swap sheet → modal if sheet is open
-      if (logSheetOpen) {
-        setLogSheetOpen(false);
-        openLogModal(profileHorse);
-      }
+    if (!logObservationTarget && horseLogSurfaceRef.current === "modal") {
+      horseLogSurfaceRef.current = null;
     }
-  }, [isMdUp, closeLogModal, logObservationTarget, logSheetOpen, openLogModal, profileHorse]);
+  }, [logObservationTarget]);
 
   const healthSummaryProse = useMemo(() => {
     if (allObservationsForHorse.length === 0) return null;
@@ -625,9 +617,31 @@ export function HorseProfile() {
     "";
 
   function openHorseLog() {
-    if (!isMdUp) setLogSheetOpen(true);
-    else openLogModal(profileHorse);
+    if (!isMdUp) {
+      horseLogSurfaceRef.current = "sheet";
+      setLogSheetOpen(true);
+    } else {
+      horseLogSurfaceRef.current = "modal";
+      openLogModal(profileHorse);
+    }
   }
+
+  const prevIsMdUpRef = useRef(isMdUp);
+  useEffect(() => {
+    if (prevIsMdUpRef.current === isMdUp) return;
+    prevIsMdUpRef.current = isMdUp;
+    if (!isMdUp && horseLogSurfaceRef.current === "modal") {
+      // Shrink to mobile: swap modal → sheet
+      horseLogSurfaceRef.current = "sheet";
+      closeLogModal();
+      setLogSheetOpen(true);
+    } else if (isMdUp && horseLogSurfaceRef.current === "sheet") {
+      // Grow to desktop: swap sheet → modal
+      horseLogSurfaceRef.current = "modal";
+      setLogSheetOpen(false);
+      openLogModal(profileHorse);
+    }
+  }, [isMdUp, closeLogModal, openLogModal, profileHorse]);
 
   const profileTabItems: TabItem[] = useMemo(
     () => [
@@ -1268,7 +1282,10 @@ export function HorseProfile() {
         <HorseLogSheet
           key={profileHorseId}
           horse={profileHorse}
-          onClose={() => setLogSheetOpen(false)}
+          onClose={() => {
+            horseLogSurfaceRef.current = null;
+            setLogSheetOpen(false);
+          }}
         />
       ) : null}
 
