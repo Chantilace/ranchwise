@@ -869,7 +869,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                         <div
                           ref={tabContentRef}
                           className="min-h-0 flex-1 overflow-y-auto"
-                          style={lockedTabHeight != null ? { height: lockedTabHeight } : undefined}
+                          style={lockedTabHeight != null && footerApi.phase !== "result" ? { height: lockedTabHeight } : undefined}
                         >
                           {activeTab === "log" ? (
                             <div ref={logTabMeasureRef}>{body}</div>
