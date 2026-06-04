@@ -140,7 +140,7 @@ export function HomeSmartSuggestionsSection() {
       {/* Header: badge tag + timestamp */}
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <span className="inline-flex items-center gap-1.5 rounded-md border border-ai-accent bg-ai-accent-bg px-2 py-1">
-          <AiAnnotationMark className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center text-[18px] leading-none text-ai-accent" />
+          <AiAnnotationMark className="shrink-0 text-[20px] leading-none" />
           <span className="text-[13px] font-semibold uppercase tracking-wide text-ai-accent">
             Smart suggestions
           </span>
