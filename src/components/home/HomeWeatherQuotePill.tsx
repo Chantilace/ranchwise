@@ -14,7 +14,7 @@ export function HomeWeatherQuotePill({ weather, quoteText, className }: HomeWeat
   return (
     <div
       className={cn(
-        "flex w-full max-w-full flex-nowrap items-center gap-3 rounded-[var(--border-radius-md)] px-4 py-2.5",
+        "flex w-full max-w-full flex-nowrap items-start gap-3 rounded-[var(--border-radius-md)] px-3 py-2.5",
         homepageMutedSurfaceChromeClass,
         className,
       )}
