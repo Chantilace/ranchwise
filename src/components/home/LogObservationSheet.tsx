@@ -581,7 +581,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
           <Dialog.Popup
             className={cn(
               "flex w-full max-w-full flex-col border-[0.5px] border-border bg-card text-foreground shadow-xl outline-none",
-              "min-h-[44dvh] max-h-[90vh] rounded-t-2xl md:min-h-0 md:max-h-[min(90dvh,680px)] md:max-w-lg md:rounded-2xl",
+              "min-h-[44dvh] max-h-[min(90dvh,880px)] rounded-t-2xl md:min-h-0 md:max-w-2xl md:rounded-2xl",
               "translate-y-0 transition-transform duration-200 ease-out data-[starting-style]:translate-y-full md:data-[starting-style]:translate-y-0 md:data-[starting-style]:scale-95"
             )}
           >

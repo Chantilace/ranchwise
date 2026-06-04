@@ -278,7 +278,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/55 backdrop-blur-[1px] transition-opacity data-[ending-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <Dialog.Popup className="flex max-h-[min(90dvh,720px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl outline-none">
+          <Dialog.Popup className="flex max-h-[min(90dvh,880px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl outline-none">
             <Dialog.Title className="sr-only">Add animal</Dialog.Title>
             <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
               <h2 className="text-xl font-medium text-foreground">Add animal</h2>

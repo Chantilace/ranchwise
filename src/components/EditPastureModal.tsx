@@ -67,7 +67,7 @@ export function EditPastureModal({ open, pasture, onClose, onSave, onDelete }: E
           <Dialog.Popup
             className={cn(
               "flex w-full min-w-0 max-w-full flex-col overflow-hidden border border-border bg-background text-foreground shadow-xl outline-none",
-              "max-h-[90dvh] min-h-0 rounded-t-2xl md:max-h-[min(90dvh,680px)] md:max-w-md md:rounded-2xl",
+              "max-h-[min(90dvh,880px)] min-h-0 rounded-t-2xl md:max-w-2xl md:rounded-2xl",
               "translate-y-0 transition-transform duration-200 ease-out data-[starting-style]:translate-y-full md:data-[starting-style]:translate-y-0 md:data-[starting-style]:scale-95",
             )}
           >

@@ -91,7 +91,7 @@ function AddHorseFormInner({ pastures, onClose, onSave }: InnerProps) {
         </Dialog.Close>
       </div>
 
-      <div className="max-h-[min(70dvh,640px)] overflow-y-auto px-6 py-5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
         <AddHorseFormFields
           variant="modal"
           pastures={pastures}
@@ -139,7 +139,7 @@ export function AddHorseModal({ open, pastures, onClose, onSave }: AddHorseModal
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/55 backdrop-blur-[1px] transition-opacity data-[ending-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <Dialog.Popup className="flex w-full min-w-0 max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl outline-none">
+          <Dialog.Popup className="flex w-full min-w-0 max-w-2xl flex-col max-h-[min(90dvh,880px)] overflow-hidden rounded-2xl border border-border bg-background shadow-xl outline-none">
             {open ? <AddHorseFormInner pastures={pastures} onClose={onClose} onSave={onSave} /> : null}
           </Dialog.Popup>
         </Dialog.Viewport>

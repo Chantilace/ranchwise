@@ -611,7 +611,7 @@ export function LogObservationModal({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/55 backdrop-blur-[1px] transition-opacity data-[ending-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <Dialog.Popup className="flex w-full min-w-0 max-w-lg flex-col max-h-[90dvh] overflow-hidden rounded-2xl border border-border bg-background shadow-xl outline-none">
+          <Dialog.Popup className="flex w-full min-w-0 max-w-2xl flex-col max-h-[min(90dvh,880px)] overflow-hidden rounded-2xl border border-border bg-background shadow-xl outline-none">
             {open ? (
               <LogObservationModalInner
                 key={stableKey ?? editingEntry?.id ?? "new"}

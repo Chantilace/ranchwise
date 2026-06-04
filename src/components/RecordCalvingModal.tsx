@@ -595,7 +595,7 @@ function RecordCalvingModalInner({
             </Dialog.Close>
           </div>
         }
-        contentClassName="max-h-[min(70dvh,620px)] overflow-y-auto px-6 py-5"
+        contentClassName="min-h-0 flex-1 overflow-y-auto px-6 py-5"
         footer={({ phase, canSave, save, finalize, edit, discard }) => (
           <div className="border-t border-border px-6 py-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -689,7 +689,7 @@ export function RecordCalvingModal({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-[140] bg-black/55 backdrop-blur-[1px] transition-opacity data-[ending-style]:opacity-0" />
         <Dialog.Viewport className="fixed inset-0 z-[140] flex items-center justify-center p-4">
-          <Dialog.Popup className="flex w-full min-w-0 max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-xl outline-none">
+          <Dialog.Popup className="flex w-full min-w-0 max-w-2xl flex-col max-h-[min(90dvh,880px)] overflow-hidden rounded-2xl border border-border bg-background shadow-xl outline-none">
             {open && cattle ? (
               <RecordCalvingModalInner
                 cattle={cattle}
