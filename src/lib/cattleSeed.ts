@@ -161,7 +161,7 @@ const HEIFERS: Cattle[] = Array.from({ length: 48 }, (_, i) => {
     calvingStatus = "none"
     dueDate = null
   } else {
-    calvingStatus = "complications"
+    calvingStatus = "calved"
     dueDate = null
     calvingDate = isoDateFromToday(-4)
     deliveryType = "assisted"
@@ -219,7 +219,7 @@ const NE_COWS: Cattle[] = Array.from({ length: 60 }, (_, i) => {
     calvingStatus = "pregnant"
     dueDate = isoDateFromToday(22)
   } else {
-    calvingStatus = "complications"
+    calvingStatus = "calved"
     dueDate = null
     calvingDate = isoDateFromToday(-5)
     deliveryType = "normal"
@@ -277,7 +277,7 @@ const SE_COWS: Cattle[] = Array.from({ length: 60 }, (_, i) => {
     calvingStatus = "pregnant"
     dueDate = isoDateFromToday(19 + (n - 58))
   } else {
-    calvingStatus = "complications"
+    calvingStatus = "calved"
     dueDate = null
     calvingDate = isoDateFromToday(-3)
     deliveryType = "assisted"
