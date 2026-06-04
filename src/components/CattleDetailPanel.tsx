@@ -654,7 +654,7 @@ function CattleBottomSheet({
     <Drawer.Root open onOpenChange={(open) => !open && onClose()}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[1px]" />
-        <Drawer.Content className="fixed right-0 bottom-0 left-0 z-50 flex max-h-[72vh] flex-col rounded-t-2xl bg-background outline-none">
+        <Drawer.Content className="fixed right-0 bottom-0 left-0 z-50 flex max-h-[min(90dvh,880px)] flex-col rounded-t-2xl bg-background outline-none">
           <Drawer.Title className="sr-only">Cattle details — {formatCattleTagDisplay(cattle.tagNumber)}</Drawer.Title>
           <Drawer.Handle className="mx-auto mt-2.5 mb-2 block h-1 w-8 shrink-0 rounded-full bg-border" />
           <CattleDetailSubviewSwitcher

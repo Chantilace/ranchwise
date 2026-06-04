@@ -32,7 +32,7 @@ export function MobileRosterFilterSheet({ open, title, onClose, children }: Mobi
       }}
     >
       <div
-        className="absolute bottom-0 left-0 right-0 flex max-h-[min(85vh,620px)] flex-col rounded-t-2xl border border-border bg-card shadow-xl"
+        className="absolute bottom-0 left-0 right-0 flex max-h-[min(90dvh,880px)] flex-col rounded-t-2xl border border-border bg-card shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="mobile-roster-filter-sheet-title"

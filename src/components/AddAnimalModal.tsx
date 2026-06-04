@@ -132,7 +132,7 @@ export function AddAnimalModal({ open, onOpenChange, defaultPastureId }: AddAnim
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-50 bg-black/55 backdrop-blur-[1px]" />
-          <Drawer.Content className="fixed right-0 bottom-0 left-0 z-50 flex max-h-[90vh] flex-col rounded-t-2xl bg-white outline-none">
+          <Drawer.Content className="fixed right-0 bottom-0 left-0 z-50 flex max-h-[min(90dvh,880px)] flex-col rounded-t-2xl bg-background outline-none">
             <Drawer.Title className="sr-only">Add animal</Drawer.Title>
             <div className="flex shrink-0 justify-center pt-3 pb-1">
               <div className="h-1 w-10 rounded-full bg-gray-200" />
