@@ -24,9 +24,9 @@ const suggestionsTrackClass = cn(
 )
 
 const smartSuggestionCardLinkClass = cn(
-  "group flex min-h-[140px] min-w-0 flex-col rounded-[var(--radius)] bg-[var(--ai-accent-deep)] p-4 text-[var(--ai-accent-soft)]",
+  "group flex min-h-[140px] min-w-0 flex-col rounded-[var(--radius)] bg-ai-accent-bg border border-ai-accent/20 p-4",
   "touch-manipulation no-underline outline-none transition-colors duration-150 ease-out",
-  "hover:bg-[var(--ai-hover)] active:scale-[0.99]",
+  "hover:border-ai-accent/40 hover:bg-ai-accent/10 active:scale-[0.99]",
   "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   "w-[80%] max-w-[320px] shrink-0 snap-start",
   "lg:w-[420px] lg:max-w-none",
@@ -52,17 +52,17 @@ function HomeSmartSuggestionCard({
   return (
     <Link to={to} className={smartSuggestionCardLinkClass} aria-label={ariaLabel}>
       <div className="mb-2.5 flex items-center justify-between gap-2">
-        <span className="text-[13px] font-semibold text-white">{categoryLabel}</span>
+        <span className="text-[13px] font-semibold text-foreground">{categoryLabel}</span>
         <ArrowUpRight
-          className="h-4 w-4 shrink-0 text-white transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+          className="h-4 w-4 shrink-0 text-ai-accent transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
           strokeWidth={2.25}
           aria-hidden
         />
       </div>
 
-      <p className="mb-3 min-w-0 flex-1 text-[14px] leading-snug text-white">{statement}</p>
+      <p className="mb-3 min-w-0 flex-1 text-[14px] leading-snug text-foreground">{statement}</p>
 
-      <span className="self-start rounded-full bg-transparent px-2 py-[1px] text-[13px] font-medium text-[var(--ai-accent-soft)] border border-[rgba(207,203,246,0.35)] group-hover:text-white">
+      <span className="self-start rounded-full border border-ai-accent/30 bg-ai-accent/10 px-2 py-[1px] text-[13px] font-medium text-ai-accent">
         {priorityLabel(priority)}
       </span>
     </Link>
