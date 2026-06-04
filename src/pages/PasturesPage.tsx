@@ -1,16 +1,13 @@
-import { Dialog } from "@base-ui/react/dialog"
-import { ArrowDown, ArrowUp, ArrowUpDown, NotebookPen, X } from "lucide-react"
+import { ArrowDown, ArrowUp, ArrowUpDown, NotebookPen } from "lucide-react"
 import type { ReactNode } from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
 import { PageTitleStrip } from "@/components/PageTitleStrip"
 import { RosterMobileHeader } from "@/components/roster/RosterMobileHeader"
 import { RosterMobileLogIconButton } from "@/components/roster/RosterMobileLogIconButton"
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell"
-import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
 import { SearchField } from "@/components/ui/search-field"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatusBadge } from "@/components/StatusBadge"
 import { EntityFilterPanel, type EntityFilterDimension } from "@/components/workspace/EntityFilterPanel"
@@ -21,7 +18,6 @@ import { MobileRosterFilterSheet } from "@/components/workspace/MobileRosterFilt
 import { workspaceFilterPanelClass } from "@/components/workspace/filterPanelStyles"
 import { RosterPageAddButton } from "@/components/workspace/RosterPageAddButton"
 import { useRanchData } from "@/contexts/RanchDataContext"
-import { useOverlayRegistration } from "@/contexts/OverlayRegistryContext"
 import { ROSTER_HEADCOUNT_BADGE_CLASS } from "@/lib/categoryBadgeClass"
 import { useCloseOnOutsidePointerDown } from "@/hooks/useCloseOnOutsidePointerDown"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
@@ -41,7 +37,7 @@ import {
 import { WORKSPACE_PAGE_ROSTER_FILL_CLASS } from "@/lib/workspacePageCard"
 import { cn } from "@/lib/utils"
 import { PASTURE_SEED_MEDIA } from "@/lib/pastureSeedMedia"
-import { getLatestPastureCheckAiInsight, getPastureShortName } from "@/lib/pastureUtils"
+import { getPastureShortName } from "@/lib/pastureUtils"
 import type { PastureStatus } from "@/lib/statusUtils"
 import type { Pasture } from "@/types/cattle"
 
@@ -201,12 +197,6 @@ export function PasturesPage() {
   const [sortKey, setSortKey] = useState<PastureSortColumn>("lastCheck")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
 
-  const [aiPanelOpen, setAiPanelOpen] = useState(false)
-  const [aiPastureId, setAiPastureId] = useState<string | null>(null)
-  const [aiPanelSuggestions, setAiPanelSuggestions] = useState<readonly string[] | null>(null)
-  const aiInsightOpen = aiPanelOpen && aiPastureId != null && Boolean(aiPanelSuggestions?.length)
-
-  useOverlayRegistration(aiInsightOpen)
 
   useEffect(() => {
     if (overdueChecksOnly && recencyFilters.size === 0) {
@@ -385,11 +375,6 @@ export function PasturesPage() {
 
   const pastureRosterCountVisible =
     pastures.length > 0 && (search.trim() !== "" || activePastureFilterCount > 0)
-
-  const selectedPasture = useMemo(() => {
-    if (!aiPastureId) return null
-    return pastures.find((p) => p.id === aiPastureId) ?? null
-  }, [aiPastureId, pastures])
 
   const pastureCheckSummaryCounts = useMemo(() => {
     let recent = 0
@@ -711,22 +696,13 @@ export function PasturesPage() {
                   >
                     Acreage
                   </PastureRosterSortableHeader>
-                  <TableHead
-                    className={cn(
-                      PASTURE_ROSTER_TH_BASE,
-                      PASTURE_ROSTER_TH_STICKY_TOP,
-                      "min-w-[min(260px,30vw)]",
-                    )}
-                  >
-                    <span className="flex h-14 items-center px-3.5 text-muted-foreground">AI insights</span>
-                  </TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
                 {rows.length === 0 ? (
                   <TableRow className="border-neutral-200 hover:bg-transparent">
-                    <TableCell colSpan={6} className="h-32 border-b-0 bg-white text-center align-middle">
+                    <TableCell colSpan={5} className="h-32 border-b-0 bg-white text-center align-middle">
                       <div className="flex flex-col items-center gap-2">
                         <p className="text-sm font-medium text-foreground">No pastures match your search</p>
                         <p className="text-sm text-muted-foreground">Try a different search term.</p>
@@ -741,9 +717,6 @@ export function PasturesPage() {
                   const cellBg =
                     "border-b border-neutral-200 bg-white group-hover:bg-muted/50"
                   const media = PASTURE_SEED_MEDIA[p.name] ?? null
-                  const checks = pastureChecksByPastureId[p.id]
-                  const { preview, drawerSuggestions } = getLatestPastureCheckAiInsight(checks)
-
                   return (
                     <TableRow
                       key={p.id}
@@ -816,31 +789,6 @@ export function PasturesPage() {
                         {p.acreage}
                       </TableCell>
 
-                      <TableCell
-                        className={cn(
-                          cellBg,
-                          "min-w-[min(260px,30vw)] py-3 align-top whitespace-normal"
-                        )}
-                      >
-                        {preview && drawerSuggestions?.length ? (
-                          <button
-                            type="button"
-                            className="flex w-full items-center gap-2 rounded-lg bg-muted px-3 py-2 text-left text-sm leading-relaxed text-foreground outline-none transition-colors hover:bg-muted-deeper focus-visible:ring-2 focus-visible:ring-ring/40"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              setAiPastureId(p.id)
-                              setAiPanelSuggestions(drawerSuggestions)
-                              setAiPanelOpen(true)
-                            }}
-                          >
-                            <AiAnnotationMark className="inline-flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center text-[18px] leading-none text-ai-accent" />
-                            <span className="flex-1 text-foreground">{preview}</span>
-                          </button>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
                     </TableRow>
                   )
                 })}
@@ -851,44 +799,6 @@ export function PasturesPage() {
         </div>
       </div>
 
-      <Dialog.Root
-        open={aiInsightOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setAiPanelOpen(false)
-            setAiPanelSuggestions(null)
-          }
-        }}
-      >
-        <Dialog.Portal>
-          <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/35 backdrop-blur-[1px]" />
-          <Dialog.Popup className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[520px] flex-col bg-background shadow-xl outline-none">
-            <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
-              <div className="min-w-0">
-                <Dialog.Title className="text-base font-medium text-foreground">AI insight</Dialog.Title>
-                {selectedPasture ? (
-                  <Dialog.Description className="mt-0.5 text-sm text-muted-foreground">
-                    {selectedPasture.name}
-                  </Dialog.Description>
-                ) : null}
-              </div>
-              <Dialog.Close
-                type="button"
-                className={cn(buttonVariants({ variant: "icon", size: "iconGhost" }))}
-                aria-label="Close"
-              >
-                <X className="size-4" aria-hidden />
-              </Dialog.Close>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-              {aiPanelSuggestions?.length ? (
-                <SmartSuggestionsPanel mode="modal" suggestions={aiPanelSuggestions} />
-              ) : null}
-            </div>
-          </Dialog.Popup>
-        </Dialog.Portal>
-      </Dialog.Root>
     </RanchWorkspaceShell>
     <MobileRosterFilterSheet
       open={pastureFilterOpen && isMobile}
