@@ -622,7 +622,7 @@ export function CattleOverviewPage() {
             entityName="cattle"
             className="mb-2 shrink-0"
           />
-          <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border-[0.5px] border-border bg-card">
+          <div className="rounded-xl border-[0.5px] border-border bg-card overflow-x-auto">
             {allHerdRows.length === 0 ? (
               <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
                 <p className="text-sm font-medium text-foreground">
@@ -831,9 +831,9 @@ export function CattleOverviewPage() {
             </>
           )}
 
-          <div className="mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row md:items-stretch md:gap-4">
-              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-auto">
+          <div className="mt-2 flex min-w-0 flex-col gap-4">
+            <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-stretch md:gap-4">
+              <div className="min-w-0 flex-1 overflow-x-auto">
                 <CattleRosterTable
                   rows={allHerdRows}
                   showPastureColumn
