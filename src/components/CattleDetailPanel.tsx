@@ -445,14 +445,16 @@ function CattleDetailSubviewSwitcher({
   const [, setLogFormNonce] = useState(0)
   const embeddedLogCommitIdRef = useRef<string | null>(null)
   const cattleIdRef = useRef(cattle.id)
-  const slideLogOpenRef = useRef(slideLogOpen)
-  slideLogOpenRef.current = slideLogOpen
+  /** Set synchronously by the slideLogOpen effect so the cattle-change timeout
+   *  can skip resetting to "detail" even after slideLogOpen has been consumed. */
+  const didNavigateToLogRef = useRef(false)
 
   useEffect(() => {
     if (cattleIdRef.current === cattle.id) return
     cattleIdRef.current = cattle.id
+    didNavigateToLogRef.current = false
     const timeout = window.setTimeout(() => {
-      if (slideLogOpenRef.current) return
+      if (didNavigateToLogRef.current) return
       embeddedLogCommitIdRef.current = null
       setSheetView("detail")
       setEmbeddedLogInitial(null)
@@ -462,6 +464,7 @@ function CattleDetailSubviewSwitcher({
 
   useEffect(() => {
     if (!slideLogOpen) return
+    didNavigateToLogRef.current = true
     embeddedLogCommitIdRef.current = null
     setEmbeddedLogInitial(slideLogOpen.initialObservation)
     setLogFormNonce((n) => n + 1)

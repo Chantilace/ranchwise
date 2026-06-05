@@ -844,6 +844,7 @@ export function CattleOverviewPage() {
                   onColumnSort={onCattleColumnSort}
                   onRowClick={openCattleSlide}
                   selectedCattleId={slideCattleId}
+                  onOpenObservationLog={openCattleSlideToObservationLog}
                   emptyState={
                     allHerdRows.length === 0
                       ? isUnfiltered && !hasAnyCattle
