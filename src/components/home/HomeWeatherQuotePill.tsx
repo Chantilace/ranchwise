@@ -1,39 +1,61 @@
 import { CloudSun } from "lucide-react"
 
-import { homepageMutedSurfaceChromeClass } from "@/lib/homePageCardChrome"
+import { homepageCardChromeClass } from "@/lib/homePageCardChrome"
 import { cn } from "@/lib/utils"
 
-type HomeWeatherQuotePillProps = {
-  weather: { temp: number; condition: string; location: string }
-  quoteText: string
+export type HomeWeatherData = {
+  temp: number
+  condition: string
+  location: string
+  hi: number
+  lo: number
+  wind: string
+}
+
+type HomeWeatherCardProps = {
+  weather: HomeWeatherData
   className?: string
 }
 
-/** Weather + ranch proverb pill (sits top-right beside greeting on the dashboard). */
-export function HomeWeatherQuotePill({ weather, quoteText, className }: HomeWeatherQuotePillProps) {
+/** Structured weather card — sits top-right beside the greeting on the dashboard. */
+export function HomeWeatherCard({ weather, className }: HomeWeatherCardProps) {
   return (
     <div
       className={cn(
-        "flex w-full max-w-full flex-nowrap items-start gap-3 rounded-[var(--border-radius-md)] px-3 py-2.5",
-        homepageMutedSurfaceChromeClass,
+        "flex shrink-0 flex-nowrap items-center gap-4 rounded-[var(--radius)] px-4 py-3",
+        homepageCardChromeClass,
         className,
       )}
-      style={{ background: "var(--color-background-secondary)" }}
     >
-      <div className="flex min-w-0 shrink-0 items-center gap-3">
-        <CloudSun className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[13px] font-medium leading-none text-foreground">{weather.temp}°</span>
-          <span className="text-[13px] leading-snug text-[var(--color-text-secondary)]">
-            {weather.condition} · {weather.location}
-          </span>
+      {/* Icon + temp + condition (always visible) */}
+      <div className="flex shrink-0 items-center gap-2.5">
+        <CloudSun className="size-5 shrink-0 text-muted-foreground" strokeWidth={1.5} aria-hidden />
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-[18px] font-semibold leading-none text-foreground">{weather.temp}°</span>
+          <span className="text-[13px] text-muted-foreground">{weather.condition}</span>
         </div>
       </div>
-      <div className="hidden min-w-0 md:flex md:flex-1 md:min-w-0 md:items-center md:gap-2.5">
-        <div className="h-3 w-px shrink-0 bg-[var(--color-border-tertiary)]" aria-hidden />
-        <span className="min-w-0 flex-1 text-right text-[13px] leading-snug italic text-[var(--color-text-tertiary)]">
-          {quoteText}
-        </span>
+
+      {/* Compact: just location, shown on small screens */}
+      <span className="text-[13px] text-muted-foreground md:hidden">· {weather.location}</span>
+
+      {/* Expanded: structured columns, shown md+ */}
+      <div className="hidden md:flex md:items-center md:gap-5">
+        <div className="h-4 w-px shrink-0 bg-border" aria-hidden />
+        <div className="flex items-start gap-5">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Hi / Lo</span>
+            <span className="text-[13px] font-medium text-foreground">{weather.hi}° / {weather.lo}°</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Wind</span>
+            <span className="text-[13px] font-medium text-foreground">{weather.wind}</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Location</span>
+            <span className="text-[13px] font-medium text-foreground">{weather.location}</span>
+          </div>
+        </div>
       </div>
     </div>
   )
