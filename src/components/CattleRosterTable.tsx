@@ -182,6 +182,8 @@ export type CattleRosterTableProps = {
   sortColumn?: CattleRosterSortColumn
   sortDirection?: "asc" | "desc"
   onColumnSort?: (column: CattleRosterSortColumn) => void
+  /** Override classes on the table's outer shell (e.g. `flex-none max-h-full` to hug content up to the column height, then scroll internally). */
+  shellClassName?: string
 }
 
 export function CattleRosterTable({
@@ -196,11 +198,12 @@ export function CattleRosterTable({
   sortColumn = "lastObservation",
   sortDirection = "desc",
   onColumnSort,
+  shellClassName,
 }: CattleRosterTableProps) {
   const { openCattleLogModal } = useRanchData()
   const colSpan = showPastureColumn ? 12 : 11
   return (
-    <Table className="border-separate border-spacing-0" containerClassName="min-w-0 w-full">
+    <Table className="border-separate border-spacing-0" containerClassName="min-w-0 w-full" shellClassName={shellClassName}>
       <TableHeader>
         <TableRow className="border-neutral-200 hover:bg-transparent">
           <CattleRosterSortableColumnHeader

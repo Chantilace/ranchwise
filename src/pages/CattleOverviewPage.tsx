@@ -831,11 +831,12 @@ export function CattleOverviewPage() {
             </>
           )}
 
-          <div className="mt-2 flex min-w-0 flex-col gap-4">
-            <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-stretch md:gap-4">
-              <div className="min-w-0 flex-1 overflow-x-auto">
+          <div className="mt-2 flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row md:items-stretch md:gap-4">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-auto">
                 <CattleRosterTable
                   rows={allHerdRows}
+                  shellClassName="flex-none max-h-full"
                   showPastureColumn
                   pastureNames={pastureNameById}
                   observationsByCattleId={observationsByCattleId}
