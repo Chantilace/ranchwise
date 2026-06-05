@@ -7,8 +7,6 @@ import { HomeSmartSuggestionsSection } from "@/components/home/HomeSmartSuggesti
 import { HomeWeatherCard } from "@/components/home/HomeWeatherQuotePill"
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell"
 import { CURRENT_USER } from "@/lib/workspaceIdentity"
-import { homepageCardChromeClass } from "@/lib/homePageCardChrome"
-import { cn } from "@/lib/utils"
 
 export function RanchCalendarPage() {
   const [search, setSearch] = useState("")
@@ -34,7 +32,7 @@ export function RanchCalendarPage() {
     >
       <div className="flex min-w-0 w-full max-w-full flex-col gap-4">
         <div className="mb-4 flex min-w-0 flex-nowrap items-center gap-4">
-          <div className={cn("shrink-0 rounded-[var(--radius)] px-4 py-3", homepageCardChromeClass)}>
+          <div className="shrink-0">
             <p className="mb-0.5 whitespace-nowrap text-[18px] font-medium leading-tight text-foreground xl:text-[22px]">
               Howdy, {firstName}
             </p>
