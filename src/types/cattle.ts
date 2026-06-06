@@ -46,6 +46,10 @@ export const BREED_OPTIONS = [
 ] as const
 export type Breed = (typeof BREED_OPTIONS)[number]
 
+/** Canonical cattle sex labels (shared by the Add Cattle form, roster filter, and column). */
+export const CATTLE_SEX_OPTIONS = ["Bull", "Cow", "Heifer", "Steer", "Calf"] as const
+export type CattleSexLabel = (typeof CATTLE_SEX_OPTIONS)[number]
+
 /** Persisted on the animal. Auto `pregnant` may become `calving-soon` in `getCalvingStatus()` when due within 14 days. */
 export type StoredCalvingStatus = "pregnant" | "in-labor" | "calved" | "complications" | "none"
 

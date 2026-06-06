@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from "react"
 import { useCallback, useMemo } from "react"
 import { CALVING_FILTER_OPTIONS, type EffectiveCalvingStatus } from "@/lib/calvingStatus"
-import { BREED_OPTIONS, type Breed } from "@/types/cattle"
+import { BREED_OPTIONS, CATTLE_SEX_OPTIONS, type Breed } from "@/types/cattle"
 import { SearchField } from "@/components/ui/search-field"
 import type { RanchFilterOption } from "@/components/workspace/RanchFilterCategoryField"
 import {
@@ -15,6 +15,8 @@ import {
 } from "@/components/workspace/filterPanelStyles"
 
 const HEALTH_OPTIONS = (["Flag", "Monitor", "Good"] as const).map((h) => ({ id: h, label: h }))
+
+const SEX_MENU_OPTIONS = CATTLE_SEX_OPTIONS.map((s) => ({ id: s, label: s }))
 
 const BREED_MENU_OPTIONS: { id: string; label: string }[] = [
   { id: "all", label: "All" },
@@ -32,6 +34,9 @@ export type CattleFilterPanelProps = {
   breedFilter: "all" | Breed
   setBreedFilter: (b: "all" | Breed) => void
   showBreedSection?: boolean
+  sexFilters?: Set<string>
+  setSexFilters?: Dispatch<SetStateAction<Set<string>>>
+  showSexSection?: boolean
   /** Herd roster only: pasture checklist (no swatches). Omit on single-pasture pages. */
   pastureFilterOptions?: readonly RanchFilterOption[]
   pastureFilters?: Set<string>
@@ -60,6 +65,9 @@ export function CattleFilterPanel({
   breedFilter,
   setBreedFilter,
   showBreedSection = true,
+  sexFilters,
+  setSexFilters,
+  showSexSection = false,
   pastureFilterOptions,
   pastureFilters,
   setPastureFilters,
@@ -119,6 +127,18 @@ export function CattleFilterPanel({
         "aria-label": "Calving status filters",
       })
     }
+    if (showSexSection && sexFilters && setSexFilters) {
+      out.push({
+        kind: "multi",
+        id: "sex",
+        label: "Sex",
+        options: SEX_MENU_OPTIONS,
+        selectedIds: sexFilters,
+        allSelectedLabel: "All",
+        placeholder: "All",
+        "aria-label": "Sex filters",
+      })
+    }
     out.push({
       kind: "multi",
       id: "health",
@@ -158,6 +178,9 @@ export function CattleFilterPanel({
     showCalvingStatusSection,
     calvingMenuOptions,
     calvingFilters,
+    showSexSection,
+    sexFilters,
+    setSexFilters,
     healthMenuOptions,
     healthFilters,
     pastureFilterOptions,
@@ -172,10 +195,11 @@ export function CattleFilterPanel({
   const onMultiChange = useCallback(
     (id: string, next: Set<string>) => {
       if (id === "calving") setCalvingFilters(new Set([...next] as EffectiveCalvingStatus[]))
+      else if (id === "sex") setSexFilters?.(new Set(next))
       else if (id === "health") setHealthFilters(new Set([...next] as ("Flag" | "Monitor" | "Good")[]))
       else if (id === "pasture") handlePastureChange(next)
     },
-    [handlePastureChange, setCalvingFilters, setHealthFilters]
+    [handlePastureChange, setCalvingFilters, setHealthFilters, setSexFilters]
   )
 
   const onRadioChange = useCallback(
