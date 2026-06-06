@@ -1,0 +1,182 @@
+import { FormLabel } from "@/components/ui/form-label"
+import { cn } from "@/lib/utils"
+import type { CalvingEventDraft, CalvingStage } from "@/lib/cattleCalvingEvent"
+import type { CalfStatus, CalvingComplication, DeliveryType } from "@/types/cattle"
+
+const STAGE_OPTIONS: { id: CalvingStage; label: string }[] = [
+  { id: "in-labor", label: "In labor" },
+  { id: "calved", label: "Calved" },
+]
+
+const DELIVERY_OPTIONS: { id: DeliveryType; label: string }[] = [
+  { id: "normal", label: "Normal" },
+  { id: "assisted", label: "Assisted" },
+  { id: "c-section", label: "C-section" },
+]
+
+const CALF_OPTIONS: { id: CalfStatus; label: string }[] = [
+  { id: "live", label: "Live" },
+  { id: "stillborn", label: "Stillborn" },
+  { id: "unknown", label: "Unknown" },
+]
+
+const COMPLICATION_OPTIONS: { id: CalvingComplication; label: string }[] = [
+  { id: "none", label: "None" },
+  { id: "retained-placenta", label: "Retained placenta" },
+  { id: "prolapse", label: "Prolapse" },
+]
+
+function Pill({
+  selected,
+  disabled,
+  onClick,
+  children,
+}: {
+  selected: boolean
+  disabled?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "rounded-full border px-4 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
+        selected
+          ? "border-action bg-action text-action-foreground"
+          : "border-border bg-background text-foreground hover:bg-muted/60"
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function CattleCalvingEventFields({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: CalvingEventDraft
+  onChange: (next: CalvingEventDraft) => void
+  disabled?: boolean
+}) {
+  const set = (patch: Partial<CalvingEventDraft>) => onChange({ ...value, ...patch })
+
+  const toggleComplication = (id: CalvingComplication) => {
+    if (id === "none") {
+      set({ complications: ["none"] })
+      return
+    }
+    const without = value.complications.filter((c) => c !== "none" && c !== id)
+    const next = value.complications.includes(id) ? without : [...without, id]
+    set({ complications: next.length > 0 ? next : ["none"] })
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <FormLabel variant="default">Record calving event</FormLabel>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={value.enabled}
+          aria-label="Record calving event"
+          disabled={disabled}
+          onClick={() => set({ enabled: !value.enabled })}
+          className={cn(
+            "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
+            value.enabled ? "bg-action" : "bg-surface-sunken"
+          )}
+        >
+          <span
+            className={cn(
+              "inline-block size-4 rounded-full bg-white shadow-sm transition-transform",
+              value.enabled ? "translate-x-[18px]" : "translate-x-0.5"
+            )}
+          />
+        </button>
+      </div>
+
+      {value.enabled ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <FormLabel variant="default">Stage</FormLabel>
+            <div className="flex rounded-lg border border-border bg-muted/40 p-0.5">
+              {STAGE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => set({ stage: opt.id })}
+                  className={cn(
+                    "flex-1 rounded-md px-3 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
+                    value.stage === opt.id
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {value.stage === "calved" ? (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <FormLabel variant="default">Delivery</FormLabel>
+                <div className="flex flex-wrap gap-2">
+                  {DELIVERY_OPTIONS.map((opt) => (
+                    <Pill
+                      key={opt.id}
+                      selected={value.deliveryType === opt.id}
+                      disabled={disabled}
+                      onClick={() => set({ deliveryType: opt.id })}
+                    >
+                      {opt.label}
+                    </Pill>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <FormLabel variant="default">Calf</FormLabel>
+                <div className="flex flex-wrap gap-2">
+                  {CALF_OPTIONS.map((opt) => (
+                    <Pill
+                      key={opt.id}
+                      selected={value.calfStatus === opt.id}
+                      disabled={disabled}
+                      onClick={() => set({ calfStatus: opt.id })}
+                    >
+                      {opt.label}
+                    </Pill>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <FormLabel variant="default">Complications</FormLabel>
+                <div className="flex flex-wrap gap-2">
+                  {COMPLICATION_OPTIONS.map((opt) => (
+                    <Pill
+                      key={opt.id}
+                      selected={value.complications.includes(opt.id)}
+                      disabled={disabled}
+                      onClick={() => toggleComplication(opt.id)}
+                    >
+                      {opt.label}
+                    </Pill>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}

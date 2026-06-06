@@ -6,6 +6,12 @@ import { useResultPhaseScroll } from "@/hooks/useResultPhaseScroll"
 import { ObservationTimeline } from "@/components/ObservationTimeline"
 import { StatusBadge } from "@/components/StatusBadge"
 import { CattleAvatar } from "@/components/CattleAvatar"
+import { CattleCalvingEventFields } from "@/components/CattleCalvingEventFields"
+import {
+  calvingEventCattleUpdate,
+  emptyCalvingEventDraft,
+  isCattleCalvingEligible,
+} from "@/lib/cattleCalvingEvent"
 import { RecordCalvingEditor } from "@/components/RecordCalvingModal"
 import { SheetBackCenterTitleHeader } from "@/components/SheetBackCenterTitleHeader"
 import { CattleLoggingStatusSection } from "@/components/CattleLoggingStatusSection"
@@ -192,15 +198,22 @@ function CattleEmbeddedLogObservationSubview({
     useRanchData()
   const { scrollRef, isScrolled } = useScrollShadow()
   const scrollBodyElRef = useRef<HTMLDivElement | null>(null)
+  const calvingEligible = isCattleCalvingEligible(cattle)
+  const [calvingDraft, setCalvingDraft] = useState(emptyCalvingEventDraft)
   const { body, footerApi } = useLogObservationFormController({
     mode: "modal",
     animalName: formatCattleTagDisplay(cattle.tagNumber),
     hideCategoryField: true,
     initialObservation: embeddedLogInitial,
     onDismiss: goDetail,
+    topSlot:
+      calvingEligible && !embeddedLogInitial ? (
+        <CattleCalvingEventFields value={calvingDraft} onChange={setCalvingDraft} />
+      ) : undefined,
     onSave: async (data, meta) => {
       if (data.kind !== "animal") return
       const stage = meta?.stage ?? "done"
+      const category = calvingDraft.enabled ? "Calving" : data.category
       if (stage === "commit") {
         const priorForAi = observations.filter((o) =>
           embeddedLogInitial ? o.id !== embeddedLogInitial.id : true
@@ -208,7 +221,7 @@ function CattleEmbeddedLogObservationSubview({
         const committedId = saveCattleObservationLog(
           cattle.id,
           {
-            category: data.category,
+            category,
             notes: data.notes,
             loggedBy: data.loggedBy,
             aiResult: data.aiResult,
@@ -273,7 +286,7 @@ function CattleEmbeddedLogObservationSubview({
         saveCattleObservationLog(
           cattle.id,
           {
-            category: data.category,
+            category,
             notes: data.notes,
             loggedBy: data.loggedBy,
             aiResult: data.aiResult,
@@ -281,6 +294,9 @@ function CattleEmbeddedLogObservationSubview({
           { id: targetId } as ObservationEntry
         )
       }
+
+      const calvingUpdate = calvingEventCattleUpdate(calvingDraft)
+      if (calvingUpdate) updateCattle(cattle.id, calvingUpdate)
 
       setEmbeddedLogInitial(null)
       onClosePanel()

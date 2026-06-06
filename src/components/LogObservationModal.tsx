@@ -8,6 +8,12 @@ import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
 import { ObservationFormFields } from "@/components/ObservationFormFields"
 import { StatusBadge } from "@/components/StatusBadge"
 import { CattleAvatar } from "@/components/CattleAvatar"
+import { CattleCalvingEventFields } from "@/components/CattleCalvingEventFields"
+import {
+  calvingEventCattleUpdate,
+  emptyCalvingEventDraft,
+  isCattleCalvingEligible,
+} from "@/lib/cattleCalvingEvent"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { LOG_OBSERVATION_IDENTITY_ROW } from "@/lib/logObservationLayout"
 import { PastureLogFormFields } from "@/components/PastureLogFormFields"
@@ -23,6 +29,7 @@ import {
   type PastureCheckCategory,
 } from "@/lib/pastureCheckTypes"
 import type { AIResult, Category, ObservationEntry, RiskLevel } from "@/types/observation"
+import type { Cattle } from "@/types/cattle"
 import { cn } from "@/lib/utils"
 
 export type LogObservationSavePayload =
@@ -55,6 +62,10 @@ export interface LogObservationModalProps {
   modalHeading?: string
   /** Forces form remount when opening a new subject (e.g. pasture id for new pasture checks). */
   stableKey?: string
+  /** Cattle target: enables the in-flow "Record calving event" block for eligible cattle. */
+  calvingCattle?: Cattle
+  /** Applies the calving field updates to the cattle on Finalize (e.g. `updateCattle(id, update)`). */
+  onCommitCalving?: (update: Partial<Cattle>) => void
   onClose: () => void
   onSave: (
     data: LogObservationSavePayload,
@@ -120,6 +131,8 @@ export type UseLogObservationFormControllerArgs = {
   onDismiss: () => void
   /** Prefill / edit an existing observation (sheet or modal). */
   initialObservation?: ObservationEntry | null
+  /** Optional content rendered at the top of the form body during the input phase (e.g. the cattle calving-event block). */
+  topSlot?: ReactNode
 }
 
 export type LogObservationFormController = {
@@ -221,6 +234,7 @@ export function useLogObservationFormController({
   onSave,
   onDismiss,
   initialObservation = null,
+  topSlot,
 }: UseLogObservationFormControllerArgs): LogObservationFormController {
   const [phase, setPhase] = useState<Phase>("input")
   const [category, setCategory] = useState<Category>(() => initialObservation?.category ?? "Health")
@@ -356,6 +370,7 @@ export function useLogObservationFormController({
 
   const body = (
     <div className="flex flex-col gap-4">
+      {phase === "input" && topSlot ? topSlot : null}
       {sectionTitle ? (
         <p
           className={cn(
@@ -481,6 +496,8 @@ function LogObservationModalInner({
   logMode = "animal",
   modalHeading = "Log observation",
   editingEntry,
+  calvingCattle,
+  onCommitCalving,
   onClose,
   onSave,
 }: {
@@ -494,12 +511,28 @@ function LogObservationModalInner({
   logMode?: "animal" | "pasture"
   modalHeading?: string
   editingEntry?: ObservationEntry
+  calvingCattle?: Cattle
+  onCommitCalving?: (update: Partial<Cattle>) => void
   onClose: () => void
   onSave: LogObservationModalProps["onSave"]
 }) {
   const isEdit = !!editingEntry
   // Cattle is the only animal target with no category picker; show the cow-icon avatar for it.
   const isCattle = logMode === "animal" && hideCategoryField === true
+  const calvingEligible = !isEdit && !!calvingCattle && isCattleCalvingEligible(calvingCattle)
+  const [calvingDraft, setCalvingDraft] = useState(emptyCalvingEventDraft)
+  const handleSave: LogObservationModalProps["onSave"] = async (data, meta) => {
+    const outData =
+      calvingEligible && calvingDraft.enabled && data.kind === "animal"
+        ? { ...data, category: "Calving" as Category }
+        : data
+    const result = await onSave(outData, meta)
+    if (meta?.stage === "done" && calvingEligible) {
+      const update = calvingEventCattleUpdate(calvingDraft)
+      if (update) onCommitCalving?.(update)
+    }
+    return result
+  }
   const avatarRadius =
     logMode === "pasture" ? "rounded-lg" : categories != null ? "rounded-xl" : "rounded-full"
   const pastureSeedPhoto =
@@ -515,8 +548,11 @@ function LogObservationModalInner({
     hideCategoryField,
     logMode,
     initialObservation: editingEntry ?? null,
-    onSave,
+    onSave: handleSave,
     onDismiss: onClose,
+    topSlot: calvingEligible ? (
+      <CattleCalvingEventFields value={calvingDraft} onChange={setCalvingDraft} />
+    ) : undefined,
   })
   useResultPhaseScroll(footerApi.phase, scrollBodyElRef)
 
@@ -605,6 +641,8 @@ export function LogObservationModal({
   modalHeading = "Log observation",
   stableKey,
   editingEntry,
+  calvingCattle,
+  onCommitCalving,
   onClose,
   onSave,
 }: LogObservationModalProps) {
@@ -635,6 +673,8 @@ export function LogObservationModal({
                 logMode={logMode}
                 modalHeading={modalHeading}
                 editingEntry={editingEntry}
+                calvingCattle={calvingCattle}
+                onCommitCalving={onCommitCalving}
                 onClose={onClose}
                 onSave={onSave}
               />

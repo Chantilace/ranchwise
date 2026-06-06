@@ -1110,6 +1110,12 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
         logMode={logObservationTarget?.kind === "pasture" ? "pasture" : "animal"}
         modalHeading="Log observation"
         stableKey={logObservationTarget?.kind === "pasture" ? logObservationTarget.pastureId : undefined}
+        calvingCattle={logObservationTarget?.kind === "cattle" ? logObservationTarget.cattle : undefined}
+        onCommitCalving={(update) => {
+          if (logObservationTarget?.kind === "cattle") {
+            updateCattle(logObservationTarget.cattle.id, update)
+          }
+        }}
         onClose={closeLogModal}
         onSave={handleLogSave}
       />

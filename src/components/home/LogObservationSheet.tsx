@@ -6,6 +6,12 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 
 import { StatusBadge } from "@/components/StatusBadge"
 import { CattleAvatar } from "@/components/CattleAvatar"
+import { CattleCalvingEventFields } from "@/components/CattleCalvingEventFields"
+import {
+  calvingEventCattleUpdate,
+  emptyCalvingEventDraft,
+  isCattleCalvingEligible,
+} from "@/lib/cattleCalvingEvent"
 import { SearchField } from "@/components/ui/search-field"
 import { buttonVariants } from "@/components/ui/button"
 import { Tabs, type TabItem } from "@/components/ui/tabs"
@@ -240,7 +246,6 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
     removeCattleObservation,
     updateCattle,
     updateHerdHorse,
-    openRecordCalvingModal,
     closeRecordCalvingModal,
     recordCalvingModal,
     openPastureCheckModal,
@@ -257,6 +262,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
     }
   })
   const [activeTab, setActiveTab] = useState<"log" | "history">("log")
+  const [calvingDraft, setCalvingDraft] = useState(emptyCalvingEventDraft)
 
   const committedHorseKeyRef = useRef<string | null>(null)
   const committedHorseObsIdRef = useRef<string | null>(null)
@@ -411,6 +417,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
     }
     setSelectedAnimal(item)
     setActiveTab("log")
+    setCalvingDraft(emptyCalvingEventDraft())
     if (item.species === "cattle") {
       setSheetState("cattle-prep")
     } else {
@@ -469,7 +476,12 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
       committedCattleIdRef.current = cid
       const returned = saveCattleObservationLog(
         cid,
-        { category: data.category, notes: data.notes.trim(), loggedBy: data.loggedBy.trim(), aiResult: data.aiResult },
+        {
+          category: calvingDraft.enabled ? "Calving" : data.category,
+          notes: data.notes.trim(),
+          loggedBy: data.loggedBy.trim(),
+          aiResult: data.aiResult,
+        },
         undefined
       )
       committedCattleObsIdRef.current = typeof returned === "string" ? returned : null
@@ -577,6 +589,8 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
         )
       }
       updateCattle(cid, { healthStatus: cattleHealthFromRiskLevel(data.aiResult.riskLevel) })
+      const calvingUpdate = calvingEventCattleUpdate(calvingDraft)
+      if (calvingUpdate) updateCattle(cid, calvingUpdate)
     }
 
     onOpenChange(false)
@@ -842,13 +856,6 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                   <CattleLoggingStatusSection
                     cattle={selectedAnimal as Cattle}
                     pastureName={selectedAnimal.pastureLabel}
-                    onRecordCalving={() =>
-                      openRecordCalvingModal({
-                        cattle: selectedAnimal as Cattle,
-                        pastureName: selectedAnimal.pastureLabel,
-                        onCalvingDone: () => onOpenChange(false),
-                      })
-                    }
                     onLogObservation={() => {
                       setActiveTab("log")
                       setSheetState("form")
@@ -873,6 +880,12 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                 animalName={identityTitle(selectedAnimal)}
                 categories={selectedAnimal.species === "horse" ? HORSE_OBSERVATION_CATEGORIES : undefined}
                 hideCategoryField={selectedAnimal.species === "cattle"}
+                topSlot={
+                  selectedAnimal.species === "cattle" &&
+                  isCattleCalvingEligible(selectedAnimal as Cattle) ? (
+                    <CattleCalvingEventFields value={calvingDraft} onChange={setCalvingDraft} />
+                  ) : undefined
+                }
                 onDismiss={() => onOpenChange(false)}
                 onSave={handleSheetSave}
               >
