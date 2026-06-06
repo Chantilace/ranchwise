@@ -1,4 +1,4 @@
-import { Check, Sparkle, X } from "lucide-react"
+import { CircleCheck, Sparkle, X } from "lucide-react"
 import { useRef, useState, type Dispatch, type SetStateAction } from "react"
 import { useResultPhaseScroll } from "@/hooks/useResultPhaseScroll"
 import { Drawer } from "vaul"
@@ -353,8 +353,8 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
 
       {view === "result" && aiResult ? (
         <>
-          <div className="flex items-center gap-2 rounded-lg bg-status-good-bg px-3 py-2">
-            <Check className="size-3.5 shrink-0 text-status-good-text" aria-hidden />
+          <div className="flex items-center gap-2">
+            <CircleCheck className="size-4 shrink-0 text-status-good-text" aria-hidden />
             <span className="text-[13px] font-medium text-status-good-text">Observation successfully logged</span>
           </div>
           <SmartSuggestionsPanel
