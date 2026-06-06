@@ -1,11 +1,11 @@
 import { ChevronLeft, Sparkle, X } from "lucide-react"
-import { FaCow } from "react-icons/fa6"
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react"
 import { Drawer } from "vaul"
 import { useLogObservationFormController } from "@/components/LogObservationModal"
 import { useResultPhaseScroll } from "@/hooks/useResultPhaseScroll"
 import { ObservationTimeline } from "@/components/ObservationTimeline"
 import { StatusBadge } from "@/components/StatusBadge"
+import { CattleAvatar } from "@/components/CattleAvatar"
 import { RecordCalvingEditor } from "@/components/RecordCalvingModal"
 import { SheetBackCenterTitleHeader } from "@/components/SheetBackCenterTitleHeader"
 import { CattleLoggingStatusSection } from "@/components/CattleLoggingStatusSection"
@@ -58,15 +58,6 @@ function cattleHealthFromRiskLevel(level: RiskLevel): NonNullable<Cattle["health
   if (level === "flag") return "Flag"
   if (level === "monitor") return "Monitor"
   return "Good"
-}
-
-/** Avatar for cattle panels: the sidebar cow icon on the grayscale muted surface (matches horse/pasture geometry). */
-function CattleAvatar() {
-  return (
-    <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
-      <FaCow className="size-6 text-muted-foreground" aria-hidden />
-    </div>
-  )
 }
 
 function CattleDetailHeader({

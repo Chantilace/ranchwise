@@ -5,6 +5,7 @@ import { LiaHorseSolid } from "react-icons/lia"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react"
 
 import { StatusBadge } from "@/components/StatusBadge"
+import { CattleAvatar } from "@/components/CattleAvatar"
 import { SearchField } from "@/components/ui/search-field"
 import { buttonVariants } from "@/components/ui/button"
 import { Tabs, type TabItem } from "@/components/ui/tabs"
@@ -656,6 +657,8 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                           </span>
                         )}
                       </div>
+                    ) : selectedAnimal.species === "cattle" ? (
+                      <CattleAvatar />
                     ) : null}
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

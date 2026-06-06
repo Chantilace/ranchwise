@@ -1,5 +1,5 @@
 import { Dialog } from "@base-ui/react/dialog"
-import { Check, Sparkle, X } from "lucide-react"
+import { CircleCheck, Sparkle, X } from "lucide-react"
 import { useMemo, useRef, useState, type ReactNode } from "react"
 import { useScrollShadow } from "@/hooks/useScrollShadow"
 import { useResultPhaseScroll } from "@/hooks/useResultPhaseScroll"
@@ -7,6 +7,7 @@ import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
 import { SmartSuggestionsPanel } from "@/components/SmartSuggestionsPanel"
 import { ObservationFormFields } from "@/components/ObservationFormFields"
 import { StatusBadge } from "@/components/StatusBadge"
+import { CattleAvatar } from "@/components/CattleAvatar"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { LOG_OBSERVATION_IDENTITY_ROW } from "@/lib/logObservationLayout"
 import { PastureLogFormFields } from "@/components/PastureLogFormFields"
@@ -399,8 +400,8 @@ export function useLogObservationFormController({
       {phase === "saving" ? <AnalyzingSkeleton /> : null}
 
       {phase === "result" ? (
-        <div className="flex items-center gap-2 rounded-lg bg-status-good-bg px-3 py-2">
-          <Check className="size-3.5 shrink-0 text-status-good-text" aria-hidden />
+        <div className="flex items-center gap-2">
+          <CircleCheck className="size-4 shrink-0 text-status-good-text" aria-hidden />
           <span className="text-[13px] font-medium text-status-good-text">Observation successfully logged</span>
         </div>
       ) : null}
@@ -497,6 +498,8 @@ function LogObservationModalInner({
   onSave: LogObservationModalProps["onSave"]
 }) {
   const isEdit = !!editingEntry
+  // Cattle is the only animal target with no category picker; show the cow-icon avatar for it.
+  const isCattle = logMode === "animal" && hideCategoryField === true
   const avatarRadius =
     logMode === "pasture" ? "rounded-lg" : categories != null ? "rounded-xl" : "rounded-full"
   const pastureSeedPhoto =
@@ -541,20 +544,24 @@ function LogObservationModalInner({
         </div>
         <div className={LOG_OBSERVATION_IDENTITY_ROW}>
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <div
-              className={cn(
-                "relative flex size-12 shrink-0 items-center justify-center overflow-hidden bg-muted",
-                avatarRadius
-              )}
-            >
-              {identityPhoto ? (
-                <img src={identityPhoto} alt="" className="size-full object-cover object-center" />
-              ) : (
-                <span className="text-[13px] font-semibold text-muted-foreground" aria-hidden>
-                  {initials(animalName)}
-                </span>
-              )}
-            </div>
+            {isCattle ? (
+              <CattleAvatar />
+            ) : (
+              <div
+                className={cn(
+                  "relative flex size-12 shrink-0 items-center justify-center overflow-hidden bg-muted",
+                  avatarRadius
+                )}
+              >
+                {identityPhoto ? (
+                  <img src={identityPhoto} alt="" className="size-full object-cover object-center" />
+                ) : (
+                  <span className="text-[13px] font-semibold text-muted-foreground" aria-hidden>
+                    {initials(animalName)}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-base font-medium text-foreground">{animalName}</span>
