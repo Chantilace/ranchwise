@@ -2,12 +2,14 @@ import { Dialog } from "@base-ui/react/dialog"
 import { formatDistanceToNow } from "date-fns"
 import { X } from "lucide-react"
 import { LiaHorseSolid } from "react-icons/lia"
+import { FaCow } from "react-icons/fa6"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react"
 
 import { StatusBadge } from "@/components/StatusBadge"
 import { CattleAvatar } from "@/components/CattleAvatar"
 import { CattleCalvingEventFields } from "@/components/CattleCalvingEventFields"
 import { CattleCalvingStatusRow } from "@/components/CattleCalvingStatusRow"
+import { getCalvingStatus } from "@/lib/calvingStatus"
 import {
   calvingEventCattleUpdate,
   emptyCalvingEventDraft,
@@ -656,6 +658,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
               </div>
 
               {selectedAnimal && sheetState !== "search" ? (
+                <>
                 <div className={LOG_OBSERVATION_IDENTITY_ROW}>
                   <div className="flex min-w-0 flex-1 items-start gap-3">
                     {selectedAnimal.species === "horse" ? (
@@ -704,6 +707,13 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                     ) : null}
                   </div>
                 </div>
+                {selectedAnimal.species === "cattle" &&
+                getCalvingStatus(selectedAnimal as Cattle) !== "none" ? (
+                  <div className="-mt-1 px-4 pb-4 md:px-6">
+                    <CattleCalvingStatusRow cattle={selectedAnimal as Cattle} />
+                  </div>
+                ) : null}
+                </>
               ) : null}
             </div>
 
@@ -773,7 +783,11 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                                 onClick={() => selectItem(animal)}
                                 className="flex min-h-[52px] w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                               >
-                                {!isCattle ? (
+                                {isCattle ? (
+                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
+                                    <FaCow className="size-4 text-muted-foreground" aria-hidden />
+                                  </div>
+                                ) : (
                                   <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
                                     {animal.photoUrl ? (
                                       <img
@@ -785,7 +799,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                                       <LiaHorseSolid className="size-4 text-muted-foreground" aria-hidden />
                                     )}
                                   </div>
-                                ) : null}
+                                )}
                                 <div className="min-w-0 flex-1">
                                   <div className="flex min-w-0 items-center gap-2">
                                     {isCattle ? (
@@ -885,14 +899,11 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                   selectedAnimal.species === "cattle" &&
                   isCattleCalvingEligible(selectedAnimal as Cattle)
                     ? ({ disabled }) => (
-                        <div className="flex flex-col gap-3">
-                          <CattleCalvingStatusRow cattle={selectedAnimal as Cattle} />
-                          <CattleCalvingEventFields
-                            value={calvingDraft}
-                            onChange={setCalvingDraft}
-                            disabled={disabled}
-                          />
-                        </div>
+                        <CattleCalvingEventFields
+                          value={calvingDraft}
+                          onChange={setCalvingDraft}
+                          disabled={disabled}
+                        />
                       )
                     : undefined
                 }
