@@ -7,7 +7,7 @@ import { ObservationTimeline } from "@/components/ObservationTimeline"
 import { StatusBadge } from "@/components/StatusBadge"
 import { CattleAvatar } from "@/components/CattleAvatar"
 import { CattleCalvingEventFields } from "@/components/CattleCalvingEventFields"
-import { CattleCalvingEventSummary } from "@/components/CattleCalvingEventSummary"
+import { CattleCalvingStatusRow } from "@/components/CattleCalvingStatusRow"
 import {
   calvingEventCattleUpdate,
   emptyCalvingEventDraft,
@@ -208,13 +208,18 @@ function CattleEmbeddedLogObservationSubview({
     initialObservation: embeddedLogInitial,
     onDismiss: goDetail,
     topSlot:
-      calvingEligible && !embeddedLogInitial ? (
-        <CattleCalvingEventFields value={calvingDraft} onChange={setCalvingDraft} />
-      ) : undefined,
-    resultSlot:
-      calvingEligible && !embeddedLogInitial ? (
-        <CattleCalvingEventSummary value={calvingDraft} />
-      ) : undefined,
+      calvingEligible && !embeddedLogInitial
+        ? ({ disabled }) => (
+            <div className="flex flex-col gap-3">
+              <CattleCalvingStatusRow cattle={cattle} />
+              <CattleCalvingEventFields
+                value={calvingDraft}
+                onChange={setCalvingDraft}
+                disabled={disabled}
+              />
+            </div>
+          )
+        : undefined,
     onSave: async (data, meta) => {
       if (data.kind !== "animal") return
       const stage = meta?.stage ?? "done"

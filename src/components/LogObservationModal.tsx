@@ -9,7 +9,7 @@ import { ObservationFormFields } from "@/components/ObservationFormFields"
 import { StatusBadge } from "@/components/StatusBadge"
 import { CattleAvatar } from "@/components/CattleAvatar"
 import { CattleCalvingEventFields } from "@/components/CattleCalvingEventFields"
-import { CattleCalvingEventSummary } from "@/components/CattleCalvingEventSummary"
+import { CattleCalvingStatusRow } from "@/components/CattleCalvingStatusRow"
 import {
   calvingEventCattleUpdate,
   emptyCalvingEventDraft,
@@ -132,10 +132,11 @@ export type UseLogObservationFormControllerArgs = {
   onDismiss: () => void
   /** Prefill / edit an existing observation (sheet or modal). */
   initialObservation?: ObservationEntry | null
-  /** Optional content rendered at the top of the form body during the input phase (e.g. the cattle calving-event block). */
-  topSlot?: ReactNode
-  /** Optional read-only content rendered at the top of the review during the result phase (e.g. the calving-event summary). */
-  resultSlot?: ReactNode
+  /**
+   * Optional content rendered at the top of the form body in every phase (e.g. the cattle calving-event block).
+   * Receives `disabled` (true while saving / in the result review) so it can lock its controls for review.
+   */
+  topSlot?: (opts: { disabled: boolean }) => ReactNode
 }
 
 export type LogObservationFormController = {
@@ -238,7 +239,6 @@ export function useLogObservationFormController({
   onDismiss,
   initialObservation = null,
   topSlot,
-  resultSlot,
 }: UseLogObservationFormControllerArgs): LogObservationFormController {
   const [phase, setPhase] = useState<Phase>("input")
   const [category, setCategory] = useState<Category>(() => initialObservation?.category ?? "Health")
@@ -374,8 +374,7 @@ export function useLogObservationFormController({
 
   const body = (
     <div className="flex flex-col gap-4">
-      {phase === "input" && topSlot ? topSlot : null}
-      {phase === "result" && resultSlot ? resultSlot : null}
+      {topSlot ? topSlot({ disabled: fieldsLocked }) : null}
       {sectionTitle ? (
         <p
           className={cn(
@@ -555,10 +554,19 @@ function LogObservationModalInner({
     initialObservation: editingEntry ?? null,
     onSave: handleSave,
     onDismiss: onClose,
-    topSlot: calvingEligible ? (
-      <CattleCalvingEventFields value={calvingDraft} onChange={setCalvingDraft} />
-    ) : undefined,
-    resultSlot: calvingEligible ? <CattleCalvingEventSummary value={calvingDraft} /> : undefined,
+    topSlot:
+      calvingEligible && calvingCattle
+        ? ({ disabled }) => (
+            <div className="flex flex-col gap-3">
+              <CattleCalvingStatusRow cattle={calvingCattle} />
+              <CattleCalvingEventFields
+                value={calvingDraft}
+                onChange={setCalvingDraft}
+                disabled={disabled}
+              />
+            </div>
+          )
+        : undefined,
   })
   useResultPhaseScroll(footerApi.phase, scrollBodyElRef)
 
