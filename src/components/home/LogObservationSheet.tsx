@@ -7,7 +7,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { StatusBadge } from "@/components/StatusBadge"
 import { CattleAvatar } from "@/components/CattleAvatar"
 import { CattleCalvingEventFields } from "@/components/CattleCalvingEventFields"
-import { CattleCalvingEventSummary } from "@/components/CattleCalvingEventSummary"
+import { CattleCalvingStatusRow } from "@/components/CattleCalvingStatusRow"
 import {
   calvingEventCattleUpdate,
   emptyCalvingEventDraft,
@@ -883,15 +883,18 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                 hideCategoryField={selectedAnimal.species === "cattle"}
                 topSlot={
                   selectedAnimal.species === "cattle" &&
-                  isCattleCalvingEligible(selectedAnimal as Cattle) ? (
-                    <CattleCalvingEventFields value={calvingDraft} onChange={setCalvingDraft} />
-                  ) : undefined
-                }
-                resultSlot={
-                  selectedAnimal.species === "cattle" &&
-                  isCattleCalvingEligible(selectedAnimal as Cattle) ? (
-                    <CattleCalvingEventSummary value={calvingDraft} />
-                  ) : undefined
+                  isCattleCalvingEligible(selectedAnimal as Cattle)
+                    ? ({ disabled }) => (
+                        <div className="flex flex-col gap-3">
+                          <CattleCalvingStatusRow cattle={selectedAnimal as Cattle} />
+                          <CattleCalvingEventFields
+                            value={calvingDraft}
+                            onChange={setCalvingDraft}
+                            disabled={disabled}
+                          />
+                        </div>
+                      )
+                    : undefined
                 }
                 onDismiss={() => onOpenChange(false)}
                 onSave={handleSheetSave}

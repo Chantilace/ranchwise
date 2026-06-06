@@ -26,29 +26,6 @@ export const CALVING_COMPLICATION_OPTIONS: { id: CalvingComplication; label: str
   { id: "prolapse", label: "Prolapse" },
 ]
 
-const labelOf = <T extends string>(opts: { id: T; label: string }[], id: T): string =>
-  opts.find((o) => o.id === id)?.label ?? id
-
-/** Labeled rows summarizing a recorded calving event for the review step; null when disabled. */
-export function summarizeCalvingDraft(
-  draft: CalvingEventDraft
-): { label: string; value: string }[] | null {
-  if (!draft.enabled) return null
-  if (draft.stage === "in-labor") {
-    return [{ label: "Stage", value: "In labor" }]
-  }
-  const comps = draft.complications.filter((c) => c !== "none")
-  const complicationsLabel =
-    comps.length > 0
-      ? comps.map((c) => labelOf(CALVING_COMPLICATION_OPTIONS, c)).join(", ")
-      : "None"
-  return [
-    { label: "Stage", value: "Calved" },
-    { label: "Delivery", value: labelOf(CALVING_DELIVERY_OPTIONS, draft.deliveryType) },
-    { label: "Calf", value: labelOf(CALVING_CALF_OPTIONS, draft.calfStatus) },
-    { label: "Complications", value: complicationsLabel },
-  ]
-}
 
 /** Draft state for the calving-event block inside the cattle log flow. */
 export type CalvingEventDraft = {
