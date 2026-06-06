@@ -83,10 +83,8 @@ export function cattleHerdRosterSortFromSearchParams(searchParams: URLSearchPara
   if (rawCol && CATTLE_ROSTER_SORT_COLUMNS.has(rawCol) && rawCol !== "lastObservation") {
     return { column: rawCol as CattleSortKey, direction: rawDir === "asc" ? "asc" : "desc" }
   }
-  return {
-    column: "lastObservation",
-    direction: rosterLastActivityFromSearchParam(searchParams.get(ROSTER_LAST_ACTIVITY_URL_KEY)),
-  }
+  // Default: surface Flag then Monitor then Good (HEALTH_ORDER asc).
+  return { column: "healthStatus", direction: "asc" }
 }
 
 export function applyCattleHerdRosterSortToSearchParams(

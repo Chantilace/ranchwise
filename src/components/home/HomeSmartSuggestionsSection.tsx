@@ -54,7 +54,7 @@ function HomeSmartSuggestionCard({
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <span className="text-[13px] font-semibold text-foreground">{categoryLabel}</span>
         <ArrowUpRight
-          className="h-4 w-4 shrink-0 text-ai-accent transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+          className="h-5 w-5 shrink-0 text-ai-accent transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
           strokeWidth={2.25}
           aria-hidden
         />
@@ -62,7 +62,7 @@ function HomeSmartSuggestionCard({
 
       <p className="mb-3 min-w-0 flex-1 text-[14px] leading-snug text-foreground">{statement}</p>
 
-      <span className="self-start rounded-full border border-ai-accent/30 bg-ai-accent/10 px-2 py-[1px] text-[13px] font-medium text-ai-accent">
+      <span className="self-start rounded-full border border-ai-accent/30 bg-white px-2 py-[1px] text-[13px] font-medium text-ai-accent">
         {priorityLabel(priority)}
       </span>
     </Link>
