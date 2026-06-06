@@ -38,7 +38,7 @@ import { WORKSPACE_PAGE_ROSTER_FILL_CLASS } from "@/lib/workspacePageCard"
 import { cn } from "@/lib/utils"
 import { PASTURE_SEED_MEDIA } from "@/lib/pastureSeedMedia"
 import { getPastureShortName } from "@/lib/pastureUtils"
-import type { PastureStatus } from "@/lib/statusUtils"
+import { pastureStatusToCanonical, type PastureStatus } from "@/lib/statusUtils"
 import type { Pasture } from "@/types/cattle"
 
 type PastureSortColumn = "name" | "status" | "lastCheck" | "headCount" | "acreage"
@@ -51,11 +51,11 @@ const PASTURE_ROSTER_TH_STICKY_IDENTITY =
   "sticky left-0 top-0 z-30 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.08),var(--shadow-sticky-scroll)]"
 const PASTURE_SORT_ICON_SM = "size-3.5 shrink-0 stroke-2"
 
-function pastureCheckTierSortRank(p: Pasture): number {
-  const tier = pastureRosterCheckSummaryTier(p)
-  if (tier === "recent") return 0
-  if (tier === "borderline") return 1
-  return 2
+/** Derived-status sort rank: Action needed (flag) → Concern (monitor) → Stable (good). */
+const PASTURE_STATUS_SORT_RANK: Record<PastureStatus, number> = {
+  action_needed: 0,
+  concern: 1,
+  stable: 2,
 }
 
 function pastureRosterSortTriggerLabel(column: PastureSortColumn, dir: SortDir): string {
@@ -63,7 +63,7 @@ function pastureRosterSortTriggerLabel(column: PastureSortColumn, dir: SortDir):
     case "name":
       return dir === "asc" ? "Pasture (A–Z)" : "Pasture (Z–A)"
     case "status":
-      return dir === "asc" ? "Check status (recent → overdue)" : "Check status (overdue → recent)"
+      return dir === "asc" ? "Status (Flag first)" : "Status (Good first)"
     case "headCount":
       return dir === "asc" ? "Head count (low → high)" : "Head count (high → low)"
     case "acreage":
@@ -194,7 +194,15 @@ export function PasturesPage() {
   const [pastureConditionFilters, setPastureConditionFilters] = useState<Set<string>>(() => new Set())
   const pastureFilterRef = useRef<HTMLDivElement>(null)
 
-  const [sortKey, setSortKey] = useState<PastureSortColumn>("lastCheck")
+  // Default surfaces Action needed (flag) then Concern (monitor) pastures first,
+  // unless a "last activity" deep-link asks for the recency sort instead.
+  const [sortKey, setSortKey] = useState<PastureSortColumn>(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search)
+      if (sp.get(ROSTER_LAST_ACTIVITY_URL_KEY)) return "lastCheck"
+    }
+    return "status"
+  })
   const [sortDir, setSortDir] = useState<SortDir>("asc")
 
 
@@ -305,7 +313,7 @@ export function PasturesPage() {
   const clearAllPastureRosterFilters = useCallback(() => {
     setRecencyFilters(new Set())
     setPastureConditionFilters(new Set())
-    setSortKey("lastCheck")
+    setSortKey("status")
     setSortDir("asc")
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev)
@@ -344,8 +352,8 @@ export function PasturesPage() {
           break
         }
         case "status": {
-          const ar = pastureCheckTierSortRank(a)
-          const br = pastureCheckTierSortRank(b)
+          const ar = PASTURE_STATUS_SORT_RANK[getPastureDerivedStatus(a.id, pastureChecksByPastureId)]
+          const br = PASTURE_STATUS_SORT_RANK[getPastureDerivedStatus(b.id, pastureChecksByPastureId)]
           cmp = sortDir === "asc" ? ar - br : br - ar
           break
         }
@@ -567,7 +575,7 @@ export function PasturesPage() {
                           <div className="mb-0.5 flex items-center justify-between gap-2">
                             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                               <p className="text-[14px] font-medium text-foreground">{shortName}</p>
-                              <StatusBadge status={derived} size="sm" emphasis="secondary" />
+                              <StatusBadge status={pastureStatusToCanonical(derived)} size="sm" emphasis="secondary" />
                             </div>
                             <span className="shrink-0 text-[13px] text-muted-foreground">{lastCheckLabel}</span>
                           </div>
@@ -771,7 +779,7 @@ export function PasturesPage() {
                         )}
                       >
                         <StatusBadge
-                          status={getPastureDerivedStatus(p.id, pastureChecksByPastureId)}
+                          status={pastureStatusToCanonical(getPastureDerivedStatus(p.id, pastureChecksByPastureId))}
                           size="table"
                           emphasis="secondary"
                         />

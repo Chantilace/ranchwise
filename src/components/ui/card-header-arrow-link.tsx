@@ -11,7 +11,7 @@ export function CardHeaderArrowIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn(arrowMotionClass, "size-[18px]", className)}
+      className={cn(arrowMotionClass, "size-[24px]", className)}
       aria-hidden
     >
       <path
@@ -29,7 +29,7 @@ export type CardHeaderArrowLinkProps = LinkProps & {
   "aria-label": string
 }
 
-/** Icon-only link for card headers. Tertiary → AI accent on hover; 18px arrow, 2px up-right nudge. */
+/** Icon-only link for card headers. Tertiary → AI accent on hover; 24px arrow, 2px up-right nudge. */
 export function CardHeaderArrowLink({
   className,
   "aria-label": ariaLabel,

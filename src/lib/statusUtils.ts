@@ -65,6 +65,11 @@ const PASTURE_TO_CANONICAL: Record<PastureStatus, StatusCanonical> = {
   action_needed: "flag",
 }
 
+/** Map a pasture status to its canonical good/monitor/flag equivalent (e.g. to render standard status labels). */
+export function pastureStatusToCanonical(status: PastureStatus): StatusCanonical {
+  return PASTURE_TO_CANONICAL[status]
+}
+
 /** Profile hero / identity row: Good and Stable stay secondary (soft tint); Monitor, Concern, Flag, and Action needed use primary solid ramp (Policy B). */
 export type ProfileIdentityBadgeStatus = StatusCanonical | PastureStatus
 

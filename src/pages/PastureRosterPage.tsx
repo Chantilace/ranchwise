@@ -304,7 +304,8 @@ export function PastureRosterPage() {
       dueWeekOnly: calvingSoonParam,
       observationsByCattleId,
     })
-    return sortCattleList(filtered, { column: "tag", direction: "asc" }, {}, observationsByCattleId)
+    // Default surfaces Flag then Monitor then Good (HEALTH_ORDER asc).
+    return sortCattleList(filtered, { column: "healthStatus", direction: "asc" }, {}, observationsByCattleId)
   }, [
     cattle,
     pastureId,

@@ -92,10 +92,8 @@ export function horseRosterSortFromSearchParams(searchParams: URLSearchParams): 
   if (rawCol && HORSE_SORT_KEYS.has(rawCol)) {
     return { column: rawCol as HorseSortKey, direction: rawDir === "asc" ? "asc" : "desc" }
   }
-  return {
-    column: "lastObservation",
-    direction: rosterLastActivityFromSearchParam(searchParams.get(ROSTER_LAST_ACTIVITY_URL_KEY)),
-  }
+  // Default: surface Flag then Monitor then Good (HERD_STATUS_SORT_ORDER asc).
+  return { column: "healthStatus", direction: "asc" }
 }
 
 export function applyHorseRosterSortToSearchParams(
