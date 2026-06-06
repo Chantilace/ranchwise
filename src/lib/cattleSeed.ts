@@ -330,15 +330,27 @@ const BULLS: Cattle[] = Array.from({ length: 30 }, (_, i) => {
   }
 })
 
-// ─── JUVENILES (Northwest Pasture, 60) — season calves, all calved status ───
+// ─── JUVENILES (Northwest Pasture, 60) — season calves ──────────────────────
+// Female juveniles (Cow/Heifer) carry a recent "calved" record; bulls never
+// calve, so they stay calvingStatus "none" with no calving fields.
 
 const JUVENILES: Cattle[] = Array.from({ length: 60 }, (_, i) => {
   const n = i + 1
   const tag = `J${String(n).padStart(3, "0")}`
   const sexLabel = n % 3 === 0 ? "Bull" : n % 2 === 0 ? "Heifer" : "Cow"
+  const isFemale = sexLabel === "Cow" || sexLabel === "Heifer"
 
   const lastObsOptions = ["2 days ago", "3 days ago", "4 days ago", "5 days ago", "1 week ago"]
   const lastObservation = lastObsOptions[n % lastObsOptions.length]
+
+  const calvingFields = isFemale
+    ? {
+        calvingStatus: "calved" as const,
+        calvingDate: isoDateFromToday(-(3 + (n % 20))),
+        deliveryType: "normal" as const,
+        calfStatus: "live" as const,
+      }
+    : { calvingStatus: "none" as const }
 
   return {
     id: `ct-nw-${n}`,
@@ -348,10 +360,7 @@ const JUVENILES: Cattle[] = Array.from({ length: 60 }, (_, i) => {
     age: 0,
     pastureId: "northwest",
     dueDate: null,
-    calvingStatus: "calved" as const,
-    calvingDate: isoDateFromToday(-(3 + (n % 20))),
-    deliveryType: "normal" as const,
-    calfStatus: "live" as const,
+    ...calvingFields,
     healthStatus: HS,
     lastObservation,
   }
