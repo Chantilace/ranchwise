@@ -37,12 +37,16 @@ import {
   WORKSPACE_PAGE_SCROLL_CLASS,
   WORKSPACE_PAGE_SHELL_FLUSH_TOP_CLASS,
 } from "@/lib/workspacePageCard"
-import type { PastureStatus } from "@/lib/statusUtils"
+import {
+  pastureStatusToCanonical,
+  profileIdentityStatusEmphasis,
+  type PastureStatus,
+} from "@/lib/statusUtils"
 import { cn } from "@/lib/utils"
 import type { Pasture } from "@/types/cattle"
 import type { AIResult } from "@/types/observation"
 
-type ProfileTab = "checks" | "details" | "maintenance" | "notes"
+type ProfileTab = "checks" | "details" | "maintenance"
 
 const CHECK_LOG_STATUS_IDS = ["stable", "concern", "action_needed"] as const
 
@@ -372,6 +376,9 @@ export function PastureProfilePage() {
     if (!pastureId) return "stable"
     return getPastureDerivedStatus(pastureId, pastureChecksByPastureId)
   }, [pastureId, pastureChecksByPastureId])
+  // Render the pasture status as standard good / monitor / flag (Good stays secondary per Policy B).
+  const statusCanonical = pastureStatusToCanonical(derivedStatus)
+  const statusEmphasis = profileIdentityStatusEmphasis(derivedStatus)
 
   const latestCheckId = checksSorted[0]?.id ?? null
 
@@ -436,10 +443,9 @@ export function PastureProfilePage() {
 
   const tabItems = useMemo(
     (): TabItem[] => [
-      { id: "checks", label: "Pasture checks", count: checksSorted.length },
+      { id: "checks", label: "Observation", count: checksSorted.length },
       { id: "details", label: "Details" },
       { id: "maintenance", label: "Maintenance" },
-      { id: "notes", label: "Notes" },
     ],
     [checksSorted.length],
   )
@@ -631,12 +637,6 @@ export function PastureProfilePage() {
             No maintenance records yet — start tracking fence repairs, water systems, and supplementation here.
           </p>
         ) : null}
-
-        {activeTab === "notes" ? (
-          <p className="max-w-lg pb-9 text-sm leading-relaxed text-muted-foreground">
-            No notes yet — keep general observations about this pasture here.
-          </p>
-        ) : null}
       </div>
     )
   }
@@ -751,9 +751,9 @@ export function PastureProfilePage() {
                         {pasture.name}
                       </span>
                       <StatusBadge
-                        status={derivedStatus}
+                        status={statusCanonical}
                         size="md"
-                        emphasis="primary"
+                        emphasis={statusEmphasis}
                         className="shrink-0 !px-2 !py-[3px] !text-[13px]"
                       />
                     </div>
@@ -829,9 +829,9 @@ export function PastureProfilePage() {
                 />
                 <div className="absolute bottom-0 left-0 z-10 flex w-full min-w-0 flex-col items-start gap-1.5 px-4 pb-3.5 sm:px-6">
                   <StatusBadge
-                    status={derivedStatus}
+                    status={statusCanonical}
                     size="md"
-                    emphasis="primary"
+                    emphasis={statusEmphasis}
                     className="shrink-0"
                   />
                   <h2 className="min-w-0 text-[22px] font-medium leading-[1.1] text-white">{pasture.name}</h2>
@@ -888,9 +888,9 @@ export function PastureProfilePage() {
                       {pasture.name}
                     </h2>
                     <StatusBadge
-                      status={derivedStatus}
+                      status={statusCanonical}
                       size="md"
-                      emphasis="primary"
+                      emphasis={statusEmphasis}
                       className="shrink-0"
                     />
                   </div>
@@ -930,9 +930,9 @@ export function PastureProfilePage() {
                       {pasture.name}
                     </h1>
                     <StatusBadge
-                      status={derivedStatus}
+                      status={statusCanonical}
                       size="md"
-                      emphasis="primary"
+                      emphasis={statusEmphasis}
                       className="shrink-0"
                     />
                   </div>
