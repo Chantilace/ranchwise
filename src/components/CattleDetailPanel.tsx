@@ -118,7 +118,7 @@ function CattleDetailHeader({
               )}
             </div>
             <p className="mt-0.5 text-[13px] text-muted-foreground">
-              {cattle.breed} · {cattle.age} yrs · {pastureName}
+              {cattle.breed} · {cattle.age} yrs · {cattle.sexLabel?.trim() ? `${cattle.sexLabel.trim()} · ` : ""}{pastureName}
             </p>
           </div>
         </div>
@@ -338,7 +338,7 @@ function CattleEmbeddedLogObservationSubview({
                 )}
               </div>
               <p className="mt-0.5 text-[13px] text-muted-foreground">
-                {cattle.breed} · {cattle.age} yrs · {pastureName}
+                {cattle.breed} · {cattle.age} yrs · {cattle.sexLabel?.trim() ? `${cattle.sexLabel.trim()} · ` : ""}{pastureName}
               </p>
             </div>
           </div>

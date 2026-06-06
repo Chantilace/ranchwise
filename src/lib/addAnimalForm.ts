@@ -1,10 +1,16 @@
 import { differenceInYears, parseISO } from "date-fns"
 import { cattleTagBare } from "@/lib/cattleUi"
-import { BREED_OPTIONS, type Breed, type Cattle, type CattleInventoryStatus } from "@/types/cattle"
+import {
+  BREED_OPTIONS,
+  CATTLE_SEX_OPTIONS,
+  type Breed,
+  type Cattle,
+  type CattleInventoryStatus,
+} from "@/types/cattle"
 
 export const ADD_ANIMAL_BREED_OPTIONS = BREED_OPTIONS
 
-export const ADD_ANIMAL_SEX_OPTIONS = ["Bull", "Cow", "Heifer", "Steer", "Calf"] as const
+export const ADD_ANIMAL_SEX_OPTIONS = CATTLE_SEX_OPTIONS
 
 export const ADD_ANIMAL_STATUS_OPTIONS: { value: CattleInventoryStatus; label: string }[] = [
   { value: "active", label: "Active" },

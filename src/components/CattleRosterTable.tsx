@@ -201,7 +201,7 @@ export function CattleRosterTable({
   shellClassName,
 }: CattleRosterTableProps) {
   const { openCattleLogModal } = useRanchData()
-  const colSpan = showPastureColumn ? 12 : 11
+  const colSpan = showPastureColumn ? 13 : 12
   return (
     <Table className="border-separate border-spacing-0" containerClassName="min-w-0 w-full" shellClassName={shellClassName}>
       <TableHeader>
@@ -248,6 +248,14 @@ export function CattleRosterTable({
             onColumnSort={onColumnSort}
           >
             Breed
+          </CattleRosterSortableColumnHeader>
+          <CattleRosterSortableColumnHeader
+            rosterSortKey="sex"
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onColumnSort={onColumnSort}
+          >
+            Sex
           </CattleRosterSortableColumnHeader>
           <CattleRosterSortableColumnHeader
             rosterSortKey="age"
@@ -386,6 +394,9 @@ export function CattleRosterTable({
               </TableCell>
               <TableCell className={cn(cellBg, "text-sm text-foreground")}>
                 {row.breed}
+              </TableCell>
+              <TableCell className={cn(cellBg, "text-sm text-foreground")}>
+                {row.sexLabel?.trim() || "—"}
               </TableCell>
               <TableCell className={cn(cellBg, "text-foreground")}>
                 {row.age} yrs

@@ -204,6 +204,7 @@ export function CattleOverviewPage() {
 
   const [herdSearch, setHerdSearch] = useState("")
   const [herdBreedFilter, setHerdBreedFilter] = useState<"all" | Breed>("all")
+  const [herdSexFilters, setHerdSexFilters] = useState<Set<string>>(() => new Set())
   const [herdFilterOpen, setHerdFilterOpen] = useState(false)
   const [addAnimalOpen, setAddAnimalOpen] = useState(false)
   const [herdCalvingFilters, setHerdCalvingFilters] = useState<Set<EffectiveCalvingStatus>>(() =>
@@ -385,6 +386,7 @@ export function CattleOverviewPage() {
       herdPastureCatalog,
       searchTrimmed: herdSearch.trim(),
       breed: herdBreedFilter,
+      sexFilters: herdSexFilters,
       calvingFilters: herdCalvingFilters,
       healthFilters: herdHealthFilters,
       careDueKind: herdCareDueKind,
@@ -396,6 +398,7 @@ export function CattleOverviewPage() {
     herdPastureFilters,
     herdSearch,
     herdBreedFilter,
+    herdSexFilters,
     herdCalvingFilters,
     herdHealthFilters,
     herdCareDueKind,
@@ -448,6 +451,7 @@ export function CattleOverviewPage() {
       setCareDueKind: setHerdCareDueKind,
       setPastureFilters: setHerdPastureFilters,
     })
+    setHerdSexFilters(new Set())
     setSearchParams(
       (prev) => {
         const p = new URLSearchParams(prev)
@@ -486,12 +490,14 @@ export function CattleOverviewPage() {
     if (calvingPartial) n += herdCalvingFilters.size
     if (pasturePartial) n += herdPastureFilters.size
     if (herdBreedFilter !== "all") n += 1
+    if (herdSexFilters.size > 0) n += herdSexFilters.size
     if (herdCareDueKind != null) n += 1
     return n
   }, [
     herdPastureCatalog.length,
     herdPastureFilters,
     herdBreedFilter,
+    herdSexFilters,
     herdCareDueKind,
     herdHealthFilters,
     herdCalvingFilters,
@@ -509,6 +515,9 @@ export function CattleOverviewPage() {
       breedFilter={herdBreedFilter}
       setBreedFilter={setHerdBreedFilter}
       showBreedSection
+      sexFilters={herdSexFilters}
+      setSexFilters={setHerdSexFilters}
+      showSexSection
       showCalvingStatusSection
       pastureFilterOptions={herdPastureFilterOptions}
       pastureFilters={herdPastureFilters}
@@ -537,6 +546,7 @@ export function CattleOverviewPage() {
   const isUnfiltered =
     herdSearch.trim() === "" &&
     herdBreedFilter === "all" &&
+    herdSexFilters.size === 0 &&
     herdCareDueKind == null &&
     pastureFilterInactive &&
     calvingPanelIsDefault &&

@@ -18,6 +18,7 @@ import type { ObservationEntry } from "@/types/observation"
 export type CattleSortKey =
   | "tag"
   | "breed"
+  | "sex"
   | "age"
   | "pasture"
   | "dueDate"
@@ -37,6 +38,7 @@ const CATTLE_ROSTER_SORT_COLUMNS = new Set<string>([
   "lastObservation",
   "tag",
   "breed",
+  "sex",
   "age",
   "pasture",
   "dueDate",
@@ -131,6 +133,8 @@ export function cattleRosterSortTriggerLabel(sort: {
       return `Sorted by Tag # (${num})`
     case "breed":
       return `Sorted by Breed (${az})`
+    case "sex":
+      return `Sorted by Sex (${az})`
     case "age":
       return `Sorted by Age (${num})`
     case "pasture":
@@ -193,6 +197,8 @@ export type CattleRosterFilterOptions = {
   herdPastureCatalog?: readonly string[]
   searchTrimmed: string
   breed: "all" | Breed
+  /** Selected sex labels (e.g. "Bull", "Cow"); empty = no sex filter. Matched case-insensitively against `sexLabel`. */
+  sexFilters?: Set<string>
   calvingFilters: Set<EffectiveCalvingStatus>
   healthFilters: Set<"Flag" | "Monitor" | "Good">
   dueWeekOnly?: boolean
@@ -225,6 +231,10 @@ export function filterCattleList(list: Cattle[], options: CattleRosterFilterOpti
     result = result.filter((c) => c.breed === options.breed)
   }
   // Empty selection = no filter applied (all rows pass for that category).
+  if (options.sexFilters && options.sexFilters.size > 0) {
+    const wanted = new Set(Array.from(options.sexFilters, (s) => s.trim().toLowerCase()))
+    result = result.filter((c) => wanted.has((c.sexLabel ?? "").trim().toLowerCase()))
+  }
   if (options.calvingFilters.size > 0) {
     result = result.filter((c) => options.calvingFilters.has(getCalvingStatus(c)))
   }
@@ -264,6 +274,9 @@ export function sortCattleList(
           break
         case "breed":
           cmp = a.breed.localeCompare(b.breed, undefined, { sensitivity: "base" })
+          break
+        case "sex":
+          cmp = (a.sexLabel ?? "").localeCompare(b.sexLabel ?? "", undefined, { sensitivity: "base" })
           break
         case "age":
           cmp = a.age - b.age
