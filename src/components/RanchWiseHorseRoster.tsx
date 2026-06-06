@@ -1940,7 +1940,6 @@ function HorseRosterSortableColumnHeader({
 /** Roster health or behavior status badge — table geometry. */
 function HorseRosterStatusCell({ status }: { status: HorseTableRow["healthStatus"] }) {
   const label = status === "flag" ? "Flag" : status === "monitor" ? "Monitor" : "Good"
-  if (status === "good") return null
   return <span className={getTableStatusBadgeClass(status)}>{label}</span>
 }
 

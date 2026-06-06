@@ -380,11 +380,7 @@ export function CattleRosterTable({
                 </div>
               </TableCell>
               <TableCell className={cn(cellBg, "min-w-[96px] whitespace-nowrap pl-4")}>
-                {healthRisk === "flag" ? (
-                  <StatusBadge status="flag" size="table" emphasis="secondary" />
-                ) : healthRisk === "monitor" ? (
-                  <StatusBadge status="monitor" size="table" emphasis="secondary" />
-                ) : null}
+                <StatusBadge status={healthRisk} size="table" emphasis="secondary" />
               </TableCell>
               <TableCell className={cn(cellBg, "min-w-[124px] whitespace-nowrap")}>
                 {calvingStatusPill(row)}
