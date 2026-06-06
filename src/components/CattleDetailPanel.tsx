@@ -7,6 +7,7 @@ import { ObservationTimeline } from "@/components/ObservationTimeline"
 import { StatusBadge } from "@/components/StatusBadge"
 import { CattleAvatar } from "@/components/CattleAvatar"
 import { CattleCalvingEventFields } from "@/components/CattleCalvingEventFields"
+import { CattleCalvingEventSummary } from "@/components/CattleCalvingEventSummary"
 import {
   calvingEventCattleUpdate,
   emptyCalvingEventDraft,
@@ -209,6 +210,10 @@ function CattleEmbeddedLogObservationSubview({
     topSlot:
       calvingEligible && !embeddedLogInitial ? (
         <CattleCalvingEventFields value={calvingDraft} onChange={setCalvingDraft} />
+      ) : undefined,
+    resultSlot:
+      calvingEligible && !embeddedLogInitial ? (
+        <CattleCalvingEventSummary value={calvingDraft} />
       ) : undefined,
     onSave: async (data, meta) => {
       if (data.kind !== "animal") return
