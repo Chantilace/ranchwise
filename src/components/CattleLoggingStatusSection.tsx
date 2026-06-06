@@ -11,7 +11,6 @@ import {
   getCalvingStatus,
 } from "@/lib/calvingStatus"
 import { getComplicationVariant } from "@/lib/calvingRichTextVariants"
-import { useRanchData } from "@/contexts/RanchDataContext"
 import { formatCattleTagDisplay } from "@/lib/cattleUi"
 import type { Cattle } from "@/types/cattle"
 import { cn } from "@/lib/utils"
@@ -19,8 +18,9 @@ import { cn } from "@/lib/utils"
 export type CattleLoggingStatusSectionProps = {
   cattle: Cattle
   pastureName: string
-  /** Required when `showActions` is true. */
+  /** @deprecated Calving is now recorded in the log flow; no longer rendered here. Accepted for caller compatibility. */
   onRecordCalving?: () => void
+  /** Required when `showActions` is true. Opens the log flow (where calving events are now recorded). */
   onLogObservation?: () => void
   /** When false, show calving context only (e.g. home sheet result step). */
   showActions?: boolean
@@ -29,18 +29,16 @@ export type CattleLoggingStatusSectionProps = {
 }
 
 /**
- * Calving status pill, contextual delivery lines, and the same CTAs as the cattle detail panel
- * (Record calving / Log observation / Mark as in labor by state).
+ * Calving status pill, contextual delivery lines, and the Log observation CTA.
+ * Calving events (in labor / calved) are recorded inside the log flow, not here.
  */
 export function CattleLoggingStatusSection({
   cattle,
   pastureName: _pastureName,
-  onRecordCalving,
   onLogObservation,
   showActions = true,
   usePanelPadding = true,
 }: CattleLoggingStatusSectionProps) {
-  const { markCattleInLabor } = useRanchData()
   const effective = getCalvingStatus(cattle)
   const cattlePageLogLabel = `Log ${formatCattleTagDisplay(cattle.tagNumber)}`
   const cattlePageLogAriaLabel = `Log observation for ${formatCattleTagDisplay(cattle.tagNumber)}`
@@ -50,14 +48,9 @@ export function CattleLoggingStatusSection({
       ? formatDistanceToNow(parseISO(cattle.inLaborTimestamp), { addSuffix: false })
       : null
 
-  const showMarkInLabor = effective === "calving-soon"
-
   const deliveryType = formatDeliveryTypeLabel(cattle.deliveryType)
   const calfStatus = formatCalfStatusLabel(cattle.calfStatus)
   const complicationSummary = formatComplicationsSummary(cattle.calvingComplications)
-
-  const preCalvingOrLabor =
-    effective === "pregnant" || effective === "calving-soon" || effective === "in-labor"
 
   const pad = usePanelPadding ? "px-4" : ""
   const padTop = usePanelPadding ? "px-4 pt-4" : ""
@@ -85,77 +78,18 @@ export function CattleLoggingStatusSection({
         </RichText>
       ) : null}
 
-      {showActions && onRecordCalving && onLogObservation ? (
+      {showActions && onLogObservation ? (
         <div className={cn("mt-4 flex flex-col gap-2", pad)}>
-          {preCalvingOrLabor ? (
-            <>
-              <Button type="button" variant="primary" className="w-full" onClick={onRecordCalving}>
-                Record calving
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full gap-1.5"
-                aria-label={cattlePageLogAriaLabel}
-                onClick={onLogObservation}
-              >
-                <NotebookPen className="size-4 shrink-0" aria-hidden />
-                {cattlePageLogLabel}
-              </Button>
-              {showMarkInLabor ? (
-                <button
-                  type="button"
-                  className="block w-full cursor-pointer border-none bg-transparent py-1 text-center text-sm text-action outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
-                  onClick={() => markCattleInLabor(cattle.id)}
-                >
-                  Mark as in labor
-                </button>
-              ) : null}
-            </>
-          ) : null}
-
-          {effective === "calved" ? (
-            <Button
-              type="button"
-              variant="primary"
-              className="w-full gap-1.5"
-              aria-label={cattlePageLogAriaLabel}
-              onClick={onLogObservation}
-            >
-              <NotebookPen className="size-4 shrink-0" aria-hidden />
-              {cattlePageLogLabel}
-            </Button>
-          ) : null}
-
-          {effective === "complications" ? (
-            <>
-              <Button type="button" variant="primary" className="w-full" onClick={onRecordCalving}>
-                Record calving outcome
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full gap-1.5"
-                aria-label={cattlePageLogAriaLabel}
-                onClick={onLogObservation}
-              >
-                <NotebookPen className="size-4 shrink-0" aria-hidden />
-                {cattlePageLogLabel}
-              </Button>
-            </>
-          ) : null}
-          {effective === "none" ? (
-            <Button
-              type="button"
-              variant="primary"
-              className="w-full gap-1.5"
-              aria-label={cattlePageLogAriaLabel}
-              onClick={onLogObservation}
-            >
-              <NotebookPen className="size-4 shrink-0" aria-hidden />
-              {cattlePageLogLabel}
-            </Button>
-          ) : null}
+          <Button
+            type="button"
+            variant="primary"
+            className="w-full gap-1.5"
+            aria-label={cattlePageLogAriaLabel}
+            onClick={onLogObservation}
+          >
+            <NotebookPen className="size-4 shrink-0" aria-hidden />
+            {cattlePageLogLabel}
+          </Button>
         </div>
       ) : null}
     </>
