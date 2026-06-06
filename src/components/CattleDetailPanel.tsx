@@ -1,4 +1,5 @@
 import { ChevronLeft, Sparkle, X } from "lucide-react"
+import { FaCow } from "react-icons/fa6"
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react"
 import { Drawer } from "vaul"
 import { useLogObservationFormController } from "@/components/LogObservationModal"
@@ -59,6 +60,15 @@ function cattleHealthFromRiskLevel(level: RiskLevel): NonNullable<Cattle["health
   return "Good"
 }
 
+/** Avatar for cattle panels: the sidebar cow icon on the grayscale muted surface (matches horse/pasture geometry). */
+function CattleAvatar() {
+  return (
+    <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
+      <FaCow className="size-6 text-muted-foreground" aria-hidden />
+    </div>
+  )
+}
+
 function CattleDetailHeader({
   cattle,
   pastureName,
@@ -94,20 +104,23 @@ function CattleDetailHeader({
         </div>
       </div>
       <div className={LOG_OBSERVATION_IDENTITY_ROW}>
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {cattle.displayName?.trim() ? (
-              <>
-                <span className="text-base font-medium text-foreground">{cattle.displayName.trim()}</span>
-                <span className="text-sm text-muted-foreground">{formatCattleTagDisplay(cattle.tagNumber)}</span>
-              </>
-            ) : (
-              <span className="text-base font-medium text-foreground">{formatCattleTagDisplay(cattle.tagNumber)}</span>
-            )}
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <CattleAvatar />
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              {cattle.displayName?.trim() ? (
+                <>
+                  <span className="text-base font-medium text-foreground">{cattle.displayName.trim()}</span>
+                  <span className="text-sm text-muted-foreground">{formatCattleTagDisplay(cattle.tagNumber)}</span>
+                </>
+              ) : (
+                <span className="text-base font-medium text-foreground">{formatCattleTagDisplay(cattle.tagNumber)}</span>
+              )}
+            </div>
+            <p className="mt-0.5 text-[13px] text-muted-foreground">
+              {cattle.breed} · {cattle.age} yrs · {pastureName}
+            </p>
           </div>
-          <p className="mt-0.5 text-[13px] text-muted-foreground">
-            {cattle.breed} · {cattle.age} yrs · {pastureName}
-          </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-start justify-end gap-1.5">
           <StatusBadge status={cattleRiskLevelToBadgeStatus(healthRisk)} />
@@ -307,24 +320,27 @@ function CattleEmbeddedLogObservationSubview({
           </div>
         </div>
         <div className={LOG_OBSERVATION_IDENTITY_ROW}>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              {cattle.displayName?.trim() ? (
-                <>
-                  <span className="text-base font-medium text-foreground">{cattle.displayName.trim()}</span>
-                  <span className="text-sm text-muted-foreground">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <CattleAvatar />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                {cattle.displayName?.trim() ? (
+                  <>
+                    <span className="text-base font-medium text-foreground">{cattle.displayName.trim()}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formatCattleTagDisplay(cattle.tagNumber)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-base font-medium text-foreground">
                     {formatCattleTagDisplay(cattle.tagNumber)}
                   </span>
-                </>
-              ) : (
-                <span className="text-base font-medium text-foreground">
-                  {formatCattleTagDisplay(cattle.tagNumber)}
-                </span>
-              )}
+                )}
+              </div>
+              <p className="mt-0.5 text-[13px] text-muted-foreground">
+                {cattle.breed} · {cattle.age} yrs · {pastureName}
+              </p>
             </div>
-            <p className="mt-0.5 text-[13px] text-muted-foreground">
-              {cattle.breed} · {cattle.age} yrs · {pastureName}
-            </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-end justify-end gap-1.5">
             <StatusBadge
