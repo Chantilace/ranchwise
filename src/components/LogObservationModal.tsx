@@ -9,6 +9,7 @@ import { ObservationFormFields } from "@/components/ObservationFormFields"
 import { StatusBadge } from "@/components/StatusBadge"
 import { CattleAvatar } from "@/components/CattleAvatar"
 import { CattleCalvingEventFields } from "@/components/CattleCalvingEventFields"
+import { CattleCalvingEventSummary } from "@/components/CattleCalvingEventSummary"
 import {
   calvingEventCattleUpdate,
   emptyCalvingEventDraft,
@@ -133,6 +134,8 @@ export type UseLogObservationFormControllerArgs = {
   initialObservation?: ObservationEntry | null
   /** Optional content rendered at the top of the form body during the input phase (e.g. the cattle calving-event block). */
   topSlot?: ReactNode
+  /** Optional read-only content rendered at the top of the review during the result phase (e.g. the calving-event summary). */
+  resultSlot?: ReactNode
 }
 
 export type LogObservationFormController = {
@@ -235,6 +238,7 @@ export function useLogObservationFormController({
   onDismiss,
   initialObservation = null,
   topSlot,
+  resultSlot,
 }: UseLogObservationFormControllerArgs): LogObservationFormController {
   const [phase, setPhase] = useState<Phase>("input")
   const [category, setCategory] = useState<Category>(() => initialObservation?.category ?? "Health")
@@ -371,6 +375,7 @@ export function useLogObservationFormController({
   const body = (
     <div className="flex flex-col gap-4">
       {phase === "input" && topSlot ? topSlot : null}
+      {phase === "result" && resultSlot ? resultSlot : null}
       {sectionTitle ? (
         <p
           className={cn(
@@ -553,6 +558,7 @@ function LogObservationModalInner({
     topSlot: calvingEligible ? (
       <CattleCalvingEventFields value={calvingDraft} onChange={setCalvingDraft} />
     ) : undefined,
+    resultSlot: calvingEligible ? <CattleCalvingEventSummary value={calvingDraft} /> : undefined,
   })
   useResultPhaseScroll(footerApi.phase, scrollBodyElRef)
 

@@ -1,30 +1,13 @@
 import { FormLabel } from "@/components/ui/form-label"
 import { cn } from "@/lib/utils"
-import type { CalvingEventDraft, CalvingStage } from "@/lib/cattleCalvingEvent"
-import type { CalfStatus, CalvingComplication, DeliveryType } from "@/types/cattle"
-
-const STAGE_OPTIONS: { id: CalvingStage; label: string }[] = [
-  { id: "in-labor", label: "In labor" },
-  { id: "calved", label: "Calved" },
-]
-
-const DELIVERY_OPTIONS: { id: DeliveryType; label: string }[] = [
-  { id: "normal", label: "Normal" },
-  { id: "assisted", label: "Assisted" },
-  { id: "c-section", label: "C-section" },
-]
-
-const CALF_OPTIONS: { id: CalfStatus; label: string }[] = [
-  { id: "live", label: "Live" },
-  { id: "stillborn", label: "Stillborn" },
-  { id: "unknown", label: "Unknown" },
-]
-
-const COMPLICATION_OPTIONS: { id: CalvingComplication; label: string }[] = [
-  { id: "none", label: "None" },
-  { id: "retained-placenta", label: "Retained placenta" },
-  { id: "prolapse", label: "Prolapse" },
-]
+import {
+  CALVING_CALF_OPTIONS,
+  CALVING_COMPLICATION_OPTIONS,
+  CALVING_DELIVERY_OPTIONS,
+  CALVING_STAGE_OPTIONS,
+  type CalvingEventDraft,
+} from "@/lib/cattleCalvingEvent"
+import type { CalvingComplication } from "@/types/cattle"
 
 function Pill({
   selected,
@@ -105,7 +88,7 @@ export function CattleCalvingEventFields({
           <div className="flex flex-col gap-1.5">
             <FormLabel variant="default">Stage</FormLabel>
             <div className="flex rounded-lg border border-border bg-muted/40 p-0.5">
-              {STAGE_OPTIONS.map((opt) => (
+              {CALVING_STAGE_OPTIONS.map((opt) => (
                 <button
                   key={opt.id}
                   type="button"
@@ -129,7 +112,7 @@ export function CattleCalvingEventFields({
               <div className="flex flex-col gap-1.5">
                 <FormLabel variant="default">Delivery</FormLabel>
                 <div className="flex flex-wrap gap-2">
-                  {DELIVERY_OPTIONS.map((opt) => (
+                  {CALVING_DELIVERY_OPTIONS.map((opt) => (
                     <Pill
                       key={opt.id}
                       selected={value.deliveryType === opt.id}
@@ -145,7 +128,7 @@ export function CattleCalvingEventFields({
               <div className="flex flex-col gap-1.5">
                 <FormLabel variant="default">Calf</FormLabel>
                 <div className="flex flex-wrap gap-2">
-                  {CALF_OPTIONS.map((opt) => (
+                  {CALVING_CALF_OPTIONS.map((opt) => (
                     <Pill
                       key={opt.id}
                       selected={value.calfStatus === opt.id}
@@ -161,7 +144,7 @@ export function CattleCalvingEventFields({
               <div className="flex flex-col gap-1.5">
                 <FormLabel variant="default">Complications</FormLabel>
                 <div className="flex flex-wrap gap-2">
-                  {COMPLICATION_OPTIONS.map((opt) => (
+                  {CALVING_COMPLICATION_OPTIONS.map((opt) => (
                     <Pill
                       key={opt.id}
                       selected={value.complications.includes(opt.id)}

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { StatusBadge } from "@/components/StatusBadge"
 import { CattleAvatar } from "@/components/CattleAvatar"
 import { CattleCalvingEventFields } from "@/components/CattleCalvingEventFields"
+import { CattleCalvingEventSummary } from "@/components/CattleCalvingEventSummary"
 import {
   calvingEventCattleUpdate,
   emptyCalvingEventDraft,
@@ -884,6 +885,12 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                   selectedAnimal.species === "cattle" &&
                   isCattleCalvingEligible(selectedAnimal as Cattle) ? (
                     <CattleCalvingEventFields value={calvingDraft} onChange={setCalvingDraft} />
+                  ) : undefined
+                }
+                resultSlot={
+                  selectedAnimal.species === "cattle" &&
+                  isCattleCalvingEligible(selectedAnimal as Cattle) ? (
+                    <CattleCalvingEventSummary value={calvingDraft} />
                   ) : undefined
                 }
                 onDismiss={() => onOpenChange(false)}
