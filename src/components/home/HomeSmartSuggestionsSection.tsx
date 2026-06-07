@@ -156,7 +156,7 @@ export function HomeSmartSuggestionsSection() {
             )}
           >
             <RefreshCw
-              className="size-4 transition-transform duration-[400ms] ease-out group-hover/refresh:rotate-[360deg]"
+              className="size-6 transition-transform duration-[400ms] ease-out group-hover/refresh:rotate-[360deg]"
               strokeWidth={2}
               aria-hidden
             />
