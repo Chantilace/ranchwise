@@ -133,11 +133,13 @@ function SingleLineCard({ suggestion }: { suggestion: string }) {
       </div>
       <div
         className={cn(
-          "overflow-hidden transition-all duration-300 ease-out",
-          expanded ? "mt-3 max-h-[500px] opacity-100" : "mt-0 max-h-0 opacity-0",
+          "grid transition-[grid-template-rows] duration-200 ease-out",
+          expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
         )}
       >
-        <p className="text-sm leading-relaxed text-foreground">{suggestion}</p>
+        <div className="overflow-hidden">
+          <p className="mt-3 text-sm leading-relaxed text-foreground">{suggestion}</p>
+        </div>
       </div>
     </div>
   )

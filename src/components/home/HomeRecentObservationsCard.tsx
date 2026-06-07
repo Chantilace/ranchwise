@@ -128,9 +128,18 @@ function RecentObservationCompactTile({ pick }: { pick: HorseWeeklyAttentionPick
         {observationText || "—"}
       </p>
 
-      {hasAi && aiExpanded ? (
-        <div className="mt-2 overflow-hidden rounded-lg bg-muted px-2.5 py-2 text-[13px] leading-relaxed text-[var(--color-text-primary)]">
-          {observationAiSuggestionBody(pick.entry)}
+      {hasAi ? (
+        <div
+          className={cn(
+            "grid transition-[grid-template-rows] duration-200 ease-out",
+            aiExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+          )}
+        >
+          <div className="overflow-hidden">
+            <div className="mt-2 rounded-lg bg-muted px-2.5 py-2 text-[13px] leading-relaxed text-[var(--color-text-primary)]">
+              {observationAiSuggestionBody(pick.entry)}
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

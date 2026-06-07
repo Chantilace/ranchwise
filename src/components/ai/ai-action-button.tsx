@@ -20,7 +20,7 @@ export function AiActionButton({ ariaLabel, expanded, onClick, className }: AiAc
     <button
       type="button"
       className={cn(
-        "group flex shrink-0 cursor-pointer items-center justify-center rounded p-1 transition-colors",
+        "group flex shrink-0 cursor-pointer items-center justify-center rounded p-1 transition-colors ease-out",
         "hover:bg-ai-accent-wash",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-accent/40 focus-visible:ring-offset-1",
         expanded && "bg-ai-accent-wash/80",
@@ -32,10 +32,12 @@ export function AiActionButton({ ariaLabel, expanded, onClick, className }: AiAc
     >
       <Sparkle
         className={cn(
-          "size-5 text-ai-accent transition-transform duration-200 group-hover:scale-110",
-          expanded && "scale-110 rotate-12",
+          "size-5 text-ai-accent transition-transform duration-200 ease-out",
+          expanded
+            ? "scale-110 rotate-[18deg]"
+            : "group-hover:scale-110 group-hover:rotate-6",
         )}
-        strokeWidth={1.75}
+        strokeWidth={1.5}
         aria-hidden
       />
     </button>
