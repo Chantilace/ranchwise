@@ -85,7 +85,7 @@ function FitForWorkAvatarStack({
             to={`/horses/${encodeURIComponent(key)}`}
             className={cn(
               "relative inline-flex size-9 shrink-0 overflow-hidden rounded-xl border-2 border-white bg-muted outline-none",
-              "transition-[translate,scale,box-shadow] duration-150 ease-out",
+              "transition-[translate,scale,box-shadow] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
               "hover:z-10 hover:-translate-y-2 hover:scale-[1.5] hover:shadow-md",
               "focus-visible:z-10 focus-visible:-translate-y-2 focus-visible:scale-[1.5] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             )}
@@ -112,7 +112,7 @@ function FitForWorkAvatarStack({
           to={`/horses?filter=${HORSE_ROSTER_FIT_FOR_WORK_FILTER_PARAM}`}
           className={cn(
             "relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border-2 border-white bg-secondary text-[13px] font-medium text-secondary-foreground outline-none",
-            "transition-[translate,scale,box-shadow,background-color] duration-150 ease-out",
+            "transition-[translate,scale,box-shadow,background-color] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
             "hover:z-10 hover:-translate-y-2 hover:scale-[1.5] hover:bg-[var(--color-background-secondary)] hover:shadow-md",
             "focus-visible:z-10 focus-visible:-translate-y-2 focus-visible:scale-[1.5] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           )}
