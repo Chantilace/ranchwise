@@ -6,9 +6,9 @@ import { AiAnnotationMark } from "@/components/ai/ai-annotation-mark"
 import { AiSurfaceMark } from "@/components/ai/ai-surface-mark"
 import { cn } from "@/lib/utils"
 
-/** 18px filled ✦ for Health / Pasture summary headers; label text scale stays independent. */
+/** 20px filled ✦ for Health / Pasture summary headers; matches the home Smart suggestions tag. */
 const SECTION_HEADER_GLYPH_CLASS =
-  "inline-flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center text-[18px] leading-none text-ai-accent"
+  "inline-flex h-[20px] w-[20px] flex-shrink-0 items-center justify-center text-[20px] leading-none text-ai-accent"
 
 export type SmartSuggestionsPanelProps = {
   mode: "modal" | "card"
