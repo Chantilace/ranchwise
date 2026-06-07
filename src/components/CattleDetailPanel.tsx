@@ -101,7 +101,7 @@ function CattleDetailHeader({
           </div>
         </div>
       </div>
-      <div className={LOG_OBSERVATION_IDENTITY_ROW}>
+      <div className={cn(LOG_OBSERVATION_IDENTITY_ROW, "md:px-4")}>
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <CattleAvatar />
           <div className="min-w-0 flex-1">

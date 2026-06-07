@@ -56,7 +56,8 @@ export function CattleLoggingStatusSection({
   const complicationSummary = formatComplicationsSummary(cattle.calvingComplications)
 
   const pad = usePanelPadding ? "px-4" : ""
-  const padTop = usePanelPadding ? "px-4 pt-4" : ""
+  // No extra top padding: the identity row above already provides the gap (matches the log subview spacing).
+  const padTop = pad
 
   return (
     <>
