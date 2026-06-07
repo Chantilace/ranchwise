@@ -12,59 +12,86 @@ import type { ObservationEntry } from "@/types/observation"
 
 const CALVING_SEASON = RANCH_SEASONS.find((s) => s.id === "calving")!
 
-/** Mutually exclusive buckets: health Flag wins; else calving in-labor; else complications. */
+/**
+ * Two views of the same cows:
+ * - `legend*` counts each cow in every bucket it qualifies for (a flagged cow that's also
+ *   in labor adds to BOTH In labor and Flagged), so the legend reflects the real state.
+ * - `ring*` / `total` count each cow once by priority (Flag > in-labor > complications) so the
+ *   donut ring and centre number stay distinct (no double-counting / over-filling).
+ */
 function computeCattleDonutCounts(
   cattleList: readonly Cattle[],
   observationsByCattleId: Record<string, ObservationEntry[]>
-): { inLabor: number; complications: number; flagged: number; total: number } {
-  let inLabor = 0
-  let complications = 0
-  let flagged = 0
+): {
+  legendInLabor: number
+  legendComplications: number
+  legendFlagged: number
+  ringInLabor: number
+  ringComplications: number
+  ringFlagged: number
+  total: number
+} {
+  let legendInLabor = 0
+  let legendComplications = 0
+  let legendFlagged = 0
+  let ringInLabor = 0
+  let ringComplications = 0
+  let ringFlagged = 0
   for (const c of cattleList) {
-    if (cattleEffectiveHealthBucket(c, observationsByCattleId) === "Flag") {
-      flagged++
-      continue
-    }
+    const isFlag = cattleEffectiveHealthBucket(c, observationsByCattleId) === "Flag"
     const cs = getCalvingStatus(c)
-    if (cs === "in-labor") {
-      inLabor++
-      continue
-    }
-    if (cs === "complications") {
-      complications++
-      continue
-    }
+    const isInLabor = cs === "in-labor"
+    const isComplications = cs === "complications"
+
+    if (isFlag) legendFlagged++
+    if (isInLabor) legendInLabor++
+    if (isComplications) legendComplications++
+
+    // Distinct (priority) assignment for the ring + centre total.
+    if (isFlag) ringFlagged++
+    else if (isInLabor) ringInLabor++
+    else if (isComplications) ringComplications++
   }
   return {
-    inLabor,
-    complications,
-    flagged,
-    total: inLabor + complications + flagged,
+    legendInLabor,
+    legendComplications,
+    legendFlagged,
+    ringInLabor,
+    ringComplications,
+    ringFlagged,
+    total: ringInLabor + ringComplications + ringFlagged,
   }
 }
 
 function CattleAttentionDonut({
-  inLabor,
-  complications,
-  flagged,
+  ringInLabor,
+  ringComplications,
+  ringFlagged,
+  legendInLabor,
+  legendComplications,
+  legendFlagged,
 }: {
-  inLabor: number
-  complications: number
-  flagged: number
+  ringInLabor: number
+  ringComplications: number
+  ringFlagged: number
+  legendInLabor: number
+  legendComplications: number
+  legendFlagged: number
 }) {
-  const total = inLabor + complications + flagged
+  // Centre + ring use the distinct (priority) counts; the legend below uses the overlapping counts.
+  const total = ringInLabor + ringComplications + ringFlagged
   const radius = 48
   const circumference = 2 * Math.PI * radius
-  const flaggedArc = total > 0 ? (flagged / total) * circumference : 0
-  const complicationsArc = total > 0 ? (complications / total) * circumference : 0
-  const inLaborArc = total > 0 ? (inLabor / total) * circumference : 0
+  const flaggedArc = total > 0 ? (ringFlagged / total) * circumference : 0
+  const complicationsArc = total > 0 ? (ringComplications / total) * circumference : 0
+  const inLaborArc = total > 0 ? (ringInLabor / total) * circumference : 0
 
   /** Same ring order as before (flagged → complications → in labor); only non-zero slices render. */
   const segmentRings: { arc: number; stroke: string; key: string }[] = []
-  if (flagged > 0) segmentRings.push({ arc: flaggedArc, stroke: "var(--badge-flag-bg)", key: "flagged" })
-  if (complications > 0)
+  if (ringFlagged > 0) segmentRings.push({ arc: flaggedArc, stroke: "var(--badge-flag-bg)", key: "flagged" })
+  if (ringComplications > 0)
     segmentRings.push({ arc: complicationsArc, stroke: "var(--badge-monitor-mid-bg)", key: "complications" })
-  if (inLabor > 0)
+  if (ringInLabor > 0)
     segmentRings.push({ arc: inLaborArc, stroke: "var(--status-monitor-primary)", key: "in-labor" })
 
   let cum = 0
@@ -85,7 +112,7 @@ function CattleAttentionDonut({
         viewBox="0 0 120 120"
         className="shrink-0"
         role="img"
-        aria-label={`On watch: ${total}. In labor ${inLabor}, complications ${complications}, flagged ${flagged}.`}
+        aria-label={`On watch: ${total}. In labor ${legendInLabor}, complications ${legendComplications}, flagged ${legendFlagged}.`}
       >
         <circle
           cx="60"
@@ -129,7 +156,7 @@ function CattleAttentionDonut({
             style={{ background: "var(--status-monitor-primary)" }}
           />
           <span className="flex-1 text-[13px] text-muted-foreground">In labor</span>
-          <span className="text-base font-medium tabular-nums text-foreground">{inLabor}</span>
+          <span className="text-base font-medium tabular-nums text-foreground">{legendInLabor}</span>
         </div>
         <div className="flex items-center gap-2.5">
           <span
@@ -137,7 +164,7 @@ function CattleAttentionDonut({
             style={{ background: "var(--badge-monitor-mid-bg)" }}
           />
           <span className="flex-1 text-[13px] text-muted-foreground">Complications</span>
-          <span className="text-base font-medium tabular-nums text-foreground">{complications}</span>
+          <span className="text-base font-medium tabular-nums text-foreground">{legendComplications}</span>
         </div>
         <div className="flex items-center gap-2.5">
           <span
@@ -145,7 +172,7 @@ function CattleAttentionDonut({
             style={{ background: "var(--badge-flag-bg)" }}
           />
           <span className="flex-1 text-[13px] text-muted-foreground">Flagged</span>
-          <span className="text-base font-medium tabular-nums text-foreground">{flagged}</span>
+          <span className="text-base font-medium tabular-nums text-foreground">{legendFlagged}</span>
         </div>
       </div>
     </div>
@@ -159,22 +186,14 @@ export function HomeCattleSummaryCard() {
   const isCalvingSeason = season.id === "calving"
   const daysLeft = isCalvingSeason ? daysRemainingInSeason(CALVING_SEASON, today) : null
 
-  const { calvedCount, cohortTotal, progressPct, donutInLabor, donutComplications, donutFlagged } =
-    useMemo(() => {
-      const calved = cattle.filter((c) => getCalvingStatus(c) === "calved")
-      const cohortTotal = countCattleCalvingSeasonCohort(cattle)
-      const progressPct =
-        cohortTotal > 0 ? Math.min(100, Math.round((calved.length / cohortTotal) * 100)) : 0
-      const donut = computeCattleDonutCounts(cattle, observationsByCattleId)
-      return {
-        calvedCount: calved.length,
-        cohortTotal,
-        progressPct,
-        donutInLabor: donut.inLabor,
-        donutComplications: donut.complications,
-        donutFlagged: donut.flagged,
-      }
-    }, [cattle, observationsByCattleId])
+  const { calvedCount, cohortTotal, progressPct, donut } = useMemo(() => {
+    const calved = cattle.filter((c) => getCalvingStatus(c) === "calved")
+    const cohortTotal = countCattleCalvingSeasonCohort(cattle)
+    const progressPct =
+      cohortTotal > 0 ? Math.min(100, Math.round((calved.length / cohortTotal) * 100)) : 0
+    const donut = computeCattleDonutCounts(cattle, observationsByCattleId)
+    return { calvedCount: calved.length, cohortTotal, progressPct, donut }
+  }, [cattle, observationsByCattleId])
 
   return (
     <section
@@ -211,9 +230,12 @@ export function HomeCattleSummaryCard() {
 
       <div className="flex min-h-0 flex-1 flex-col">
         <CattleAttentionDonut
-          inLabor={donutInLabor}
-          complications={donutComplications}
-          flagged={donutFlagged}
+          ringInLabor={donut.ringInLabor}
+          ringComplications={donut.ringComplications}
+          ringFlagged={donut.ringFlagged}
+          legendInLabor={donut.legendInLabor}
+          legendComplications={donut.legendComplications}
+          legendFlagged={donut.legendFlagged}
         />
       </div>
     </section>
