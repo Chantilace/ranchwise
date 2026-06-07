@@ -70,10 +70,17 @@ export function ObservationTimelineEntryCard({
 
       <p className={cn("mb-3 text-[14px] leading-[1.5] text-foreground", hasAi && "pr-8")}>{entry.notes}</p>
 
-      {hasAi && aiExpanded ? (
-        <div className="mb-3 overflow-hidden">
-          <div className="rounded-lg bg-muted px-3 py-2 text-sm leading-relaxed text-foreground">
-            {aiBodyText}
+      {hasAi ? (
+        <div
+          className={cn(
+            "grid transition-[grid-template-rows] duration-200 ease-out",
+            aiExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+          )}
+        >
+          <div className="overflow-hidden">
+            <div className="mb-3 rounded-lg bg-muted px-3 py-2 text-sm leading-relaxed text-foreground">
+              {aiBodyText}
+            </div>
           </div>
         </div>
       ) : null}
