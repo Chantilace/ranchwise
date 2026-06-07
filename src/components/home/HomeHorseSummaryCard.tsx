@@ -84,9 +84,12 @@ function FitForWorkAvatarStack({
             key={key}
             to={`/horses/${encodeURIComponent(key)}`}
             className={cn(
-              "relative inline-flex size-9 shrink-0 overflow-hidden rounded-xl border-2 border-white bg-muted outline-none ring-0 transition-opacity hover:opacity-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              "relative inline-flex size-9 shrink-0 overflow-hidden rounded-xl border-2 border-white bg-muted outline-none",
+              "transition-[translate,box-shadow] duration-150 ease-out",
+              "hover:z-10 hover:-translate-y-1 hover:shadow-md",
+              "focus-visible:z-10 focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             )}
-            style={{ zIndex: index + 1, marginLeft: index === 0 ? 0 : -10 }}
+            style={{ marginLeft: index === 0 ? 0 : -10 }}
             aria-label={`Open ${horse.name} profile`}
           >
             {photo ? (
@@ -108,10 +111,12 @@ function FitForWorkAvatarStack({
         <Link
           to={`/horses?filter=${HORSE_ROSTER_FIT_FOR_WORK_FILTER_PARAM}`}
           className={cn(
-            "relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border-2 border-white bg-secondary text-[13px] font-medium text-secondary-foreground outline-none transition-colors",
-            "hover:bg-ai-accent-wash focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            "relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border-2 border-white bg-secondary text-[13px] font-medium text-secondary-foreground outline-none",
+            "transition-[translate,box-shadow,background-color] duration-150 ease-out",
+            "hover:z-10 hover:-translate-y-1 hover:bg-ai-accent-wash hover:shadow-md",
+            "focus-visible:z-10 focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           )}
-          style={{ zIndex: visible.length + 1, marginLeft: -10 }}
+          style={{ marginLeft: -10 }}
           aria-label={`See all ${totalFit} horses fit for work`}
         >
           +{remainder}
