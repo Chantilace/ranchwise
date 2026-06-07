@@ -85,9 +85,9 @@ function FitForWorkAvatarStack({
             to={`/horses/${encodeURIComponent(key)}`}
             className={cn(
               "relative inline-flex size-9 shrink-0 overflow-hidden rounded-xl border-2 border-white bg-muted outline-none",
-              "transition-[translate,scale,box-shadow,border-color] duration-150 ease-out",
-              "hover:z-10 hover:-translate-y-1 hover:scale-[1.5] hover:border-action hover:shadow-md",
-              "focus-visible:z-10 focus-visible:-translate-y-1 focus-visible:scale-[1.5] focus-visible:border-action focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              "transition-[translate,scale,box-shadow] duration-150 ease-out",
+              "hover:z-10 hover:-translate-y-1 hover:scale-[1.5] hover:shadow-md",
+              "focus-visible:z-10 focus-visible:-translate-y-1 focus-visible:scale-[1.5] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             )}
             style={{ marginLeft: index === 0 ? 0 : -10 }}
             aria-label={`Open ${horse.name} profile`}
@@ -112,9 +112,9 @@ function FitForWorkAvatarStack({
           to={`/horses?filter=${HORSE_ROSTER_FIT_FOR_WORK_FILTER_PARAM}`}
           className={cn(
             "relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border-2 border-white bg-secondary text-[13px] font-medium text-secondary-foreground outline-none",
-            "transition-[translate,box-shadow,background-color] duration-150 ease-out",
-            "hover:z-10 hover:-translate-y-1 hover:bg-ai-accent-wash hover:shadow-md",
-            "focus-visible:z-10 focus-visible:-translate-y-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            "transition-[translate,scale,box-shadow,background-color] duration-150 ease-out",
+            "hover:z-10 hover:-translate-y-1 hover:scale-[1.5] hover:bg-ai-accent-wash hover:shadow-md",
+            "focus-visible:z-10 focus-visible:-translate-y-1 focus-visible:scale-[1.5] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           )}
           style={{ marginLeft: -10 }}
           aria-label={`See all ${totalFit} horses fit for work`}
