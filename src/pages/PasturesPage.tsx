@@ -550,11 +550,13 @@ export function PasturesPage() {
                   return (
                     <div
                       key={p.id}
-                      className="relative overflow-hidden rounded-xl border-[0.5px] border-border bg-card"
+                      className="relative overflow-hidden rounded-xl border-[0.5px] border-border bg-card transition-colors hover:bg-muted/50"
                     >
                       <Link
                         to={`/pastures/${p.id}`}
-                        className="block w-full cursor-pointer outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        tabIndex={-1}
+                        aria-label={`Open ${shortName} pasture`}
+                        className="block w-full cursor-pointer outline-none"
                       >
                         <div className="aspect-[16/7] w-full overflow-hidden bg-muted">
                           {mediaUrl ? (
@@ -571,26 +573,28 @@ export function PasturesPage() {
                             />
                           )}
                         </div>
-                        <div className="p-2.5 pr-12">
-                          <div className="mb-0.5 flex items-center justify-between gap-2">
-                            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                              <p className="text-[14px] font-medium text-foreground">{shortName}</p>
-                              <StatusBadge status={pastureStatusToCanonical(derived)} size="sm" emphasis="secondary" />
-                            </div>
-                            <span className="shrink-0 text-[13px] text-muted-foreground">{lastCheckLabel}</span>
+                      </Link>
+                      <div className="flex items-center gap-2 p-2.5">
+                        <Link
+                          to={`/pastures/${p.id}`}
+                          className="min-w-0 flex-1 cursor-pointer rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        >
+                          <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
+                            <p className="text-[14px] font-medium text-foreground">{shortName}</p>
+                            <StatusBadge status={pastureStatusToCanonical(derived)} size="sm" emphasis="secondary" />
                           </div>
                           <p className="truncate text-[13px] text-muted-foreground">
                             {p.animalCount} head · {p.acreage} acres · {p.terrain}
                           </p>
-                        </div>
-                      </Link>
-                      <RosterMobileLogIconButton
-                        ariaLabel={`Log pasture check for ${shortName}`}
-                        className="absolute bottom-2.5 right-2.5 z-10"
-                        onClick={() => {
-                          openPastureCheckModal({ pastureId: p.id, pastureName: p.name })
-                        }}
-                      />
+                        </Link>
+                        <span className="shrink-0 text-[13px] text-muted-foreground">{lastCheckLabel}</span>
+                        <RosterMobileLogIconButton
+                          ariaLabel={`Log pasture check for ${shortName}`}
+                          onClick={() => {
+                            openPastureCheckModal({ pastureId: p.id, pastureName: p.name })
+                          }}
+                        />
+                      </div>
                     </div>
                   )
                 })}
