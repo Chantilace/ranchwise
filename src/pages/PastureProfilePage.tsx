@@ -488,7 +488,7 @@ export function PastureProfilePage() {
         headerRight: (
           <Link
             to={herdHref}
-            className="inline-flex shrink-0 items-center gap-[5px] rounded-full border border-action bg-transparent px-[14px] py-1.5 text-[13px] font-medium text-action outline-none transition-colors hover:bg-action/5 focus-visible:ring-2 focus-visible:ring-ring/40"
+            className="inline-flex shrink-0 items-center gap-[5px] rounded-full border border-action bg-transparent px-[14px] py-1.5 text-[13px] font-medium text-action outline-none transition-colors hover:border-action hover:bg-action hover:text-white hover:[&_svg]:text-white focus-visible:ring-2 focus-visible:ring-ring/40"
           >
             View herd
             <ArrowRight className="size-3 shrink-0" aria-hidden />
