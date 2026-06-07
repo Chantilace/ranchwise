@@ -867,7 +867,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                 className="min-h-0 flex-1 overflow-y-auto overflow-x-visible"
               >
                 <div className="px-5 pb-[var(--scroll-area-bottom-pad)] md:px-7">
-                  <div className="flex flex-col gap-2 pt-3 md:pt-4">
+                  <div className="flex flex-col gap-2">
                   <CattleLoggingStatusSection
                     cattle={selectedAnimal as Cattle}
                     pastureName={selectedAnimal.pastureLabel}
