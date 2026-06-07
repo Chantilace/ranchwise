@@ -877,6 +877,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                     }}
                     showActions
                     usePanelPadding={false}
+                    hideStatusPill
                   />
                   <div className="h-px bg-border" aria-hidden />
                   <ObservationTimeline observations={sheetObservationEntries} />
@@ -929,7 +930,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
                           style={lockedTabHeight != null && footerApi.phase !== "result" ? { height: lockedTabHeight } : undefined}
                         >
                           {activeTab === "log" ? (
-                            <div ref={logTabMeasureRef}>{body}</div>
+                            <div ref={logTabMeasureRef} className="pt-4">{body}</div>
                           ) : (
                             <ObservationTimeline observations={sheetObservationEntries} />
                           )}

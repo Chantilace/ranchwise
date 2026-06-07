@@ -559,6 +559,7 @@ function LogObservationModalInner({
         ? ({ disabled }) => (
             <div className="flex flex-col gap-3">
               <CattleCalvingStatusRow cattle={calvingCattle} />
+              <div className="h-px bg-border" aria-hidden />
               <CattleCalvingEventFields
                 value={calvingDraft}
                 onChange={setCalvingDraft}

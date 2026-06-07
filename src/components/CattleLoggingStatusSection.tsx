@@ -26,6 +26,8 @@ export type CattleLoggingStatusSectionProps = {
   showActions?: boolean
   /** Panel detail body uses horizontal padding on each row; home log sheet relies on parent padding. */
   usePanelPadding?: boolean
+  /** Hide the calving status pill when it's already shown elsewhere (e.g. the sheet identity header). */
+  hideStatusPill?: boolean
 }
 
 /**
@@ -38,6 +40,7 @@ export function CattleLoggingStatusSection({
   onLogObservation,
   showActions = true,
   usePanelPadding = true,
+  hideStatusPill = false,
 }: CattleLoggingStatusSectionProps) {
   const effective = getCalvingStatus(cattle)
   const cattlePageLogLabel = `Log ${formatCattleTagDisplay(cattle.tagNumber)}`
@@ -57,7 +60,9 @@ export function CattleLoggingStatusSection({
 
   return (
     <>
-      <div className={cn("flex flex-wrap items-center gap-2", padTop)}>{calvingStatusPill(cattle)}</div>
+      {hideStatusPill ? null : (
+        <div className={cn("flex flex-wrap items-center gap-2", padTop)}>{calvingStatusPill(cattle)}</div>
+      )}
 
       {cattle.calvingStatus === "in-labor" && inLaborRelative ? (
         <p className={cn("pt-2 text-[13px] text-muted-foreground", pad)}>Marked {inLaborRelative} ago</p>
