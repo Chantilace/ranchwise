@@ -59,6 +59,15 @@ export function CattleLoggingStatusSection({
   // No extra top padding: the identity row above already provides the gap (matches the log subview spacing).
   const padTop = pad
 
+  // When the status pill is shown here (or a delivery/labor context line precedes the CTA), the action
+  // block needs its top margin. When the pill lives elsewhere (hideStatusPill) and there's no context
+  // line above, the CTA is the first element — drop the margin so it sits tight under the header.
+  const hasLeadingContext =
+    (cattle.calvingStatus === "in-labor" && !!inLaborRelative) ||
+    effective === "calved" ||
+    effective === "complications"
+  const actionTopClass = hideStatusPill && !hasLeadingContext ? "" : "mt-4"
+
   return (
     <>
       {hideStatusPill ? null : (
@@ -85,7 +94,7 @@ export function CattleLoggingStatusSection({
       ) : null}
 
       {showActions && onLogObservation ? (
-        <div className={cn("mt-4 flex flex-col gap-2", pad)}>
+        <div className={cn(actionTopClass, "flex flex-col gap-2", pad)}>
           <Button
             type="button"
             variant="primary"
