@@ -818,6 +818,7 @@ export function RanchDataProvider({ children }: { children: ReactNode }) {
           const entry: ObservationEntry = {
             id: crypto.randomUUID(),
             date: formatObservationDate(new Date()),
+            createdAtMs: Date.now(),
             category: animalData.category,
             observationDomain: observationDomainFromCategory(animalData.category),
             notes: animalData.notes,

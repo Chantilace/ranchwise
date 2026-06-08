@@ -18,6 +18,12 @@ export interface AIResult {
 export interface ObservationEntry {
   id: string
   date: string
+  /**
+   * Precise creation time (epoch ms) for ordering. `date` is only day-resolution, so without this
+   * a freshly-logged entry ties with same-day seed entries and may not surface in "recent" lists.
+   * Seed entries omit it and fall back to the day timestamp.
+   */
+  createdAtMs?: number
   category: Category
   /** When set, scopes writeback to health vs behavior on horses; inferred from category if omitted. */
   observationDomain?: ObservationDomain
