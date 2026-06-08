@@ -84,19 +84,33 @@ export function LogObservationFAB({ className }: LogObservationFABProps) {
   if (hasOpenOverlay) return null
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
+    <div
       className={cn(
         "fixed bottom-[calc(24px+env(safe-area-inset-bottom,0px))] right-[calc(24px+env(safe-area-inset-right,0px))] z-[60] md:hidden",
-        "flex size-14 shrink-0 items-center justify-center rounded-full",
-        "bg-action text-action-foreground shadow-[0_8px_20px_rgba(91,76,174,0.45),0_2px_6px_rgba(91,76,174,0.3)] transition-all",
-        "hover:bg-action-hover active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        "motion-safe:animate-[fab-pop-in_320ms_cubic-bezier(0.34,1.56,0.64,1)_both]",
         className,
       )}
-      aria-label="Log observation"
     >
-      <NotebookPen className="size-6 shrink-0 text-action-foreground" aria-hidden />
-    </button>
+      <button
+        type="button"
+        onClick={handleClick}
+        className={cn(
+          "group relative flex size-14 shrink-0 items-center justify-center rounded-full",
+          "bg-action text-action-foreground shadow-[0_8px_20px_rgba(91,76,174,0.45),0_2px_6px_rgba(91,76,174,0.3)] transition-all",
+          "hover:bg-action-hover active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        )}
+        aria-label="Log observation"
+      >
+        {/* Idle attention ring (sits behind the icon; box-shadow ripples outside the button). */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-full motion-safe:animate-[fab-pulse-ring_2.4s_ease-out_infinite]"
+        />
+        <NotebookPen
+          className="relative size-6 shrink-0 text-action-foreground transition-[rotate,translate] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:-translate-y-0.5 group-active:-rotate-[10deg]"
+          aria-hidden
+        />
+      </button>
+    </div>
   )
 }
