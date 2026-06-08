@@ -101,10 +101,11 @@ export function LogObservationFAB({ className }: LogObservationFABProps) {
         )}
         aria-label="Log observation"
       >
-        {/* Idle attention ring (sits behind the icon; box-shadow ripples outside the button). */}
+        {/* Idle attention ring (sits behind the icon; box-shadow ripples outside the button).
+            Pulses 3x on mount, then rests so it doesn't read as busy during long sessions. */}
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-full motion-safe:animate-[fab-pulse-ring_2.4s_ease-out_infinite]"
+          className="pointer-events-none absolute inset-0 rounded-full motion-safe:animate-[fab-pulse-ring_2.4s_ease-out_3]"
         />
         <NotebookPen
           className="relative size-6 shrink-0 text-action-foreground transition-[rotate,translate] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:-translate-y-0.5 group-active:-rotate-[10deg]"
