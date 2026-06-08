@@ -3,6 +3,8 @@ import { cattleTagBare } from "@/lib/cattleUi"
 import {
   BREED_OPTIONS,
   CATTLE_SEX_OPTIONS,
+  canCarryCalvingStatus,
+  parseCattleSexLabel,
   type Breed,
   type Cattle,
   type CattleInventoryStatus,
@@ -107,10 +109,11 @@ export function buildCattleFromAddAnimalForm(
     age: ageFromDateOfBirth(s.dateOfBirth || undefined),
     pastureId,
     dueDate: null,
-    calvingStatus: "calved",
+    // Only Cow/Heifer carry a calving lifecycle; Bull/Steer/Calf never get a calving status.
+    calvingStatus: canCarryCalvingStatus(s.sex) ? "calved" : "none",
     healthStatus: "Good",
     displayName: s.name.trim() || undefined,
-    sexLabel: s.sex,
+    sexLabel: parseCattleSexLabel(s.sex),
     dateOfBirthIso: s.dateOfBirth.trim() || undefined,
     weightLbs: weightOk,
     inventoryStatus: s.status,
