@@ -50,6 +50,18 @@ export type Breed = (typeof BREED_OPTIONS)[number]
 export const CATTLE_SEX_OPTIONS = ["Bull", "Cow", "Heifer", "Steer", "Calf"] as const
 export type CattleSexLabel = (typeof CATTLE_SEX_OPTIONS)[number]
 
+/** Narrow an arbitrary string to a canonical sex label; returns undefined for anything else (e.g. a typo). */
+export function parseCattleSexLabel(value: string | undefined | null): CattleSexLabel | undefined {
+  const v = value?.trim()
+  return CATTLE_SEX_OPTIONS.find((o) => o === v)
+}
+
+/** Only Cow/Heifer carry a calving lifecycle; Bull/Steer/Calf are always `calvingStatus: "none"`. */
+export function canCarryCalvingStatus(sexLabel: string | undefined | null): boolean {
+  const parsed = parseCattleSexLabel(sexLabel)
+  return parsed === "Cow" || parsed === "Heifer"
+}
+
 /** Persisted on the animal. Auto `pregnant` may become `calving-soon` in `getCalvingStatus()` when due within 14 days. */
 export type StoredCalvingStatus = "pregnant" | "in-labor" | "calved" | "complications" | "none"
 
@@ -106,7 +118,7 @@ export interface Cattle {
   observations?: CattleObservation[]
   /** Optional display name from Add animal. */
   displayName?: string
-  sexLabel?: string
+  sexLabel?: CattleSexLabel
   dateOfBirthIso?: string
   weightLbs?: number
   inventoryStatus?: CattleInventoryStatus
