@@ -87,7 +87,9 @@ export function buildHorseRecentObservationPicks(
     const key = horseRowKey(horse)
     for (const entry of observationsByHorse[key] ?? []) {
       if (!isHorseObservationThisWeek(entry, now)) continue
-      const t = parseObservationDate(entry.date)
+      // Prefer the precise creation time so a freshly-logged entry sorts above same-day seed
+      // entries (whose `date` only resolves to midnight); fall back to the day timestamp.
+      const t = entry.createdAtMs ?? parseObservationDate(entry.date)
       if (!Number.isFinite(t) || t <= 0) continue
       flat.push({ horse, entry, t })
     }

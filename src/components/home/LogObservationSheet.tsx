@@ -454,6 +454,7 @@ export function LogObservationSheet({ open, onOpenChange }: LogObservationSheetP
         const entry: ObservationEntry = {
           id: crypto.randomUUID(),
           date: formatObservationDate(new Date()),
+          createdAtMs: Date.now(),
           category: data.category,
           observationDomain: observationDomainFromCategory(data.category),
           notes: data.notes.trim(),

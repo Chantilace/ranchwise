@@ -118,6 +118,7 @@ function HorseLogSheetInner({ horse, onClose, view, setView }: HorseLogSheetInne
       const entry: ObservationEntry = {
         id: crypto.randomUUID(),
         date: formatObservationDate(new Date()),
+        createdAtMs: Date.now(),
         category,
         observationDomain: observationDomainFromCategory(category),
         notes: notes.trim(),
