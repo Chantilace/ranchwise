@@ -1,4 +1,4 @@
-import { ChevronRight, NotebookPen } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import {
   startTransition,
   useCallback,
@@ -13,6 +13,8 @@ import { CattleRosterTable } from "@/components/CattleRosterTable"
 import { CattleDetailPanel } from "@/components/CattleDetailPanel"
 import { PageTitleStrip } from "@/components/PageTitleStrip"
 import { RosterMobileHeader } from "@/components/roster/RosterMobileHeader"
+import { RosterMobileLogIconButton } from "@/components/roster/RosterMobileLogIconButton"
+import { CattleAvatar } from "@/components/CattleAvatar"
 import { StatusBadge } from "@/components/StatusBadge"
 import { RanchWorkspaceShell } from "@/components/RanchWorkspaceShell"
 import { SearchField } from "@/components/ui/search-field"
@@ -152,6 +154,7 @@ function CattleMobileRosterRow({
   tagLabel,
   contextLine,
   healthBadge,
+  onOpenDetail,
   onLogObservation,
 }: {
   cow: Cattle
@@ -159,37 +162,38 @@ function CattleMobileRosterRow({
   contextLine: string
   /** When set, shows a compact health status chip (e.g. Flagged section). */
   healthBadge: "flag" | "monitor" | null
-  /** Single action: open observation log for this animal (no profile navigation). */
+  /** Row body click: open the cattle detail panel. */
+  onOpenDetail: () => void
+  /** Log CTA only: open observation log for this animal. */
   onLogObservation: () => void
 }) {
   return (
-    <button
-      type="button"
-      onClick={onLogObservation}
-      className="group flex w-full items-center border-b border-border px-3.5 py-2.5 text-left outline-none transition-colors last:border-b-0 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/40"
-    >
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[14px] font-medium text-foreground">{tagLabel}</p>
-          {healthBadge ? (
-            <StatusBadge status={healthBadge} size="sm" emphasis="secondary" />
-          ) : null}
-          <span className="text-[13px] text-muted-foreground">
-            {cow.breed} · {cow.age} yrs
-          </span>
-        </div>
-        <p className="truncate text-[13px] text-muted-foreground">{contextLine}</p>
-      </div>
-      <div
-        aria-hidden
-        className="pointer-events-none ml-2 flex size-8 shrink-0 items-center justify-center rounded-full border-[0.5px] border-ai-accent bg-card text-ai-accent transition-colors group-hover:bg-ai-accent group-hover:text-white"
+    <div className="flex items-center gap-2 border-b border-border px-3.5 py-2.5 last:border-b-0">
+      <button
+        type="button"
+        onClick={onOpenDetail}
+        className="-mx-3.5 -my-2.5 flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-sm px-3.5 py-2.5 text-left outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/40"
       >
-        <NotebookPen
-          className="size-3.5 shrink-0 text-ai-accent transition-colors group-hover:text-white"
-          strokeWidth={2}
-        />
-      </div>
-    </button>
+        <CattleAvatar className="size-11" />
+        <div className="min-w-0 flex-1">
+          <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
+            <p className="text-[14px] font-medium text-foreground">{tagLabel}</p>
+            {healthBadge ? (
+              <StatusBadge status={healthBadge} size="sm" emphasis="secondary" />
+            ) : null}
+            <span className="text-[13px] text-muted-foreground">
+              {cow.breed} · {cow.age} yrs
+            </span>
+          </div>
+          <p className="truncate text-[13px] text-muted-foreground">{contextLine}</p>
+        </div>
+      </button>
+      <RosterMobileLogIconButton
+        ariaLabel={`Log observation for ${tagLabel}`}
+        onClick={onLogObservation}
+      />
+      <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+    </div>
   )
 }
 
@@ -674,6 +678,7 @@ export function CattleOverviewPage() {
                           cow={cow}
                           contextLine={ctx}
                           healthBadge={null}
+                          onOpenDetail={() => openCattleSlide(cow)}
                           onLogObservation={() => openCattleSlideToObservationLog(cow, null)}
                           tagLabel={formatCattleTagDisplay(cow.tagNumber)}
                         />
@@ -692,6 +697,7 @@ export function CattleOverviewPage() {
                           cow={cow}
                           contextLine={`${pasture} · In labor`}
                           healthBadge={null}
+                          onOpenDetail={() => openCattleSlide(cow)}
                           onLogObservation={() => openCattleSlideToObservationLog(cow, null)}
                           tagLabel={formatCattleTagDisplay(cow.tagNumber)}
                         />
@@ -711,6 +717,7 @@ export function CattleOverviewPage() {
                           cow={cow}
                           contextLine={`${pasture} · ${obs}`}
                           healthBadge="flag"
+                          onOpenDetail={() => openCattleSlide(cow)}
                           onLogObservation={() => openCattleSlideToObservationLog(cow, null)}
                           tagLabel={formatCattleTagDisplay(cow.tagNumber)}
                         />
@@ -746,6 +753,7 @@ export function CattleOverviewPage() {
                               cow={cow}
                               contextLine={pasture}
                               healthBadge={null}
+                              onOpenDetail={() => openCattleSlide(cow)}
                               onLogObservation={() => openCattleSlideToObservationLog(cow, null)}
                               tagLabel={formatCattleTagDisplay(cow.tagNumber)}
                             />
