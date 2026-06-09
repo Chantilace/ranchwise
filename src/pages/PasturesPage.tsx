@@ -38,7 +38,7 @@ import { WORKSPACE_PAGE_ROSTER_FILL_CLASS } from "@/lib/workspacePageCard"
 import { cn } from "@/lib/utils"
 import { PASTURE_SEED_MEDIA } from "@/lib/pastureSeedMedia"
 import { getPastureShortName } from "@/lib/pastureUtils"
-import { pastureStatusToCanonical, type PastureStatus } from "@/lib/statusUtils"
+import { PASTURE_STATUS_LABELS, pastureStatusToCanonical, type PastureStatus } from "@/lib/statusUtils"
 import type { Pasture } from "@/types/cattle"
 
 type PastureSortColumn = "name" | "status" | "lastCheck" | "headCount" | "acreage"
@@ -167,9 +167,9 @@ const PASTURE_RECENCY_OPTIONS = [
 ] as const
 
 const PASTURE_CONDITION_OPTIONS: { id: PastureStatus; label: string }[] = [
-  { id: "stable", label: "Stable" },
-  { id: "concern", label: "Concern" },
-  { id: "action_needed", label: "Action needed" },
+  { id: "stable", label: PASTURE_STATUS_LABELS.stable },
+  { id: "concern", label: PASTURE_STATUS_LABELS.concern },
+  { id: "action_needed", label: PASTURE_STATUS_LABELS.action_needed },
 ]
 
 function pastureCheckRecencyFilterId(p: Pasture): "recent" | "borderline" | "overdue" {

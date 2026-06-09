@@ -53,10 +53,12 @@ export type StatusEmphasis = "primary" | "secondary" | "outline" | "outlineMuted
 /** Pasture roster semantic status — reuses good / monitor / flag color ramps (no new CSS colors). */
 export type PastureStatus = "stable" | "concern" | "action_needed"
 
+// Pasture checks surface the canonical Good / Monitor / Flag labels (the underlying status
+// values stay stable/concern/action_needed; only the display label is canonical).
 export const PASTURE_STATUS_LABELS: Record<PastureStatus, string> = {
-  stable: "Stable",
-  concern: "Concern",
-  action_needed: "Action needed",
+  stable: "Good",
+  concern: "Monitor",
+  action_needed: "Flag",
 }
 
 const PASTURE_TO_CANONICAL: Record<PastureStatus, StatusCanonical> = {

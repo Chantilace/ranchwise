@@ -38,6 +38,7 @@ import {
   WORKSPACE_PAGE_SHELL_FLUSH_TOP_CLASS,
 } from "@/lib/workspacePageCard"
 import {
+  PASTURE_STATUS_LABELS,
   pastureStatusToCanonical,
   type PastureStatus,
 } from "@/lib/statusUtils"
@@ -108,11 +109,7 @@ function PastureCheckCard({
               <StatusBadge status={status} size="sm" emphasis="secondary" />
             ) : (
               <span className="text-[13px] font-normal text-muted-foreground">
-                {status === "stable"
-                  ? "Stable"
-                  : status === "concern"
-                    ? "Concern"
-                    : "Action needed"}
+                {PASTURE_STATUS_LABELS[status]}
               </span>
             )}
           </>
@@ -209,9 +206,9 @@ export function PastureProfilePage() {
       label: PASTURE_CHECK_CATEGORY_LABELS[c],
     }))
     const statusOptions = [
-      { id: "stable", label: "Stable" },
-      { id: "concern", label: "Concern" },
-      { id: "action_needed", label: "Action needed" },
+      { id: "stable", label: PASTURE_STATUS_LABELS.stable },
+      { id: "concern", label: PASTURE_STATUS_LABELS.concern },
+      { id: "action_needed", label: PASTURE_STATUS_LABELS.action_needed },
     ]
     return [
       {
