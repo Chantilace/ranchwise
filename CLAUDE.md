@@ -55,7 +55,8 @@ Three canonical statuses. Everything routes to one of them.
 Each status has three emphasis variants: `secondary` (default, soft tint), `primary` (solid fill, for focal moments), and `outline` (rare, explicitly requested).
 
 - Tables and lists → always `secondary`. Scannability first.
-- Detail panels, hero statuses, homepage "needs attention" counts → `monitor` and `flag` escalate to `primary`. Good stays `secondary` always.
+- **Profile identity / hero badges** (the status tag beside the entity name on a horse / pasture / cattle profile, at every breakpoint) → always `primary`, including Good. The identity badge is a focal, solid element, so Good escalates here too. Use `emphasis="primary"` directly; do not route it through a conditional helper. (Horse and pasture profiles follow this; the cattle detail panel still defaults to `secondary` and should be brought in line.)
+- Other detail panels and homepage "needs attention" counts → `monitor` and `flag` escalate to `primary`; Good stays `secondary`.
 - Outline → only when explicitly requested.
 
 Helper API:
