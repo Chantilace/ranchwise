@@ -121,7 +121,7 @@ function CattleDetailHeader({
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-start justify-end gap-1.5">
-          <StatusBadge status={cattleRiskLevelToBadgeStatus(healthRisk)} />
+          <StatusBadge status={cattleRiskLevelToBadgeStatus(healthRisk)} emphasis="primary" />
         </div>
       </div>
     </>
@@ -365,6 +365,7 @@ function CattleEmbeddedLogObservationSubview({
               status={cattleRiskLevelToBadgeStatus(
                 getCattleEffectiveHealthRisk(cattle, cattleObsMap(cattle.id, observations))
               )}
+              emphasis="primary"
             />
           </div>
         </div>
