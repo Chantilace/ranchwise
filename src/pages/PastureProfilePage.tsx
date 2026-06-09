@@ -39,7 +39,6 @@ import {
 } from "@/lib/workspacePageCard"
 import {
   pastureStatusToCanonical,
-  profileIdentityStatusEmphasis,
   type PastureStatus,
 } from "@/lib/statusUtils"
 import { cn } from "@/lib/utils"
@@ -378,7 +377,6 @@ export function PastureProfilePage() {
   }, [pastureId, pastureChecksByPastureId])
   // Render the pasture status as standard good / monitor / flag (Good stays secondary per Policy B).
   const statusCanonical = pastureStatusToCanonical(derivedStatus)
-  const statusEmphasis = profileIdentityStatusEmphasis(derivedStatus)
 
   const latestCheckId = checksSorted[0]?.id ?? null
 
@@ -752,7 +750,7 @@ export function PastureProfilePage() {
                       <StatusBadge
                         status={statusCanonical}
                         size="md"
-                        emphasis={statusEmphasis}
+                        emphasis="primary"
                         className="shrink-0 !px-2 !py-[3px] !text-[13px]"
                       />
                     </div>
@@ -830,7 +828,7 @@ export function PastureProfilePage() {
                   <StatusBadge
                     status={statusCanonical}
                     size="md"
-                    emphasis={statusEmphasis}
+                    emphasis="primary"
                     className="shrink-0"
                   />
                   <h2 className="min-w-0 text-[22px] font-medium leading-[1.1] text-white">{pasture.name}</h2>
@@ -889,7 +887,7 @@ export function PastureProfilePage() {
                     <StatusBadge
                       status={statusCanonical}
                       size="md"
-                      emphasis={statusEmphasis}
+                      emphasis="primary"
                       className="shrink-0"
                     />
                   </div>
@@ -931,7 +929,7 @@ export function PastureProfilePage() {
                     <StatusBadge
                       status={statusCanonical}
                       size="md"
-                      emphasis={statusEmphasis}
+                      emphasis="primary"
                       className="shrink-0"
                     />
                   </div>
