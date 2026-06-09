@@ -242,7 +242,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "Juniper",
       {
         riskLevel: "good",
-        riskLabel: "Stable",
+        riskLabel: "Good",
         recommendations: ["Continue rotation schedule as planned."],
         patternNote: null,
       }
@@ -256,7 +256,7 @@ const SEED_ROWS: Record<string, SeedRow[]> = {
       "Lou",
       {
         riskLevel: "monitor",
-        riskLabel: "Concern",
+        riskLabel: "Monitor",
         patternNote:
           "Bare patch development on south end is early — not yet at recovery threshold but worth tracking on next check.",
         recommendations: [

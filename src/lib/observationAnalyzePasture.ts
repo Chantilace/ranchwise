@@ -285,7 +285,7 @@ export async function mockAnalyzePastureCheck(
   ) {
     return {
       riskLevel: "flag",
-      riskLabel: "Action needed",
+      riskLabel: "Flag",
       recommendations: [
         "Secure the perimeter before moving animals; flag the repair to your fence contractor or crew.",
         "Photograph the damage for records and re-check voltage after any fix.",
@@ -301,7 +301,7 @@ export async function mockAnalyzePastureCheck(
       recurrence.issue === "vegetation" ? [...VEGETATION_RECURRENCE_RECS] : [...GENERIC_RECURRENCE_RECS]
     return {
       riskLevel: "monitor",
-      riskLabel: "Concern",
+      riskLabel: "Monitor",
       patternNote: recurrencePatternNote(pastureName, recurrence, l, otherCat),
       recommendations: recs,
     }
@@ -312,7 +312,7 @@ export async function mockAnalyzePastureCheck(
     const fam = families[0]!
     return {
       riskLevel: "monitor",
-      riskLabel: "Concern",
+      riskLabel: "Monitor",
       patternNote: `New ${FAMILY_DISPLAY[fam]} concern flagged on ${pastureName}. Recent checks have been steady on other categories, so this is a fresh issue rather than a developing pattern. Worth tracking specifically.`,
       recommendations: [
         "Document baseline state today (photograph if applicable) so the next check has something to compare against.",
@@ -325,7 +325,7 @@ export async function mockAnalyzePastureCheck(
   if (isOperationallyCleanNote(l)) {
     return {
       riskLevel: "good",
-      riskLabel: "Stable",
+      riskLabel: "Good",
       patternNote: `Clean walk-through on ${pastureName}.`,
       recommendations: ["Continue rotation schedule as planned."],
     }
@@ -342,7 +342,7 @@ export async function mockAnalyzePastureCheck(
   ) {
     return {
       riskLevel: "monitor",
-      riskLabel: "Concern",
+      riskLabel: "Monitor",
       recommendations: [
         "Schedule a follow-up walk-through after the next rain event.",
         "Consider drainage, gravel at gates, or reseeding bare spots before they widen.",
@@ -354,7 +354,7 @@ export async function mockAnalyzePastureCheck(
 
   return {
     riskLevel: "good",
-    riskLabel: "Stable",
+    riskLabel: "Good",
     recommendations: [
       "Keep logging drive-bys and walk-throughs on a steady cadence.",
       `Routine ${PASTURE_CHECK_CATEGORY_LABELS[category].toLowerCase()} looks adequate for now.`,

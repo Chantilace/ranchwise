@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils"
 type PastureRosterTab = "animals" | "checks"
 
 const PASTURE_CHECK_OUTCOME_OPTIONS = [
-  { id: "stable", label: "Stable" },
+  { id: "stable", label: "Good" },
   { id: "attention", label: "Needs attention" },
 ] as const
 
