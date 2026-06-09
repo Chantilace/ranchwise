@@ -1979,7 +1979,7 @@ export function RanchWiseHorseRoster({
       ) : null}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col pb-4 md:pb-0">
-        <Table className="border-separate border-spacing-0" containerClassName="min-w-0">
+        <Table className="border-separate border-spacing-0" containerClassName="min-w-0" shellClassName="min-h-0 flex-1">
             <TableHeader>
               <TableRow className="border-neutral-200 hover:bg-transparent">
                 <HorseRosterSortableColumnHeader
